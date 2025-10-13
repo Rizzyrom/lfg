@@ -58,22 +58,53 @@ export const requireUser = async () => {
 }
 
 export function verifyOrigin(request: Request): boolean {
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim())
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
+  const host = request.headers.get('host')
 
-  if (origin && allowedOrigins.includes(origin)) {
-    return true
+  // In production, allow requests from the same host
+  if (host) {
+    const expectedOrigin = process.env.NODE_ENV === 'production'
+      ? `https://${host}`
+      : `http://${host}`
+
+    // Check origin header
+    if (origin === expectedOrigin) {
+      return true
+    }
+
+    // Check referer header
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer)
+        const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`
+        if (refererOrigin === expectedOrigin) {
+          return true
+        }
+      } catch {}
+    }
   }
 
-  if (referer) {
-    try {
-      const refererUrl = new URL(referer)
-      const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`
-      if (allowedOrigins.includes(refererOrigin)) {
-        return true
-      }
-    } catch {}
+  // Fallback: check ALLOWED_ORIGINS env var if set
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean)
+  if (allowedOrigins.length > 0) {
+    if (origin && allowedOrigins.includes(origin)) {
+      return true
+    }
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer)
+        const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`
+        if (allowedOrigins.includes(refererOrigin)) {
+          return true
+        }
+      } catch {}
+    }
+  }
+
+  // In development, allow localhost
+  if (process.env.NODE_ENV === 'development') {
+    return true
   }
 
   return false
