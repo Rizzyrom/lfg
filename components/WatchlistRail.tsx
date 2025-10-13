@@ -30,19 +30,20 @@ export default function WatchlistRail() {
 
   const fetchData = async () => {
     try {
-      const [watchRes, priceRes] = await Promise.all([
-        fetch('/api/watchlist'),
-        fetch('/api/price-cache')
-      ])
+      const res = await fetch('/api/watchlist/prices')
 
-      if (watchRes.ok) {
-        const data = await watchRes.json()
-        setItems(data.items || [])
-      }
+      if (res.ok) {
+        const data = await res.json()
+        const itemsWithPrices = data.items || []
 
-      if (priceRes.ok) {
-        const data = await priceRes.json()
-        setPrices(data.prices || [])
+        // Split into items and prices for component state
+        setItems(itemsWithPrices)
+        setPrices(itemsWithPrices.map((item: any) => ({
+          symbol: item.symbol,
+          source: item.source,
+          price: item.price,
+          change24h: item.change24h
+        })))
       }
     } catch (error) {
       console.error('Failed to fetch data:', error)

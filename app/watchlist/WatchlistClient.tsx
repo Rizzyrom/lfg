@@ -8,22 +8,27 @@ interface WatchItem {
   symbol: string
   source: string
   tags: string[]
+  price?: string | null
+  change24h?: string | null
 }
 
 export default function WatchlistClient() {
   const [items, setItems] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [symbol, setSymbol] = useState('')
-  const [source, setSource] = useState<'crypto' | 'equity'>('crypto')
+  const [source, setSource] = useState<'crypto' | 'stock'>('crypto')
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     fetchWatchlist()
+    // Auto-refresh prices every 30 seconds
+    const interval = setInterval(fetchWatchlist, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const fetchWatchlist = async () => {
     try {
-      const res = await fetch('/api/watchlist')
+      const res = await fetch('/api/watchlist/prices')
       if (res.ok) {
         const data = await res.json()
         setItems(data.items || [])
@@ -100,12 +105,12 @@ export default function WatchlistClient() {
           />
           <select
             value={source}
-            onChange={(e) => setSource(e.target.value as 'crypto' | 'equity')}
+            onChange={(e) => setSource(e.target.value as 'crypto' | 'stock')}
             className="input"
             disabled={adding}
           >
             <option value="crypto">Crypto</option>
-            <option value="equity">Equity</option>
+            <option value="stock">Stock</option>
           </select>
           <button type="submit" disabled={adding} className="btn btn-primary">
             {adding ? 'Adding...' : 'Add'}
@@ -126,22 +131,44 @@ export default function WatchlistClient() {
             </p>
           </div>
         ) : (
-          items.map((item) => (
-            <div key={item.id} className="card p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-tv-text">{item.symbol}</h3>
-                  <p className="text-sm text-tv-text-soft uppercase">{item.source}</p>
+          items.map((item) => {
+            const change = item.change24h ? parseFloat(item.change24h) : 0
+            const isPositive = change >= 0
+
+            return (
+              <div key={item.id} className="card p-4 hover:border-tv-blue transition">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-bold text-tv-text">{item.symbol}</h3>
+                      <span className="text-xs px-2 py-1 rounded bg-tv-chip text-tv-text-soft uppercase">
+                        {item.source}
+                      </span>
+                    </div>
+                    {item.price && (
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-2xl font-mono font-bold text-tv-text">
+                          ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className={`text-sm font-semibold ${isPositive ? 'text-tv-up' : 'text-tv-down'}`}>
+                          {isPositive ? '+' : ''}{change.toFixed(2)}%
+                        </span>
+                      </div>
+                    )}
+                    {!item.price && (
+                      <p className="text-sm text-tv-text-soft">Loading price...</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium transition-all active:scale-95"
+                  >
+                    Remove
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="btn text-tv-down border-tv-down"
-                >
-                  Remove
-                </button>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>
