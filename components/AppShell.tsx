@@ -73,16 +73,6 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
                 Watchlist
               </Link>
               <Link
-                href="/groups"
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  pathname === '/groups'
-                    ? 'bg-tv-blue text-white shadow-lg shadow-tv-blue/30'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-chip'
-                }`}
-              >
-                Groups
-              </Link>
-              <Link
                 href="/chat"
                 className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                   pathname === '/chat'
@@ -144,7 +134,7 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
           <div className="flex justify-around items-center h-16 px-1 safe-area-inset-bottom">
             <Link
               href="/feed"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all active:scale-95 ${
+              className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all active:scale-95 ${
                 pathname === '/feed'
                   ? 'text-tv-blue'
                   : 'text-tv-text-soft hover:text-tv-text'
@@ -162,7 +152,7 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
             </Link>
             <Link
               href="/watchlist"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all active:scale-95 ${
+              className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all active:scale-95 ${
                 pathname === '/watchlist'
                   ? 'text-tv-blue'
                   : 'text-tv-text-soft hover:text-tv-text'
@@ -179,26 +169,8 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
               <span className="text-[10px] font-semibold">Watch</span>
             </Link>
             <Link
-              href="/groups"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all active:scale-95 ${
-                pathname === '/groups'
-                  ? 'text-tv-blue'
-                  : 'text-tv-text-soft hover:text-tv-text'
-              }`}
-            >
-              <div className={`relative ${pathname === '/groups' ? 'animate-pulse' : ''}`}>
-                <svg className="w-6 h-6" fill={pathname === '/groups' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/groups' ? 0 : 2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                {pathname === '/groups' && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-tv-blue rounded-full" />
-                )}
-              </div>
-              <span className="text-[10px] font-semibold">Groups</span>
-            </Link>
-            <Link
               href="/chat"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all active:scale-95 ${
+              className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all active:scale-95 ${
                 pathname === '/chat'
                   ? 'text-tv-blue'
                   : 'text-tv-text-soft hover:text-tv-text'

@@ -49,13 +49,6 @@ export default function RightRail() {
           </p>
         )}
       </div>
-
-      <div className="card p-4">
-        <h2 className="text-lg font-semibold text-tv-text mb-4">Chat Preview</h2>
-        <p className="text-sm text-tv-text-soft">
-          Join the chat to see real-time messages
-        </p>
-      </div>
     </div>
   )
 }
