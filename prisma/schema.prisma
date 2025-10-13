@@ -1,0 +1,97 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  messages     Message[]
+  invitesCreated Invite[]
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  groupId     String
+}
+
+model Group {
+  id          String       @id @default(cuid())
+  nameEnc     String
+  createdById String
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  messages    Message[]
+  watchlist   WatchItem[]
+}
+
+model Membership {
+  userId   String
+  groupId  String
+  role     Role     @default(MEMBER)
+  joinedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  group    Group    @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+  ANALYST
+  BOT
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  groupId    String
+  senderId   String
+  ciphertext String
+  mediaPtr   String?
+  createdAt  DateTime @default(now())
+  group      Group    @relation(fields: [groupId], references: [id])
+  sender     User     @relation(fields: [senderId], references: [id])
+}
+
+model WatchItem {
+  id        String   @id @default(cuid())
+  groupId   String
+  symbol    String
+  source    String
+  tags      String[]
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id])
+
+  @@unique([groupId, symbol, source])
+}
+
+model PriceCache {
+  symbol    String
+  source    String
+  price     Decimal
+  change24h Decimal?
+  updatedAt DateTime @default(now())
+
+  @@id([symbol, source])
+}

@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #131722;
+  color: #D1D4DC;
+  font-feature-settings: 'tnum' on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.card {
+  background: #1E222D;
+  border: 1px solid #2A2E39;
+  border-radius: 12px;
+}
+
+.card:hover {
+  background: #1B202A;
+  transition: 0.18s ease;
+}
+
+.btn {
+  background: #2B2F3A;
+  border: 1px solid #2A2E39;
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: 0.18s ease;
+}
+
+.btn:hover {
+  border-color: #2962FF;
+}
+
+.btn:focus-visible {
+  outline: 2px solid #2962FF;
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: #2962FF;
+  border-color: #2962FF;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1E4FCC;
+}
+
+.input {
+  background: #1E222D;
+  border: 1px solid #2A2E39;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: #D1D4DC;
+  font-size: 0.875rem;
+  transition: 0.18s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2962FF;
+}
+
+.input::placeholder {
+  color: #787B86;
+}
+
+/* Focus visible ring */
+*:focus-visible {
+  outline: 2px solid #2962FF;
+  outline-offset: 2px;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Tabular numbers for prices */
+.price {
+  font-feature-settings: 'tnum' on;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #131722;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A2E39;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2B2F3A;
+}
+
+/* Mobile optimizations */
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: 80px; /* Space for bottom nav */
+  }
+
+  .card {
+    border-radius: 10px;
+  }
+
+  .btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.9375rem;
+  }
+}
