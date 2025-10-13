@@ -13,7 +13,12 @@ export default async function FeedPage() {
   }
 
   return (
-    <AppShell leftRail={<TrendingRail />} rightRail={<RightRail />}>
+    <AppShell
+      leftRail={<TrendingRail />}
+      rightRail={<RightRail />}
+      leftDrawerTitle="Top Gainers & Losers"
+      rightDrawerTitle="AI Pulse"
+    >
       <FeedClient />
     </AppShell>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -8,10 +8,20 @@ interface AppShellProps {
   children: ReactNode
   leftRail?: ReactNode
   rightRail?: ReactNode
+  leftDrawerTitle?: string
+  rightDrawerTitle?: string
 }
 
-export default function AppShell({ children, leftRail, rightRail }: AppShellProps) {
+export default function AppShell({
+  children,
+  leftRail,
+  rightRail,
+  leftDrawerTitle = 'Market Trends',
+  rightDrawerTitle = 'AI Analysis'
+}: AppShellProps) {
   const pathname = usePathname()
+  const [showLeftDrawer, setShowLeftDrawer] = useState(false)
+  const [showRightDrawer, setShowRightDrawer] = useState(false)
 
   const handleRefresh = async () => {
     try {
@@ -42,9 +52,9 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-6">
             <Link href="/feed" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-tv-blue to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-tv-blue/50 transition-all">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-tv-up to-tv-blue flex items-center justify-center shadow-lg group-hover:shadow-tv-blue/50 transition-all">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 22L8 16L12 20L22 2M22 2L15 2M22 2L22 9" />
                 </svg>
               </div>
               <span className="text-xl sm:text-2xl font-black text-tv-text tracking-tight">
@@ -86,6 +96,27 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile sidebar toggles */}
+            {leftRail && (
+              <button
+                onClick={() => setShowLeftDrawer(true)}
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-tv-chip hover:bg-tv-hover text-tv-text transition-all active:scale-95"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </button>
+            )}
+            {rightRail && (
+              <button
+                onClick={() => setShowRightDrawer(true)}
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-tv-chip hover:bg-tv-hover text-tv-text transition-all active:scale-95"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                </svg>
+              </button>
+            )}
             <button
               onClick={handleRefresh}
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-tv-chip hover:bg-tv-hover text-tv-text text-sm font-medium transition-all active:scale-95"
@@ -189,6 +220,58 @@ export default function AppShell({ children, leftRail, rightRail }: AppShellProp
           </div>
         </nav>
       </div>
+
+      {/* Mobile Left Drawer (Top Gainers/Losers) */}
+      {showLeftDrawer && leftRail && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
+          onClick={() => setShowLeftDrawer(false)}
+        >
+          <div
+            className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-sm bg-tv-panel shadow-2xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-tv-panel border-b border-tv-grid p-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-tv-text">{leftDrawerTitle}</h2>
+              <button
+                onClick={() => setShowLeftDrawer(false)}
+                className="w-9 h-9 rounded-lg bg-tv-chip hover:bg-tv-hover flex items-center justify-center transition"
+              >
+                <svg className="w-5 h-5 text-tv-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">{leftRail}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Right Drawer (AI Pulse & Watchlist) */}
+      {showRightDrawer && rightRail && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
+          onClick={() => setShowRightDrawer(false)}
+        >
+          <div
+            className="absolute right-0 top-0 bottom-0 w-[85vw] max-w-sm bg-tv-panel shadow-2xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-tv-panel border-b border-tv-grid p-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-tv-text">{rightDrawerTitle}</h2>
+              <button
+                onClick={() => setShowRightDrawer(false)}
+                className="w-9 h-9 rounded-lg bg-tv-chip hover:bg-tv-hover flex items-center justify-center transition"
+              >
+                <svg className="w-5 h-5 text-tv-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">{rightRail}</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

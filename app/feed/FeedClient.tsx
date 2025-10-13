@@ -92,10 +92,10 @@ export default function FeedClient() {
           </div>
         ) : (
           articles.map((article, index) => (
-            <div key={index} className="card p-4 hover:border-tv-blue transition group">
-              <div className="flex gap-4">
+            <div key={index} className="card p-3 sm:p-4 hover:border-tv-blue transition group">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 {article.imageUrl && (
-                  <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-tv-chip">
+                  <div className="w-full sm:w-24 h-48 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-tv-chip">
                     <img
                       src={article.imageUrl}
                       alt=""
@@ -104,11 +104,11 @@ export default function FeedClient() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs px-2 py-1 rounded bg-tv-blue/20 text-tv-blue font-medium">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="text-xs px-2 py-1 rounded bg-tv-blue/20 text-tv-blue font-medium whitespace-nowrap">
                       {article.source}
                     </span>
-                    <span className="text-xs text-tv-text-soft">
+                    <span className="text-xs text-tv-text-soft whitespace-nowrap">
                       {getTimeAgo(article.publishedAt)}
                     </span>
                   </div>
@@ -118,12 +118,12 @@ export default function FeedClient() {
                     rel="noopener noreferrer"
                     className="block"
                   >
-                    <h3 className="text-lg font-bold text-tv-text mb-2 group-hover:text-tv-blue transition line-clamp-2">
+                    <h3 className="text-base sm:text-lg font-bold text-tv-text mb-2 group-hover:text-tv-blue transition line-clamp-3 sm:line-clamp-2">
                       {article.title}
                     </h3>
                   </a>
                   {article.description && (
-                    <p className="text-sm text-tv-text-soft line-clamp-2 mb-2">
+                    <p className="text-sm text-tv-text-soft line-clamp-2 mb-3">
                       {article.description}
                     </p>
                   )}
@@ -132,12 +132,12 @@ export default function FeedClient() {
                       e.stopPropagation()
                       shareToChat(article.title, article.url)
                     }}
-                    className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded bg-tv-chip hover:bg-tv-blue hover:text-white transition"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-tv-chip hover:bg-tv-blue hover:text-white transition active:scale-95"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
-                    Share to Chat
+                    Share
                   </button>
                 </div>
               </div>

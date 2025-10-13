@@ -13,7 +13,12 @@ export default async function WatchlistPage() {
   }
 
   return (
-    <AppShell leftRail={<WatchlistRail />} rightRail={<RightRail />}>
+    <AppShell
+      leftRail={<WatchlistRail />}
+      rightRail={<RightRail />}
+      leftDrawerTitle="Watchlist"
+      rightDrawerTitle="AI Pulse"
+    >
       <WatchlistNewsClient />
     </AppShell>
   )

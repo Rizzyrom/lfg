@@ -72,16 +72,16 @@ export default function ChatClient({ username }: ChatClientProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-tv-text">Group Chat</h1>
-        <p className="text-sm text-tv-text-soft mt-1">
+    <div className="flex flex-col h-[calc(100vh-8rem)] lg:h-[calc(100vh-8rem)]">
+      <div className="mb-3 sm:mb-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-tv-text">Group Chat</h1>
+        <p className="text-xs sm:text-sm text-tv-text-soft mt-1">
           <span className="text-tv-up">● Live</span> - Updates every 3 seconds
         </p>
       </div>
 
       <div className="card flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-tv-text-soft text-center">
@@ -104,20 +104,20 @@ export default function ChatClient({ username }: ChatClientProps) {
           )}
         </div>
 
-        <form onSubmit={handleSend} className="p-4 border-t border-tv-grid">
+        <form onSubmit={handleSend} className="p-3 sm:p-4 border-t border-tv-grid">
           <div className="flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a message..."
-              className="input flex-1"
+              className="input flex-1 text-sm sm:text-base"
               disabled={sending}
             />
             <button
               type="submit"
               disabled={sending || !input.trim()}
-              className="btn btn-primary px-6"
+              className="btn btn-primary px-4 sm:px-6 text-sm sm:text-base whitespace-nowrap"
             >
               {sending ? 'Sending...' : 'Send'}
             </button>
