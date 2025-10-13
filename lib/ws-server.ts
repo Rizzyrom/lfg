@@ -64,8 +64,8 @@ wss.on('connection', async (ws, req) => {
     }
     groupSubscriptions.get(groupId)!.add(ws)
 
-    // Subscribe to Redis channel
-    const subscriber = redis.duplicate()
+    // Subscribe to Redis channel (if Redis is available)
+    const subscriber = redis ? redis.duplicate() : null
     const channel = `group:${groupId}`
 
     // Note: Upstash Redis REST API doesn't support pub/sub in the traditional sense
