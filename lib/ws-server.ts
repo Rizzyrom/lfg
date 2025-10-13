@@ -109,8 +109,10 @@ wss.on('connection', async (ws, req) => {
           })
         }
 
-        // Also publish to Redis for other server instances
-        await redis.set(`msg:${groupId}:latest`, broadcastData, { ex: 60 })
+        // Also publish to Redis for other server instances (if available)
+        if (redis) {
+          await redis.set(`msg:${groupId}:latest`, broadcastData, { ex: 60 })
+        }
       } catch (error) {
         console.error('Message handling error:', error)
         ws.send(JSON.stringify({ error: 'Failed to process message' }))
