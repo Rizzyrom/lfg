@@ -62,20 +62,61 @@ export async function GET() {
 
       if (finnhubResponse.ok) {
         const finnhubNews = await finnhubResponse.json()
+        console.log(`Finnhub returned ${finnhubNews.length} articles`)
 
-        finnhubNews.slice(0, 10).forEach((item: any) => {
-          articles.push({
-            title: item.headline,
-            description: item.summary || '',
-            url: item.url,
-            source: item.source,
-            publishedAt: new Date(item.datetime * 1000).toISOString(),
-            imageUrl: item.image,
+        if (Array.isArray(finnhubNews)) {
+          finnhubNews.slice(0, 15).forEach((item: any) => {
+            if (item.headline && item.url) {
+              articles.push({
+                title: item.headline,
+                description: item.summary || '',
+                url: item.url,
+                source: item.source || 'Market News',
+                publishedAt: new Date(item.datetime * 1000).toISOString(),
+                imageUrl: item.image,
+              })
+            }
           })
-        })
+        }
+      } else {
+        console.error('Finnhub API error:', finnhubResponse.status, await finnhubResponse.text())
       }
     } catch (error) {
       console.error('Finnhub news fetch error:', error)
+    }
+
+    // Add Yahoo Finance RSS as backup
+    try {
+      const yahooResponse = await fetch('https://finance.yahoo.com/news/rssindex', {
+        next: { revalidate: 300 }
+      })
+
+      if (yahooResponse.ok) {
+        const rssText = await yahooResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 10); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'Yahoo Finance',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Yahoo Finance RSS fetch error:', error)
     }
 
     // Sort by publishedAt (most recent first)

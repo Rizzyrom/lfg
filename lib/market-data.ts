@@ -12,15 +12,53 @@ interface StockQuote {
   dp: number // Percent change
 }
 
+// Crypto symbol to CoinGecko ID mapping
+const cryptoIdMap: Record<string, string> = {
+  'BTC': 'bitcoin',
+  'ETH': 'ethereum',
+  'SOL': 'solana',
+  'AVAX': 'avalanche-2',
+  'LINK': 'chainlink',
+  'MATIC': 'matic-network',
+  'ADA': 'cardano',
+  'DOT': 'polkadot',
+  'DOGE': 'dogecoin',
+  'SHIB': 'shiba-inu',
+  'UNI': 'uniswap',
+  'LTC': 'litecoin',
+  'XRP': 'ripple',
+  'BNB': 'binancecoin',
+  'ATOM': 'cosmos',
+  'XLM': 'stellar',
+  'TRX': 'tron',
+  'VET': 'vechain',
+  'ALGO': 'algorand',
+  'FIL': 'filecoin',
+  'AAVE': 'aave',
+  'COMP': 'compound-governance-token',
+  'MKR': 'maker',
+  'SNX': 'havven',
+  'CRV': 'curve-dao-token',
+  'SUSHI': 'sushi',
+  'YFI': 'yearn-finance',
+  'BAT': 'basic-attention-token',
+  'ZRX': '0x',
+  'ENJ': 'enjincoin',
+  'MANA': 'decentraland',
+  'SAND': 'the-sandbox',
+  'AXS': 'axie-infinity',
+  'GALA': 'gala',
+  'APE': 'apecoin',
+  'LDO': 'lido-dao',
+  'IMX': 'immutable-x',
+  'OP': 'optimism',
+  'ARB': 'arbitrum',
+}
+
 export async function fetchCryptoPrice(symbol: string): Promise<{ price: string; change24h: string } | null> {
   try {
-    const coinId = symbol.toLowerCase() === 'btc' ? 'bitcoin' :
-                   symbol.toLowerCase() === 'eth' ? 'ethereum' :
-                   symbol.toLowerCase() === 'sol' ? 'solana' :
-                   symbol.toLowerCase() === 'avax' ? 'avalanche-2' :
-                   symbol.toLowerCase() === 'link' ? 'chainlink' :
-                   symbol.toLowerCase() === 'matic' ? 'matic-network' :
-                   symbol.toLowerCase()
+    const symbolUpper = symbol.toUpperCase()
+    const coinId = cryptoIdMap[symbolUpper] || symbol.toLowerCase()
 
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
@@ -40,7 +78,10 @@ export async function fetchCryptoPrice(symbol: string): Promise<{ price: string;
     const data = await response.json()
     const coinData = data[coinId]
 
-    if (!coinData) return null
+    if (!coinData) {
+      console.log(`No CoinGecko data for ${symbol} (coinId: ${coinId})`)
+      return null
+    }
 
     return {
       price: coinData.usd.toString(),
