@@ -16,7 +16,11 @@ interface Price {
   change24h: string | null
 }
 
-export default function WatchlistRail() {
+interface WatchlistRailProps {
+  onItemClick?: (symbol: string, source: string) => void
+}
+
+export default function WatchlistRail({ onItemClick }: WatchlistRailProps = {}) {
   const [items, setItems] = useState<WatchItem[]>([])
   const [prices, setPrices] = useState<Price[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,7 +89,12 @@ export default function WatchlistRail() {
             return (
               <div
                 key={item.id}
-                onClick={() => priceData && setSelectedItem({ item, price: priceData })}
+                onClick={() => {
+                  if (priceData) {
+                    setSelectedItem({ item, price: priceData })
+                    onItemClick?.(item.symbol, item.source)
+                  }
+                }}
                 className="p-3 bg-tv-chip rounded-lg hover:bg-tv-hover transition cursor-pointer border border-transparent hover:border-tv-blue active:scale-[0.98]"
               >
                 <div className="flex items-center justify-between mb-1">

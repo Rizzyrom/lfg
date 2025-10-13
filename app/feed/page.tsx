@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getUser } from '@/lib/auth'
 import AppShell from '@/components/AppShell'
-import WatchlistRail from '@/components/WatchlistRail'
+import TrendingRail from '@/components/TrendingRail'
 import RightRail from '@/components/RightRail'
 import FeedClient from './FeedClient'
 
@@ -13,7 +13,7 @@ export default async function FeedPage() {
   }
 
   return (
-    <AppShell leftRail={<WatchlistRail />} rightRail={<RightRail />}>
+    <AppShell leftRail={<TrendingRail />} rightRail={<RightRail />}>
       <FeedClient />
     </AppShell>
   )
