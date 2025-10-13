@@ -10,7 +10,9 @@ export interface WSMessage {
 }
 
 export async function publishMessage(groupId: string, message: WSMessage) {
-  await redis.publish(`group:${groupId}`, JSON.stringify(message))
+  if (redis) {
+    await redis.publish(`group:${groupId}`, JSON.stringify(message))
+  }
 }
 
 export async function persistMessage(groupId: string, senderId: string, ciphertext: string, mediaPtr?: string) {
