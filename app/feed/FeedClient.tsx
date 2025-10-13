@@ -48,6 +48,26 @@ export default function FeedClient() {
     return `${Math.floor(seconds / 86400)}d ago`
   }
 
+  const shareToChat = async (title: string, url: string) => {
+    try {
+      const message = `📰 ${title}\n${url}`
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      })
+
+      if (res.ok) {
+        alert('Shared to chat!')
+      } else {
+        alert('Failed to share')
+      }
+    } catch (error) {
+      console.error('Failed to share:', error)
+      alert('Failed to share')
+    }
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -72,13 +92,7 @@ export default function FeedClient() {
           </div>
         ) : (
           articles.map((article, index) => (
-            <a
-              key={index}
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card p-4 hover:border-tv-blue transition block group"
-            >
+            <div key={index} className="card p-4 hover:border-tv-blue transition group">
               <div className="flex gap-4">
                 {article.imageUrl && (
                   <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-tv-chip">
@@ -98,17 +112,36 @@ export default function FeedClient() {
                       {getTimeAgo(article.publishedAt)}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-tv-text mb-2 group-hover:text-tv-blue transition line-clamp-2">
-                    {article.title}
-                  </h3>
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <h3 className="text-lg font-bold text-tv-text mb-2 group-hover:text-tv-blue transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                  </a>
                   {article.description && (
-                    <p className="text-sm text-tv-text-soft line-clamp-2">
+                    <p className="text-sm text-tv-text-soft line-clamp-2 mb-2">
                       {article.description}
                     </p>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      shareToChat(article.title, article.url)
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded bg-tv-chip hover:bg-tv-blue hover:text-white transition"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    Share to Chat
+                  </button>
                 </div>
               </div>
-            </a>
+            </div>
           ))
         )}
       </div>

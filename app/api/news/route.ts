@@ -119,12 +119,116 @@ export async function GET() {
       console.error('Yahoo Finance RSS fetch error:', error)
     }
 
+    // Add Bloomberg RSS
+    try {
+      const bloombergResponse = await fetch('https://feeds.bloomberg.com/markets/news.rss', {
+        next: { revalidate: 300 }
+      })
+
+      if (bloombergResponse.ok) {
+        const rssText = await bloombergResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 8); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'Bloomberg',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Bloomberg RSS fetch error:', error)
+    }
+
+    // Add Reuters Business RSS
+    try {
+      const reutersResponse = await fetch('https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', {
+        next: { revalidate: 300 }
+      })
+
+      if (reutersResponse.ok) {
+        const rssText = await reutersResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 8); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'Reuters',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Reuters RSS fetch error:', error)
+    }
+
+    // Add CNBC Markets RSS
+    try {
+      const cnbcResponse = await fetch('https://www.cnbc.com/id/100003114/device/rss/rss.html', {
+        next: { revalidate: 300 }
+      })
+
+      if (cnbcResponse.ok) {
+        const rssText = await cnbcResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 8); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'CNBC',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('CNBC RSS fetch error:', error)
+    }
+
     // Sort by publishedAt (most recent first)
     articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
 
+    console.log(`Total articles collected: ${articles.length}`)
+
     return NextResponse.json({
       success: true,
-      articles: articles.slice(0, 20) // Return top 20
+      articles: articles.slice(0, 40) // Return top 40
     })
   } catch (error) {
     console.error('News fetch error:', error)

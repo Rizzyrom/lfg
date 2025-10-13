@@ -189,6 +189,31 @@ export default function WatchlistRail({ onItemClick }: WatchlistRailProps = {}) 
                   </div>
                 </div>
               )}
+
+              <button
+                onClick={async () => {
+                  try {
+                    const message = `📊 ${selectedItem.item.symbol} (${selectedItem.item.source})\nPrice: $${parseFloat(selectedItem.price.price).toLocaleString()}\n24h: ${parseFloat(selectedItem.price.change24h || '0') >= 0 ? '+' : ''}${parseFloat(selectedItem.price.change24h || '0').toFixed(2)}%`
+                    const res = await fetch('/api/chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ message }),
+                    })
+                    if (res.ok) {
+                      alert('Shared to chat!')
+                      setSelectedItem(null)
+                    }
+                  } catch (error) {
+                    console.error('Failed to share:', error)
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-tv-blue text-white font-medium hover:bg-tv-blue/90 transition-all shadow-lg shadow-tv-blue/30"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Share to Chat
+              </button>
             </div>
           </div>
         </div>
