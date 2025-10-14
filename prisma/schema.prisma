@@ -8,14 +8,16 @@ generator client {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  username     String       @unique
-  passwordHash String
-  createdAt    DateTime     @default(now())
-  memberships  Membership[]
-  messages     Message[]
+  id             String         @id @default(cuid())
+  username       String         @unique
+  passwordHash   String
+  createdAt      DateTime       @default(now())
+  memberships    Membership[]
+  messages       Message[]
   invitesCreated Invite[]
-  sessions     Session[]
+  sessions       Session[]
+  notifications  Notification[]
+  reactions      Reaction[]
 }
 
 model Session {
@@ -64,14 +66,19 @@ enum Role {
 }
 
 model Message {
-  id         String   @id @default(cuid())
-  groupId    String
-  senderId   String
-  ciphertext String
-  mediaPtr   String?
-  createdAt  DateTime @default(now())
-  group      Group    @relation(fields: [groupId], references: [id])
-  sender     User     @relation(fields: [senderId], references: [id])
+  id            String         @id @default(cuid())
+  groupId       String
+  senderId      String
+  ciphertext    String
+  mediaPtr      String?
+  replyToId     String?
+  createdAt     DateTime       @default(now())
+  group         Group          @relation(fields: [groupId], references: [id])
+  sender        User           @relation(fields: [senderId], references: [id])
+  replyTo       Message?       @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies       Message[]      @relation("MessageReplies")
+  notifications Notification[]
+  reactions     Reaction[]
 }
 
 model WatchItem {
@@ -94,4 +101,29 @@ model PriceCache {
   updatedAt DateTime @default(now())
 
   @@id([symbol, source])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  messageId String
+  type      String   // "mention"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
 }

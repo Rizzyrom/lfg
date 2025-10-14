@@ -10,9 +10,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireUser()
 
-    const allowed = await rateLimit(`refresh:${user.id}`, 10, 60)
+    // Rate limit: 5 requests per hour
+    const allowed = await rateLimit(`refresh:${user.id}`, 5, 3600)
     if (!allowed) {
-      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. You can refresh up to 5 times per hour.' },
+        { status: 429 }
+      )
     }
 
     const n8nUrl = process.env.N8N_WEBHOOK_URL

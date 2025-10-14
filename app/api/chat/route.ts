@@ -35,6 +35,27 @@ export async function GET(request: NextRequest) {
             username: true,
           },
         },
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+        replyTo: {
+          select: {
+            id: true,
+            ciphertext: true,
+            sender: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
       },
     })
 
@@ -45,7 +66,10 @@ export async function GET(request: NextRequest) {
         senderId: msg.senderId,
         username: msg.sender.username,
         ciphertext: msg.ciphertext,
+        mediaPtr: msg.mediaPtr,
         createdAt: msg.createdAt.toISOString(),
+        reactions: msg.reactions,
+        replyTo: msg.replyTo,
       })),
     })
   } catch (error) {
@@ -63,7 +87,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireUser()
     const body = await request.json()
-    const { message, groupId } = body
+    const { message, groupId, mediaPtr, replyToId } = body
 
     if (!message || !message.trim()) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
@@ -101,6 +125,8 @@ export async function POST(request: NextRequest) {
         groupId: targetGroupId,
         senderId: user.id,
         ciphertext: message, // In production this would be encrypted client-side
+        mediaPtr: mediaPtr || null,
+        replyToId: replyToId || null,
       },
       include: {
         sender: {
@@ -118,6 +144,7 @@ export async function POST(request: NextRequest) {
         senderId: newMessage.senderId,
         username: newMessage.sender.username,
         ciphertext: newMessage.ciphertext,
+        mediaPtr: newMessage.mediaPtr,
         createdAt: newMessage.createdAt.toISOString(),
       },
     })

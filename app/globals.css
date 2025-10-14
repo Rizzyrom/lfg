@@ -128,3 +128,49 @@ body {
     font-size: 0.9375rem;
   }
 }
+
+/* Additional mobile-specific styles */
+@media (max-width: 768px) {
+  /* Adjust message bubbles for mobile */
+  .message-bubble {
+    max-width: 85%;
+  }
+
+  /* Make reaction picker scrollable on mobile */
+  .reaction-picker {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Adjust file preview for mobile */
+  .file-preview {
+    max-width: 100%;
+  }
+}
+
+/* Smooth animations */
+@keyframes slide-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

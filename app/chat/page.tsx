@@ -14,7 +14,7 @@ export default async function ChatPage() {
 
   return (
     <AppShell leftRail={<WatchlistRail />} rightRail={<RightRail />}>
-      <ChatClient username={user.username} />
+      <ChatClient username={user.username} userId={user.id} />
     </AppShell>
   )
 }
