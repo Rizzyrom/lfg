@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   ROOT & RESET
+   ======================================== */
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -12,32 +16,124 @@ body {
   font-feature-settings: 'tnum' on;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
 }
+
+/* iOS safe area support */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ========================================
+   ELEVATION SYSTEM (Material Design inspired)
+   ======================================== */
+
+.elevation-1 {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.elevation-2 {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.elevation-3 {
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.elevation-4 {
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.6),
+    0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* ========================================
+   CARDS & CONTAINERS
+   ======================================== */
 
 .card {
   background: #1E222D;
-  border: 1px solid #2A2E39;
+  border: 1px solid rgba(42, 46, 57, 0.6);
   border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-  background: #1B202A;
-  transition: 0.18s ease;
+  background: #232732;
+  border-color: rgba(42, 46, 57, 0.8);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 6px 20px rgba(0, 0, 0, 0.25);
 }
+
+.card-interactive {
+  cursor: pointer;
+}
+
+.card-interactive:active {
+  transform: scale(0.98);
+}
+
+/* Glassmorphism variant */
+.card-glass {
+  background: rgba(30, 34, 45, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
 
 .btn {
   background: #2B2F3A;
-  border: 1px solid #2A2E39;
+  border: 1px solid rgba(42, 46, 57, 0.8);
   border-radius: 10px;
-  padding: 0.55rem 0.9rem;
+  padding: 0.625rem 1rem;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: 0.18s ease;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px; /* iOS touch target */
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
 .btn:hover {
   border-color: #2962FF;
+  background: #313642;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(41, 98, 255, 0.3);
+}
+
+.btn:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn:focus-visible {
@@ -45,59 +141,95 @@ body {
   outline-offset: 2px;
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Primary button */
 .btn-primary {
-  background: #2962FF;
+  background: linear-gradient(135deg, #2962FF 0%, #1E4FCC 100%);
   border-color: #2962FF;
   color: #fff;
+  box-shadow: 0 2px 8px rgba(41, 98, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background: #1E4FCC;
+  background: linear-gradient(135deg, #3D76FF 0%, #2962FF 100%);
+  box-shadow: 0 4px 12px rgba(41, 98, 255, 0.5);
 }
+
+/* Secondary button */
+.btn-secondary {
+  background: #26A69A;
+  border-color: #26A69A;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: #2CBBA9;
+}
+
+/* Danger button */
+.btn-danger {
+  background: rgba(239, 83, 80, 0.15);
+  border-color: rgba(239, 83, 80, 0.5);
+  color: #EF5350;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 83, 80, 0.25);
+  border-color: #EF5350;
+}
+
+/* ========================================
+   INPUTS
+   ======================================== */
 
 .input {
   background: #1E222D;
-  border: 1px solid #2A2E39;
-  border-radius: 8px;
-  padding: 0.55rem 0.75rem;
+  border: 1.5px solid rgba(42, 46, 57, 0.8);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
   color: #D1D4DC;
-  font-size: 0.875rem;
-  transition: 0.18s ease;
+  font-size: 0.9375rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px; /* iOS touch target */
 }
 
 .input:focus {
   outline: none;
   border-color: #2962FF;
+  background: #232732;
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.1);
 }
 
 .input::placeholder {
   color: #787B86;
 }
 
-/* Focus visible ring */
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   FOCUS STATES
+   ======================================== */
+
 *:focus-visible {
   outline: 2px solid #2962FF;
   outline-offset: 2px;
 }
 
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/* ========================================
+   SCROLLBAR
+   ======================================== */
 
-/* Tabular numbers for prices */
-.price {
-  font-feature-settings: 'tnum' on;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -105,50 +237,135 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2A2E39;
-  border-radius: 4px;
+  background: rgba(42, 46, 57, 0.8);
+  border-radius: 5px;
+  border: 2px solid #131722;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2B2F3A;
+  background: rgba(42, 46, 57, 1);
 }
 
-/* Mobile optimizations */
-@media (max-width: 1023px) {
-  body {
-    padding-bottom: 80px; /* Space for bottom nav */
-  }
+::-webkit-scrollbar-corner {
+  background: #131722;
+}
 
+/* ========================================
+   MOBILE OPTIMIZATIONS
+   ======================================== */
+
+/* Touch manipulation for better mobile response */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch ripple effect */
+@keyframes touch-ripple {
+  from {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.touch-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+}
+
+.touch-ripple:active::after {
+  animation: touch-ripple 0.6s ease-out;
+}
+
+/* Active state feedback */
+.active-scale:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+/* Prevent text selection on touch */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@media (max-width: 1023px) {
   .card {
-    border-radius: 10px;
+    border-radius: 12px;
   }
 
   .btn {
-    padding: 0.65rem 1rem;
+    padding: 0.75rem 1.125rem;
     font-size: 0.9375rem;
+    min-height: 48px; /* Larger touch target */
+  }
+
+  .input {
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 0.875rem 1rem;
+  }
+
+  /* Improve touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent double-tap zoom */
+  * {
+    touch-action: manipulation;
   }
 }
 
-/* Additional mobile-specific styles */
 @media (max-width: 768px) {
-  /* Adjust message bubbles for mobile */
   .message-bubble {
     max-width: 85%;
   }
 
-  /* Make reaction picker scrollable on mobile */
   .reaction-picker {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
 
-  /* Adjust file preview for mobile */
+  .reaction-picker::-webkit-scrollbar {
+    display: none;
+  }
+
   .file-preview {
     max-width: 100%;
   }
+
+  /* Better swipe performance */
+  .swipeable {
+    transform: translateZ(0);
+    will-change: transform;
+  }
 }
 
-/* Smooth animations */
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
 @keyframes slide-in {
   from {
     transform: translateY(100%);
@@ -161,10 +378,37 @@ body {
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+  animation: slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Spinner animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -173,4 +417,162 @@ body {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(41, 98, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(41, 98, 255, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Tabular numbers for prices */
+.price {
+  font-feature-settings: 'tnum' on;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth hover scale */
+.hover-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Smooth opacity */
+.hover-opacity {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-opacity:hover {
+  opacity: 0.8;
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #2962FF 0%, #26A69A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================
+   CHAT-SPECIFIC OPTIMIZATIONS
+   ======================================== */
+
+/* Fixed viewport height for mobile browsers */
+.chat-container {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+/* iOS keyboard handling */
+@supports (-webkit-touch-callout: none) {
+  .chat-container {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Smooth scroll behavior */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Message entrance animation */
+.message-enter {
+  animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pull to refresh visual feedback */
+@keyframes pull-refresh {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.pull-refresh-indicator {
+  animation: pull-refresh 1s linear infinite;
+}
+
+/* Loading skeleton shimmer */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.1) 40px,
+    rgba(255, 255, 255, 0.05) 80px
+  );
+  background-size: 936px 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Hardware acceleration for smooth scrolling */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+/* Bounce scroll indicator */
+.bounce-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card {
+    border-width: 2px;
+  }
+
+  .btn {
+    border-width: 2px;
+  }
+}
+
+/* Dark mode color adjustments (for future use) */
+@media (prefers-color-scheme: dark) {
+  /* Already dark by default */
 }

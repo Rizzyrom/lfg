@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, useMemo, useCallback } from 'react'
 import TickerChip from './TickerChip'
 
 interface Reaction {
@@ -35,7 +35,56 @@ interface MessageProps {
 
 type MessagePart = { type: 'text'; content: string } | { type: 'ticker'; symbol: string } | { type: 'mention'; username: string }
 
-export default function Message({
+// Parse message text for tickers and mentions - moved outside component
+const parseMessage = (text: string): MessagePart[] => {
+  const parts: MessagePart[] = []
+  const regex = /(\$[A-Za-z]{1,5})|(@\w+)/g
+  let lastIndex = 0
+  let match
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', content: text.slice(lastIndex, match.index) })
+    }
+
+    if (match[0].startsWith('$')) {
+      parts.push({ type: 'ticker', symbol: match[0].slice(1).toUpperCase() })
+    } else if (match[0].startsWith('@')) {
+      parts.push({ type: 'mention', username: match[0].slice(1) })
+    }
+
+    lastIndex = regex.lastIndex
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.slice(lastIndex) })
+  }
+
+  return parts.length > 0 ? parts : [{ type: 'text', content: text }]
+}
+
+// Determine attachment type - moved outside component
+const getAttachmentType = (url: string): 'image' | 'video' | 'pdf' | null => {
+  if (!url) return null
+  const lower = url.toLowerCase()
+  if (lower.includes('.pdf')) return 'pdf'
+  if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic|heif)/)) return 'image'
+  if (lower.match(/\.(mp4|mov|avi|mpeg|webm)/)) return 'video'
+  return null
+}
+
+// Extract filename from URL - moved outside component
+const getFilename = (url: string): string => {
+  try {
+    const parts = url.split('/')
+    const lastPart = parts[parts.length - 1]
+    return decodeURIComponent(lastPart.split('?')[0])
+  } catch {
+    return 'attachment'
+  }
+}
+
+function Message({
   id,
   username,
   ciphertext,
@@ -75,8 +124,8 @@ export default function Message({
     setReactions(Object.values(grouped))
   }, [initialReactions, currentUserId])
 
-  // Handle reaction toggle
-  const handleReaction = async (emoji: string) => {
+  // Memoize handleReaction to prevent re-creating on every render
+  const handleReaction = useCallback(async (emoji: string) => {
     try {
       const res = await fetch('/api/reactions', {
         method: 'POST',
@@ -108,75 +157,42 @@ export default function Message({
     } catch (error) {
       console.error('Failed to toggle reaction:', error)
     }
-  }
+  }, [id, reactions])
 
-  // Parse message text for tickers and mentions
-  const parseMessage = (text: string): MessagePart[] => {
-    const parts: MessagePart[] = []
-    // Regex to match $TICKER (1-5 letters, case-insensitive) or @username
-    const regex = /(\$[A-Za-z]{1,5})|(@\w+)/g
-    let lastIndex = 0
-    let match
+  // Memoize parsed message parts
+  const messageParts = useMemo(() => parseMessage(ciphertext), [ciphertext])
 
-    while ((match = regex.exec(text)) !== null) {
-      // Add text before match
-      if (match.index > lastIndex) {
-        parts.push({ type: 'text', content: text.slice(lastIndex, match.index) })
-      }
+  // Memoize attachment type
+  const attachmentType = useMemo(() =>
+    mediaPtr ? getAttachmentType(mediaPtr) : null,
+    [mediaPtr]
+  )
 
-      // Add ticker or mention
-      if (match[0].startsWith('$')) {
-        // Convert ticker to uppercase for consistency
-        parts.push({ type: 'ticker', symbol: match[0].slice(1).toUpperCase() })
-      } else if (match[0].startsWith('@')) {
-        parts.push({ type: 'mention', username: match[0].slice(1) })
-      }
+  // Memoize filename
+  const filename = useMemo(() =>
+    mediaPtr ? getFilename(mediaPtr) : '',
+    [mediaPtr]
+  )
 
-      lastIndex = regex.lastIndex
+  // Memoize reply handler
+  const handleReplyClick = useCallback(() => {
+    if (onReply) {
+      onReply({ id, username, ciphertext })
     }
+  }, [onReply, id, username, ciphertext])
 
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push({ type: 'text', content: text.slice(lastIndex) })
+  // Memoize image click handler
+  const handleImageClick = useCallback(() => {
+    if (mediaPtr) {
+      window.open(mediaPtr, '_blank')
     }
+  }, [mediaPtr])
 
-    return parts.length > 0 ? parts : [{ type: 'text', content: text }]
-  }
-
-  const messageParts = parseMessage(ciphertext)
-
-  // Determine attachment type
-  const getAttachmentType = (url: string): 'image' | 'video' | 'pdf' | null => {
-    if (!url) return null
-    const lower = url.toLowerCase()
-    if (lower.includes('.pdf')) return 'pdf'
-    if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic|heif)/)) return 'image'
-    if (lower.match(/\.(mp4|mov|avi|mpeg|webm)/)) return 'video'
-    return null
-  }
-
-  const attachmentType = mediaPtr ? getAttachmentType(mediaPtr) : null
-
-  // Format file size (estimate from URL or show generic)
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'File'
-    const kb = bytes / 1024
-    const mb = kb / 1024
-    if (mb >= 1) return `${mb.toFixed(1)} MB`
-    return `${kb.toFixed(0)} KB`
-  }
-
-  // Extract filename from URL
-  const getFilename = (url: string): string => {
-    try {
-      const parts = url.split('/')
-      const lastPart = parts[parts.length - 1]
-      // Remove any query parameters
-      return decodeURIComponent(lastPart.split('?')[0])
-    } catch {
-      return 'attachment'
-    }
-  }
+  // Memoize formatted timestamp
+  const formattedTime = useMemo(() =>
+    new Date(timestamp).toLocaleTimeString(),
+    [timestamp]
+  )
 
   return (
     <div id={`message-${id}`} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 group`}>
@@ -190,7 +206,7 @@ export default function Message({
               <button
                 key={emoji}
                 onClick={() => handleReaction(emoji)}
-                className="hover:scale-125 transition-transform text-lg p-1"
+                className="hover:scale-125 active:scale-110 transition-transform text-lg p-2 min-h-[44px] min-w-[44px] touch-manipulation"
                 type="button"
               >
                 {emoji}
@@ -199,11 +215,11 @@ export default function Message({
           </div>
         </div>
 
-        {/* Reply Button (shows on hover) */}
+        {/* Reply Button (shows on hover) - increased touch target */}
         {onReply && (
           <button
-            onClick={() => onReply({ id, username, ciphertext })}
-            className="absolute -top-8 right-0 opacity-0 group-hover:opacity-100 bg-tv-panel border border-tv-grid rounded-lg px-2 py-1 text-xs text-tv-text-soft hover:text-tv-text hover:bg-tv-hover transition-all"
+            onClick={handleReplyClick}
+            className="absolute -top-8 right-0 opacity-0 group-hover:opacity-100 bg-tv-panel border border-tv-grid rounded-lg px-3 py-2 min-h-[44px] min-w-[44px] text-xs text-tv-text-soft hover:text-tv-text hover:bg-tv-hover active:scale-95 transition-all touch-manipulation"
             type="button"
           >
             Reply
@@ -259,10 +275,11 @@ export default function Message({
               <img
                 src={mediaPtr!}
                 alt="Attachment"
-                className="max-w-full max-h-[300px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => window.open(mediaPtr!, '_blank')}
+                className="max-w-full max-h-[300px] rounded-lg cursor-pointer hover:opacity-90 active:opacity-75 transition-opacity"
+                onClick={handleImageClick}
                 onError={() => setImageError(true)}
                 loading="lazy"
+                decoding="async"
               />
             </div>
           )}
@@ -307,7 +324,7 @@ export default function Message({
                 />
               </svg>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium truncate">{getFilename(mediaPtr!)}</div>
+                <div className="text-xs font-medium truncate">{filename}</div>
                 <div className="text-[10px] opacity-75">PDF Document</div>
               </div>
               <svg
@@ -334,7 +351,7 @@ export default function Message({
               <button
                 key={r.emoji}
                 onClick={() => handleReaction(r.emoji)}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                className={`flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-full text-xs border transition-all touch-manipulation active:scale-95 ${
                   r.userReacted
                     ? 'bg-tv-blue border-tv-blue text-white'
                     : 'bg-tv-bg border-tv-grid text-tv-text hover:bg-tv-hover'
@@ -349,9 +366,25 @@ export default function Message({
         )}
 
         <div className="text-[10px] text-tv-text-soft mt-1">
-          {new Date(timestamp).toLocaleTimeString()}
+          {formattedTime}
         </div>
       </div>
     </div>
   )
 }
+
+// Export memoized component to prevent unnecessary re-renders
+export default memo(Message, (prevProps, nextProps) => {
+  // Custom comparison for better memoization
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.username === nextProps.username &&
+    prevProps.ciphertext === nextProps.ciphertext &&
+    prevProps.mediaPtr === nextProps.mediaPtr &&
+    prevProps.timestamp === nextProps.timestamp &&
+    prevProps.isOwn === nextProps.isOwn &&
+    prevProps.currentUserId === nextProps.currentUserId &&
+    JSON.stringify(prevProps.reactions) === JSON.stringify(nextProps.reactions) &&
+    JSON.stringify(prevProps.replyTo) === JSON.stringify(nextProps.replyTo)
+  )
+})

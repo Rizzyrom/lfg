@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Icon Generator</title>
+</head>
+<body>
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+    function generateIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Background - dark theme
+      ctx.fillStyle = '#131722';
+      ctx.fillRect(0, 0, size, size);
+
+      // Gradient for "LFG" text
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#26A69A'); // Green
+      gradient.addColorStop(1, '#2962FF'); // Blue
+
+      // Draw "LFG" text
+      ctx.fillStyle = gradient;
+      ctx.font = `bold ${size * 0.35}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('LFG', size / 2, size / 2);
+
+      // Add subtle stroke
+      ctx.strokeStyle = '#ffffff20';
+      ctx.lineWidth = size * 0.01;
+      ctx.strokeText('LFG', size / 2, size / 2);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function generateMaskableIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Background - solid dark with padding for maskable safe zone
+      ctx.fillStyle = '#131722';
+      ctx.fillRect(0, 0, size, size);
+
+      // Gradient for "LFG" text (smaller for safe zone)
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#26A69A');
+      gradient.addColorStop(1, '#2962FF');
+
+      // Draw "LFG" text (80% size for maskable safe zone)
+      ctx.fillStyle = gradient;
+      ctx.font = `bold ${size * 0.28}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('LFG', size / 2, size / 2);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    // Generate all sizes
+    sizes.forEach(size => {
+      const dataUrl = generateIcon(size);
+      console.log(`ICON_${size}=${dataUrl}`);
+    });
+
+    // Generate maskable
+    const maskable = generateMaskableIcon(512);
+    console.log(`MASKABLE_512=${maskable}`);
+  </script>
+</body>
+</html>

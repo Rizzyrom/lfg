@@ -1,27 +1,50 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 interface UseAutoScrollOptions {
   threshold?: number // Distance from bottom (in pixels) to consider "at bottom"
+  throttleMs?: number // Throttle delay for scroll events
+}
+
+// Throttle utility function
+function throttle<T extends (...args: any[]) => void>(func: T, delay: number): T {
+  let timeoutId: NodeJS.Timeout | null = null
+  let lastRan = 0
+
+  return ((...args: Parameters<T>) => {
+    const now = Date.now()
+
+    if (now - lastRan >= delay) {
+      func(...args)
+      lastRan = now
+    } else {
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        func(...args)
+        lastRan = Date.now()
+      }, delay - (now - lastRan))
+    }
+  }) as T
 }
 
 export function useAutoScroll(options: UseAutoScrollOptions = {}) {
-  const { threshold = 100 } = options
+  const { threshold = 100, throttleMs = 100 } = options
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [showNewMessages, setShowNewMessages] = useState(false)
   const userScrolledRef = useRef(false)
+  const isScrollingRef = useRef(false)
 
-  // Check if user is at bottom of scroll container
-  const checkIfAtBottom = () => {
+  // Check if user is at bottom of scroll container - memoized
+  const checkIfAtBottom = useCallback(() => {
     if (!scrollRef.current) return true
 
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight
     return distanceFromBottom <= threshold
-  }
+  }, [threshold])
 
-  // Handle scroll events
-  const handleScroll = () => {
+  // Handle scroll events - memoized and throttled
+  const handleScrollInternal = useCallback(() => {
     const atBottom = checkIfAtBottom()
     setIsAtBottom(atBottom)
 
@@ -30,20 +53,37 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
     }
 
     // Mark that user has manually scrolled
-    userScrolledRef.current = true
-  }
-
-  // Scroll to bottom function
-  const scrollToBottom = (smooth = true) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: smooth ? 'smooth' : 'auto',
-      })
-      setIsAtBottom(true)
-      setShowNewMessages(false)
+    if (!isScrollingRef.current) {
+      userScrolledRef.current = true
     }
-  }
+  }, [checkIfAtBottom])
+
+  // Create throttled version
+  const handleScroll = useRef(throttle(handleScrollInternal, throttleMs)).current
+
+  // Scroll to bottom function - memoized with RAF for smooth performance
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (scrollRef.current) {
+      isScrollingRef.current = true
+
+      // Use RAF to avoid layout thrashing
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: smooth ? 'smooth' : 'auto',
+          })
+          setIsAtBottom(true)
+          setShowNewMessages(false)
+
+          // Reset scrolling flag after animation
+          setTimeout(() => {
+            isScrollingRef.current = false
+          }, smooth ? 500 : 0)
+        }
+      })
+    }
+  }, [])
 
   // Auto-scroll effect when content changes
   const autoScrollOnNewContent = (dependencies: any[]) => {

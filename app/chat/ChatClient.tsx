@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Message from '@/components/Message'
@@ -73,15 +73,8 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   // Use auto-scroll hook
   const { scrollRef, showNewMessages, scrollToBottom, handleScroll, autoScrollOnNewContent } = useAutoScroll()
 
-  useEffect(() => {
-    fetchMessages()
-    const interval = setInterval(fetchMessages, 3000)
-    return () => clearInterval(interval)
-  }, [])
-
-  autoScrollOnNewContent([messages])
-
-  const fetchMessages = async () => {
+  // Memoize fetchMessages to prevent recreating on every render
+  const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch('/api/chat')
       if (res.ok) {
@@ -90,10 +83,20 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
+      setToast({ message: 'Failed to fetch messages', type: 'error' })
     }
-  }
+  }, [])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    fetchMessages()
+    const interval = setInterval(fetchMessages, 3000)
+    return () => clearInterval(interval)
+  }, [fetchMessages])
+
+  autoScrollOnNewContent([messages])
+
+  // Memoize handleInputChange
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     const cursorPos = e.target.selectionStart || 0
     setInput(value)
@@ -121,17 +124,19 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     } else {
       setShowMentions(false)
     }
-  }
+  }, [])
 
-  const handleMentionSelect = (username: string) => {
+  // Memoize handleMentionSelect
+  const handleMentionSelect = useCallback((username: string) => {
     const before = input.slice(0, mentionStartPos)
     const after = input.slice(mentionStartPos + mentionQuery.length + 1)
     setInput(`${before}@${username} ${after}`)
     setShowMentions(false)
     inputRef.current?.focus()
-  }
+  }, [input, mentionStartPos, mentionQuery])
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoize handleFileSelect
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -151,17 +156,19 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     } else {
       setFilePreview(null)
     }
-  }
+  }, [])
 
-  const handleCancelUpload = () => {
+  // Memoize handleCancelUpload
+  const handleCancelUpload = useCallback(() => {
     setSelectedFile(null)
     setFilePreview(null)
     setUploading(false)
     setUploadProgress(0)
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }
+  }, [])
 
-  const handleSend = async (e: React.FormEvent) => {
+  // Memoize handleSend
+  const handleSend = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if ((!input.trim() && !selectedFile) || sending) return
 
@@ -223,21 +230,32 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       setSending(false)
       setUploading(false)
     }
-  }
+  }, [input, selectedFile, sending, replyingTo, handleCancelUpload, fetchMessages])
 
-  const handleLogout = async () => {
+  // Memoize handleLogout
+  const handleLogout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
       window.location.href = '/login'
     } catch (error) {
       console.error('Logout failed:', error)
     }
-  }
+  }, [])
+
+  // Memoize setReplyingTo callback
+  const handleReplyClick = useCallback((message: { id: string; username: string; ciphertext: string }) => {
+    setReplyingTo(message)
+  }, [])
+
+  // Memoize toast close handler
+  const handleToastClose = useCallback(() => {
+    setToast(null)
+  }, [])
 
   return (
-    <div className="flex flex-col h-screen bg-[#1a1d29]">
+    <div className="flex flex-col chat-container bg-[#1a1d29] overflow-hidden">
       {/* Top Navigation Bar - Discord style */}
-      <header className="flex-shrink-0 h-16 bg-[#202225] border-b border-[#2f3136] flex items-center justify-between px-4 shadow-lg">
+      <header className="flex-shrink-0 h-16 bg-[#202225] border-b border-[#2f3136] flex items-center justify-between px-4 elevation-3 z-20">
         <div className="flex items-center gap-4">
           {/* Mobile menu button */}
           <button
@@ -357,8 +375,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-        style={{ scrollBehavior: 'smooth' }}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-2 smooth-scroll"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -381,48 +398,50 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
               currentUserId={msg.senderId === userId ? userId : undefined}
               reactions={msg.reactions}
               replyTo={msg.replyTo}
-              onReply={setReplyingTo}
+              onReply={handleReplyClick}
             />
           ))
         )}
       </div>
 
-      {/* New messages indicator */}
+      {/* New messages indicator - Fixed positioning */}
       {showNewMessages && (
-        <button
-          onClick={() => scrollToBottom()}
-          className="absolute bottom-28 left-1/2 transform -translate-x-1/2 bg-[#5865F2] text-white px-6 py-3 rounded-full shadow-xl hover:bg-[#4752C4] transition-all font-medium"
-        >
-          New messages ↓
-        </button>
+        <div className="flex-shrink-0 flex items-center justify-center py-2 px-4 pointer-events-none">
+          <button
+            onClick={() => scrollToBottom()}
+            className="bg-[#5865F2] text-white px-6 py-3 rounded-full elevation-3 hover:bg-[#4752C4] transition-all font-medium pointer-events-auto hover-scale"
+          >
+            New messages ↓
+          </button>
+        </div>
       )}
 
-      {/* Reply Banner */}
+      {/* Reply Banner - Fixed in flow */}
       {replyingTo && (
-        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-10 bg-[#5865F2] rounded-full" />
-            <div>
-              <div className="text-xs text-gray-400">Replying to @{replyingTo.username}</div>
-              <div className="text-sm text-gray-200 truncate max-w-[300px]">
+        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] px-4 py-3 flex items-center justify-between animate-slide-in">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-1 h-10 bg-[#5865F2] rounded-full flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-xs text-gray-400 font-medium">Replying to @{replyingTo.username}</div>
+              <div className="text-sm text-gray-200 truncate">
                 {replyingTo.ciphertext}
               </div>
             </div>
           </div>
           <button
             onClick={() => setReplyingTo(null)}
-            className="p-2 hover:bg-[#36393f] rounded transition-colors"
+            className="p-2 hover:bg-[#36393f] rounded-lg transition-all flex-shrink-0 active:scale-95"
             type="button"
           >
-            <X className="w-4 h-4 text-gray-400" />
+            <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
       )}
 
-      {/* File Preview Panel */}
+      {/* File Preview Panel - Fixed in flow */}
       {selectedFile && (
-        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] p-4">
-          <div className="flex items-center gap-3 bg-[#202225] border border-[#36393f] rounded-lg p-3">
+        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] p-4 animate-slide-in">
+          <div className="flex items-center gap-3 bg-[#202225] border border-[#36393f] rounded-lg p-3 elevation-1">
             {selectedFile.type.startsWith('image/') && filePreview && (
               <img
                 src={filePreview}
@@ -462,7 +481,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
             <button
               onClick={handleCancelUpload}
-              className="p-2 hover:bg-[#36393f] rounded transition-colors"
+              className="p-2 hover:bg-[#36393f] rounded-lg transition-all flex-shrink-0 active:scale-95"
               disabled={uploading}
             >
               <X className="w-5 h-5 text-gray-400" />
@@ -471,9 +490,12 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         </div>
       )}
 
-      {/* Input Area - Fixed at bottom */}
-      <form onSubmit={handleSend} className="flex-shrink-0 bg-[#202225] border-t border-[#2f3136] p-4">
-        <div className="flex items-center gap-3">
+      {/* Input Area - Fixed at bottom with iOS safe area */}
+      <form
+        onSubmit={handleSend}
+        className="flex-shrink-0 bg-[#202225] border-t border-[#2f3136] safe-area-pb"
+      >
+        <div className="flex items-center gap-2 px-4 py-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -485,28 +507,37 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-lg hover:bg-[#36393f] transition-colors"
+            className="p-3 rounded-lg hover:bg-[#36393f] transition-all flex-shrink-0 active:scale-95 hover-opacity"
             disabled={uploading}
+            aria-label="Attach file"
           >
             <Paperclip className="w-5 h-5 text-gray-400" />
           </button>
 
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={handleInputChange}
-            placeholder={`Message @${username}`}
-            className="flex-1 bg-[#36393f] text-white placeholder-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2] transition-all"
-            disabled={sending || uploading}
-          />
+          <div className="flex-1 min-w-0">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              placeholder={`Message @${username}`}
+              className="w-full bg-[#36393f] text-white placeholder-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:bg-[#3d4251] transition-all"
+              disabled={sending || uploading}
+              style={{ fontSize: '16px' }}
+            />
+          </div>
 
           <button
             type="submit"
             disabled={(!input.trim() && !selectedFile) || sending || uploading}
-            className="p-3 bg-[#5865F2] hover:bg-[#4752C4] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-all shadow-lg"
+            className="p-3 bg-[#5865F2] hover:bg-[#4752C4] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-all elevation-2 flex-shrink-0 active:scale-95"
+            aria-label="Send message"
           >
-            <Send className="w-5 h-5 text-white" />
+            {sending ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-5 h-5 text-white" />
+            )}
           </button>
         </div>
       </form>
@@ -533,7 +564,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast(null)}
+          onClose={handleToastClose}
         />
       )}
     </div>
