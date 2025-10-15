@@ -139,16 +139,16 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setToast({ message: 'File size must be under 5MB', type: 'error' })
+    // Validate size (50MB max for videos)
+    if (file.size > 50 * 1024 * 1024) {
+      setToast({ message: 'File size must be under 50MB', type: 'error' })
       return
     }
 
     setSelectedFile(file)
 
-    // Generate preview for images
-    if (file.type.startsWith('image/')) {
+    // Generate preview for images and videos
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
       const reader = new FileReader()
       reader.onloadend = () => {
         setFilePreview(reader.result as string)
@@ -337,6 +337,15 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
                 />
               )}
 
+              {/* Video Preview */}
+              {selectedFile.type.startsWith('video/') && filePreview && (
+                <video
+                  src={filePreview}
+                  className="w-16 h-16 object-cover rounded"
+                  muted
+                />
+              )}
+
               {/* PDF Icon */}
               {selectedFile.type === 'application/pdf' && (
                 <FileIcon className="w-16 h-16 text-tv-text-soft" />
@@ -383,7 +392,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,.pdf"
+              accept="image/*,video/*,.pdf"
               className="hidden"
               onChange={handleFileSelect}
             />

@@ -3,10 +3,11 @@ import { put } from '@vercel/blob'
 import { requireUser, verifyOrigin } from '@/lib/auth'
 import { rateLimit } from '@/lib/redis'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB for videos
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/mpeg', 'video/webm']
 const ALLOWED_PDF_TYPE = 'application/pdf'
-const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ALLOWED_PDF_TYPE]
+const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES, ALLOWED_PDF_TYPE]
 
 export async function POST(request: NextRequest) {
   if (!verifyOrigin(request)) {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only images (JPEG, PNG, GIF, WebP) and PDFs are allowed.' },
+        { error: 'Invalid file type. Only images, videos, and PDFs are allowed.' },
         { status: 400 }
       )
     }
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
+        { error: 'File too large. Maximum size is 50MB.' },
         { status: 400 }
       )
     }

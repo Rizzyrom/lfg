@@ -145,11 +145,12 @@ export default function Message({
   const messageParts = parseMessage(ciphertext)
 
   // Determine attachment type
-  const getAttachmentType = (url: string): 'image' | 'pdf' | null => {
+  const getAttachmentType = (url: string): 'image' | 'video' | 'pdf' | null => {
     if (!url) return null
     const lower = url.toLowerCase()
     if (lower.includes('.pdf')) return 'pdf'
-    if (lower.match(/\.(jpg|jpeg|png|gif|webp)/)) return 'image'
+    if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic|heif)/)) return 'image'
+    if (lower.match(/\.(mp4|mov|avi|mpeg|webm)/)) return 'video'
     return null
   }
 
@@ -262,6 +263,20 @@ export default function Message({
                 onError={() => setImageError(true)}
                 loading="lazy"
               />
+            </div>
+          )}
+
+          {/* Video attachment */}
+          {attachmentType === 'video' && (
+            <div className="mt-2">
+              <video
+                src={mediaPtr!}
+                controls
+                className="max-w-full max-h-[300px] rounded-lg"
+                preload="metadata"
+              >
+                Your browser does not support video playback.
+              </video>
             </div>
           )}
 
