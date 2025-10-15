@@ -19,6 +19,7 @@ model User {
   notifications    Notification[]
   reactions        Reaction[]
   pushSubscriptions PushSubscription[]
+  watchlist        WatchItem[]        @relation("WatchItemCreator")
 }
 
 model Session {
@@ -85,11 +86,13 @@ model Message {
 model WatchItem {
   id        String   @id @default(cuid())
   groupId   String
+  userId    String
   symbol    String
   source    String
   tags      String[]
   createdAt DateTime @default(now())
   group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation("WatchItemCreator", fields: [userId], references: [id])
 
   @@unique([groupId, symbol, source])
 }
