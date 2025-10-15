@@ -23,10 +23,10 @@ const config: Config = {
           'text-soft': '#6B7280',
           'text-muted': '#9CA3AF',
 
-          // Single accent color - modern blue
-          blue: '#0066FF',
-          'blue-hover': '#0052CC',
-          'blue-active': '#003D99',
+          // Single accent color - sophisticated slate blue
+          blue: '#475569',
+          'blue-hover': '#334155',
+          'blue-active': '#1e293b',
 
           // Minimal status colors
           up: '#10B981',

@@ -89,7 +89,7 @@ export default function MentionAutocomplete({
   if (loading) {
     return (
       <div
-        className="absolute z-50 bg-tv-bg-secondary border border-tv-grid rounded-lg shadow-lg p-3"
+        className="fixed z-50 bg-tv-panel border border-tv-grid rounded-lg elevation-2 p-3"
         style={{ top: position.top, left: position.left }}
       >
         <p className="text-tv-text-soft text-sm">Loading...</p>
@@ -104,17 +104,17 @@ export default function MentionAutocomplete({
   return (
     <div
       ref={dropdownRef}
-      className="absolute z-50 bg-tv-bg-secondary border border-tv-grid rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto"
+      className="fixed z-50 bg-tv-panel border border-tv-grid rounded-lg elevation-3 overflow-hidden max-h-48 overflow-y-auto"
       style={{ top: position.top, left: position.left, minWidth: '200px' }}
     >
       {members.map((member, index) => (
         <button
           key={member.id}
           onClick={() => onSelect(member.username)}
-          className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+          className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
             index === selectedIndex
-              ? 'bg-tv-blue text-white'
-              : 'text-tv-text hover:bg-tv-chip'
+              ? 'bg-tv-chip text-tv-text font-medium'
+              : 'text-tv-text hover:bg-tv-hover'
           }`}
         >
           <span className="font-medium">@{member.username}</span>

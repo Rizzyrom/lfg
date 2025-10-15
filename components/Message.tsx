@@ -108,7 +108,7 @@ function Message({
   const handleTouchStart = useCallback(() => {
     const timer = setTimeout(() => {
       setShowReactionPicker(true)
-    }, 1000) // 1 second long press
+    }, 500) // 0.5 second long press
     setLongPressTimer(timer)
   }, [])
 
@@ -118,6 +118,27 @@ function Message({
       setLongPressTimer(null)
     }
   }, [longPressTimer])
+
+  // Click outside handler
+  useEffect(() => {
+    if (!showReactionPicker) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // If click is outside the reaction picker, close it
+      if (!target.closest('.reaction-picker-container')) {
+        setShowReactionPicker(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside as any)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside as any)
+    }
+  }, [showReactionPicker])
 
   // Parse reactions
   useEffect(() => {
@@ -238,9 +259,24 @@ function Message({
           )}
         </div>
 
-        {/* Reaction Picker (shows on long press for mobile OR hover for desktop) */}
+        {/* Reply + Reaction Picker (shows on long press) */}
         {showReactionPicker && (
-          <div className="absolute -top-8 left-0 z-10 animate-fade-in">
+          <div className="reaction-picker-container absolute -top-2 left-0 right-0 z-10 flex flex-col gap-2 animate-fade-in">
+            {/* Reply button at top */}
+            {onReply && (
+              <button
+                onClick={() => {
+                  handleReplyClick()
+                  setShowReactionPicker(false)
+                }}
+                className="self-start bg-tv-panel border border-tv-grid rounded-lg px-4 py-2 text-sm font-medium text-tv-text hover:bg-tv-hover active:scale-95 transition-all shadow-lg"
+                type="button"
+              >
+                Reply
+              </button>
+            )}
+
+            {/* Reactions at bottom */}
             <div className="flex items-center gap-1 bg-tv-panel border border-tv-grid rounded-full px-2 py-1 shadow-lg">
               {quickReactions.map(emoji => (
                 <button
@@ -255,26 +291,8 @@ function Message({
                   {emoji}
                 </button>
               ))}
-              <button
-                onClick={() => setShowReactionPicker(false)}
-                className="ml-2 text-tv-text-soft hover:text-tv-text"
-                type="button"
-              >
-                ✕
-              </button>
             </div>
           </div>
-        )}
-
-        {/* Reply Button (shows on hover) - increased touch target */}
-        {onReply && (
-          <button
-            onClick={handleReplyClick}
-            className="absolute -top-8 right-0 opacity-0 group-hover:opacity-100 bg-tv-panel border border-tv-grid rounded-lg px-3 py-2 min-h-[44px] min-w-[44px] text-xs text-tv-text-soft hover:text-tv-text hover:bg-tv-hover active:scale-95 transition-all touch-manipulation"
-            type="button"
-          >
-            Reply
-          </button>
         )}
 
         {/* Reply Reference (if this is a reply) */}

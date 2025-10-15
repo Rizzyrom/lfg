@@ -113,7 +113,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         if (inputRef.current) {
           const rect = inputRef.current.getBoundingClientRect()
           setMentionPosition({
-            top: rect.top - 210,
+            top: rect.bottom + 8, // Position below the input
             left: rect.left + 10,
           })
         }
@@ -353,21 +353,18 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   }, [])
 
   return (
-    <div className="flex flex-col chat-container bg-[#1a1d29] overflow-x-hidden">
-      {/* Top Navigation Bar - Discord style - NO HAMBURGER MENU */}
-      <header className="flex-shrink-0 h-16 bg-[#202225] border-b border-[#2f3136] flex items-center justify-between px-4 elevation-3 z-20">
+    <div className="flex flex-col chat-container bg-tv-bg overflow-x-hidden">
+      {/* Top Navigation Bar - Minimal style */}
+      <header className="flex-shrink-0 h-16 bg-tv-panel border-b border-tv-grid flex items-center justify-between px-4 elevation-1 z-20">
         <div className="flex items-center gap-4">
           {/* Logo and Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#26A69A] to-[#2962FF] flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2 22L8 16L12 20L22 2M22 2L15 2M22 2L22 9" />
-              </svg>
+            <div className="w-10 h-10 rounded-xl bg-tv-blue flex items-center justify-center">
+              <span className="text-white font-bold text-lg">LFG</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Group Chat</h1>
-              <p className="text-xs text-gray-400">
-                <span className="text-[#26A69A]">● </span>
+              <h1 className="text-base font-semibold text-tv-text">Group Chat</h1>
+              <p className="text-xs text-tv-text-soft">
                 {messages.length} messages
               </p>
             </div>
@@ -378,23 +375,23 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         <nav className="flex items-center gap-2">
           <Link
             href="/feed"
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-tv-hover text-tv-text-soft hover:text-tv-text transition-all"
           >
-            <Home className="w-5 h-5" />
+            <Home className="w-4 h-4" />
             <span className="text-sm font-medium">Feed</span>
           </Link>
           <Link
             href="/watchlist"
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-tv-hover text-tv-text-soft hover:text-tv-text transition-all"
           >
-            <TrendingUp className="w-5 h-5" />
+            <TrendingUp className="w-4 h-4" />
             <span className="text-sm font-medium">Watchlist</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-tv-down hover:text-tv-down-hover transition-all"
           >
-            <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline text-sm font-medium">Logout</span>
           </button>
         </nav>
@@ -409,9 +406,9 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <MessageCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg font-medium">No messages yet</p>
-              <p className="text-gray-500 text-sm mt-2">Start the conversation!</p>
+              <MessageCircle className="w-16 h-16 text-tv-text-muted mx-auto mb-4" />
+              <p className="text-tv-text-soft text-lg font-medium">No messages yet</p>
+              <p className="text-tv-text-muted text-sm mt-2">Start the conversation!</p>
             </div>
           </div>
         ) : (
@@ -438,7 +435,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         <div className="flex-shrink-0 flex items-center justify-center py-2 px-4 pointer-events-none">
           <button
             onClick={() => scrollToBottom()}
-            className="bg-[#5865F2] text-white px-6 py-3 rounded-full elevation-3 hover:bg-[#4752C4] transition-all font-medium pointer-events-auto hover-scale"
+            className="bg-tv-blue text-white px-6 py-3 rounded-full elevation-2 hover:bg-tv-blue-hover transition-all font-medium pointer-events-auto hover-scale"
           >
             New messages ↓
           </button>
@@ -447,30 +444,30 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
       {/* Reply Banner - Fixed in flow */}
       {replyingTo && (
-        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] px-4 py-3 flex items-center justify-between animate-slide-in">
+        <div className="flex-shrink-0 bg-tv-panel border-t border-tv-grid px-4 py-3 flex items-center justify-between animate-slide-in">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-1 h-10 bg-[#5865F2] rounded-full flex-shrink-0" />
+            <div className="w-1 h-10 bg-tv-blue rounded-full flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="text-xs text-gray-400 font-medium">Replying to @{replyingTo.username}</div>
-              <div className="text-sm text-gray-200 truncate">
+              <div className="text-xs text-tv-text-soft font-medium">Replying to @{replyingTo.username}</div>
+              <div className="text-sm text-tv-text truncate">
                 {replyingTo.ciphertext}
               </div>
             </div>
           </div>
           <button
             onClick={() => setReplyingTo(null)}
-            className="p-2 hover:bg-[#36393f] rounded-lg transition-all flex-shrink-0 active:scale-95"
+            className="p-2 hover:bg-tv-hover rounded-lg transition-all flex-shrink-0 active:scale-95"
             type="button"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-tv-text-soft" />
           </button>
         </div>
       )}
 
       {/* File Preview Panel - Fixed in flow */}
       {selectedFile && (
-        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] p-4 animate-slide-in">
-          <div className="flex items-center gap-3 bg-[#202225] border border-[#36393f] rounded-lg p-3 elevation-1">
+        <div className="flex-shrink-0 bg-tv-panel border-t border-tv-grid p-4 animate-slide-in">
+          <div className="flex items-center gap-3 bg-tv-bg border border-tv-grid rounded-lg p-3 elevation-1">
             {selectedFile.type.startsWith('image/') && filePreview && (
               <img
                 src={filePreview}
@@ -492,15 +489,15 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
             )}
 
             <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-200 truncate">{selectedFile.name}</div>
-              <div className="text-xs text-gray-400">
+              <div className="text-sm text-tv-text truncate">{selectedFile.name}</div>
+              <div className="text-xs text-tv-text-soft">
                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </div>
               {uploading && (
                 <div className="mt-2">
-                  <div className="w-full bg-[#36393f] rounded-full h-1.5">
+                  <div className="w-full bg-tv-grid rounded-full h-1.5">
                     <div
-                      className="bg-[#26A69A] h-1.5 rounded-full transition-all"
+                      className="bg-tv-up h-1.5 rounded-full transition-all"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -510,10 +507,10 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
             <button
               onClick={handleCancelUpload}
-              className="p-2 hover:bg-[#36393f] rounded-lg transition-all flex-shrink-0 active:scale-95"
+              className="p-2 hover:bg-tv-hover rounded-lg transition-all flex-shrink-0 active:scale-95"
               disabled={uploading}
             >
-              <X className="w-5 h-5 text-gray-400" />
+              <X className="w-5 h-5 text-tv-text-soft" />
             </button>
           </div>
         </div>
@@ -522,7 +519,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       {/* Input Area - Fixed at bottom with iOS safe area */}
       <form
         onSubmit={handleSend}
-        className="flex-shrink-0 bg-[#202225] border-t border-[#2f3136] safe-area-pb"
+        className="flex-shrink-0 bg-tv-panel border-t border-tv-grid safe-area-pb"
       >
         <div className="flex items-center gap-2 px-4 py-3">
           <input
@@ -536,11 +533,11 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-lg hover:bg-[#36393f] transition-all flex-shrink-0 active:scale-95 hover-opacity"
+            className="p-3 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
             disabled={uploading}
             aria-label="Attach file"
           >
-            <Paperclip className="w-5 h-5 text-gray-400" />
+            <Paperclip className="w-5 h-5 text-tv-text-soft" />
           </button>
 
           <div className="flex-1 min-w-0">
@@ -550,7 +547,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
               value={input}
               onChange={handleInputChange}
               placeholder={`Message @${username}`}
-              className="w-full bg-[#36393f] text-white placeholder-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:bg-[#3d4251] transition-all"
+              className="w-full bg-tv-bg text-tv-text placeholder-tv-text-muted rounded-lg px-4 py-3 border border-tv-grid focus:outline-none focus:ring-2 focus:ring-tv-blue focus:border-tv-blue transition-all"
               disabled={sending || uploading}
               style={{ fontSize: '16px' }}
             />
@@ -559,7 +556,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="submit"
             disabled={(!input.trim() && !selectedFile) || sending || uploading}
-            className="p-3 bg-[#5865F2] hover:bg-[#4752C4] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-all elevation-2 flex-shrink-0 active:scale-95"
+            className="p-3 bg-tv-blue hover:bg-tv-blue-hover disabled:bg-tv-text-muted disabled:cursor-not-allowed rounded-lg transition-all elevation-2 flex-shrink-0 active:scale-95"
             aria-label="Send message"
           >
             {sending ? (

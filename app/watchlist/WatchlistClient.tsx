@@ -17,6 +17,9 @@ export default function WatchlistClient() {
   const [items, setItems] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [selectedAsset, setSelectedAsset] = useState<WatchItem | null>(null)
+  const [assetNews, setAssetNews] = useState<any[]>([])
+  const [loadingNews, setLoadingNews] = useState(false)
 
   useEffect(() => {
     fetchWatchlist()
@@ -73,6 +76,9 @@ export default function WatchlistClient() {
       })
 
       if (res.ok) {
+        if (selectedAsset?.id === id) {
+          setSelectedAsset(null)
+        }
         await fetchWatchlist()
       }
     } catch (error) {
@@ -80,71 +86,142 @@ export default function WatchlistClient() {
     }
   }
 
+  const handleSelectAsset = async (item: WatchItem) => {
+    setSelectedAsset(item)
+    setLoadingNews(true)
+
+    try {
+      // Fetch news for this specific asset
+      const res = await fetch(`/api/news?symbol=${item.symbol}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAssetNews(data.articles || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch asset news:', error)
+    } finally {
+      setLoadingNews(false)
+    }
+  }
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
-        <p className="text-sm text-tv-text-soft mt-1">
-          Manage symbols to track
-        </p>
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left: Watchlist Items */}
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
+          <p className="text-sm text-tv-text-soft mt-1">
+            Click an asset to view details
+          </p>
+        </div>
 
-      <div className="card p-4 mb-6">
-        <h2 className="text-lg font-semibold text-tv-text mb-4">Add Asset to Watchlist</h2>
-        <AssetSearchBar onAdd={handleAdd} disabled={adding} />
-      </div>
+        <div className="card p-4 mb-6">
+          <h2 className="text-base font-semibold text-tv-text mb-4">Add Asset</h2>
+          <AssetSearchBar onAdd={handleAdd} disabled={adding} />
+        </div>
 
-      <div className="space-y-3">
-        {loading ? (
-          <>
-            <SkeletonRow />
-            <SkeletonRow />
-          </>
-        ) : items.length === 0 ? (
-          <div className="card p-8 text-center">
-            <p className="text-tv-text-soft">
-              Your watchlist is empty. Add symbols above to start tracking.
-            </p>
-          </div>
-        ) : (
-          items.map((item) => {
-            const change = item.change24h ? parseFloat(item.change24h) : 0
-            const isPositive = change >= 0
+        <div className="space-y-2">
+          {loading ? (
+            <>
+              <SkeletonRow />
+              <SkeletonRow />
+            </>
+          ) : items.length === 0 ? (
+            <div className="card p-8 text-center">
+              <p className="text-tv-text-soft">
+                Your watchlist is empty. Add symbols above to start tracking.
+              </p>
+            </div>
+          ) : (
+            items.map((item) => {
+              const change = item.change24h ? parseFloat(item.change24h) : 0
+              const isPositive = change >= 0
+              const isSelected = selectedAsset?.id === item.id
 
-            return (
-              <div key={item.id} className="card p-4 hover:border-tv-blue transition">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-tv-text">{item.symbol}</h3>
-                      <span className="text-xs px-2 py-1 rounded bg-tv-chip text-tv-text-soft uppercase">
-                        {item.source}
-                      </span>
-                    </div>
-                    {item.price && (
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-2xl font-mono font-bold text-tv-text">
-                          ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                        <span className={`text-sm font-semibold ${isPositive ? 'text-tv-up' : 'text-tv-down'}`}>
-                          {isPositive ? '+' : ''}{change.toFixed(2)}%
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelectAsset(item)}
+                  className={`w-full card p-4 text-left transition-all cursor-pointer ${
+                    isSelected ? 'ring-2 ring-tv-blue border-tv-blue' : 'hover:border-tv-blue'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-bold text-tv-text">{item.symbol}</h3>
+                        <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase">
+                          {item.source}
                         </span>
                       </div>
-                    )}
-                    {!item.price && (
-                      <p className="text-sm text-tv-text-soft">Loading price...</p>
-                    )}
+                      {item.price && (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-base font-mono font-semibold text-tv-text">
+                            ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          <span className={`text-sm font-medium ${isPositive ? 'text-tv-up' : 'text-tv-down'}`}>
+                            {isPositive ? '+' : ''}{change.toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
+                      {!item.price && (
+                        <p className="text-sm text-tv-text-soft">Loading...</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(item.id)
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-tv-down text-xs font-medium transition-all active:scale-95"
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium transition-all active:scale-95"
-                  >
-                    Remove
-                  </button>
+                </button>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Right: Asset Details */}
+      <div>
+        {selectedAsset ? (
+          <div className="card p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-tv-text mb-2">{selectedAsset.symbol}</h2>
+              <p className="text-sm text-tv-text-soft uppercase">{selectedAsset.source}</p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-tv-text-soft mb-3">Latest News</h3>
+              {loadingNews ? (
+                <SkeletonRow />
+              ) : assetNews.length === 0 ? (
+                <p className="text-sm text-tv-text-soft">No recent news available</p>
+              ) : (
+                <div className="space-y-3">
+                  {assetNews.map((article, index) => (
+                    <a
+                      key={index}
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3 rounded-lg border border-tv-grid hover:border-tv-blue transition-all"
+                    >
+                      <h4 className="font-medium text-tv-text text-sm mb-1">{article.title}</h4>
+                      <p className="text-xs text-tv-text-soft">{article.source} • {new Date(article.publishedAt).toLocaleDateString()}</p>
+                    </a>
+                  ))}
                 </div>
-              </div>
-            )
-          })
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="card p-8 text-center">
+            <p className="text-tv-text-soft">Select an asset to view details</p>
+          </div>
         )}
       </div>
     </div>
