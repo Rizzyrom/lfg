@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     const item = await db.watchItem.create({
       data: {
         groupId: targetGroupId,
+        userId: user.id,
         symbol: symbol.toUpperCase(),
         source,
         tags,
