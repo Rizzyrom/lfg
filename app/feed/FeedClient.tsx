@@ -1,7 +1,7 @@
 'use client'
 
-import UnifiedFeed from '@/components/UnifiedFeed'
+import FeedLayout from './FeedLayout'
 
 export default function FeedClient() {
-  return <UnifiedFeed />
+  return <FeedLayout />
 }

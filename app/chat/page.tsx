@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getUser } from '@/lib/auth'
-import ChatClient from './ChatClient'
+import ChatLayout from './ChatLayout'
 
 export default async function ChatPage() {
   const user = await getUser()
@@ -9,5 +9,5 @@ export default async function ChatPage() {
     redirect('/login')
   }
 
-  return <ChatClient username={user.username} userId={user.id} />
+  return <ChatLayout username={user.username} userId={user.id} />
 }

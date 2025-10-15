@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import SkeletonRow from '@/components/SkeletonRow'
 import AssetSearchBar from './AssetSearchBar'
 
@@ -17,9 +18,6 @@ export default function WatchlistClient() {
   const [items, setItems] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
-  const [selectedAsset, setSelectedAsset] = useState<WatchItem | null>(null)
-  const [assetNews, setAssetNews] = useState<any[]>([])
-  const [loadingNews, setLoadingNews] = useState(false)
 
   useEffect(() => {
     fetchWatchlist()
@@ -76,9 +74,6 @@ export default function WatchlistClient() {
       })
 
       if (res.ok) {
-        if (selectedAsset?.id === id) {
-          setSelectedAsset(null)
-        }
         await fetchWatchlist()
       }
     } catch (error) {
@@ -86,27 +81,8 @@ export default function WatchlistClient() {
     }
   }
 
-  const handleSelectAsset = async (item: WatchItem) => {
-    setSelectedAsset(item)
-    setLoadingNews(true)
-
-    try {
-      // Fetch news for this specific asset
-      const res = await fetch(`/api/news?symbol=${item.symbol}`)
-      if (res.ok) {
-        const data = await res.json()
-        setAssetNews(data.articles || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch asset news:', error)
-    } finally {
-      setLoadingNews(false)
-    }
-  }
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left: Watchlist Items */}
+    <div>
       <div>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
@@ -136,15 +112,12 @@ export default function WatchlistClient() {
             items.map((item) => {
               const change = item.change24h ? parseFloat(item.change24h) : 0
               const isPositive = change >= 0
-              const isSelected = selectedAsset?.id === item.id
 
               return (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => handleSelectAsset(item)}
-                  className={`w-full card p-4 text-left transition-all cursor-pointer ${
-                    isSelected ? 'ring-2 ring-tv-blue border-tv-blue' : 'hover:border-tv-blue'
-                  }`}
+                  href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
+                  className="w-full card p-4 text-left transition-all cursor-pointer hover:border-tv-blue hover:shadow-elevation-2"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -178,51 +151,11 @@ export default function WatchlistClient() {
                       Remove
                     </button>
                   </div>
-                </button>
+                </Link>
               )
             })
           )}
         </div>
-      </div>
-
-      {/* Right: Asset Details */}
-      <div>
-        {selectedAsset ? (
-          <div className="card p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-tv-text mb-2">{selectedAsset.symbol}</h2>
-              <p className="text-sm text-tv-text-soft uppercase">{selectedAsset.source}</p>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-tv-text-soft mb-3">Latest News</h3>
-              {loadingNews ? (
-                <SkeletonRow />
-              ) : assetNews.length === 0 ? (
-                <p className="text-sm text-tv-text-soft">No recent news available</p>
-              ) : (
-                <div className="space-y-3">
-                  {assetNews.map((article, index) => (
-                    <a
-                      key={index}
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block p-3 rounded-lg border border-tv-grid hover:border-tv-blue transition-all"
-                    >
-                      <h4 className="font-medium text-tv-text text-sm mb-1">{article.title}</h4>
-                      <p className="text-xs text-tv-text-soft">{article.source} • {new Date(article.publishedAt).toLocaleDateString()}</p>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="card p-8 text-center">
-            <p className="text-tv-text-soft">Select an asset to view details</p>
-          </div>
-        )}
       </div>
     </div>
   )
