@@ -221,6 +221,142 @@ export async function GET() {
       console.error('CNBC RSS fetch error:', error)
     }
 
+    // Add MarketWatch RSS
+    try {
+      const marketWatchResponse = await fetch('https://www.marketwatch.com/rss/topstories', {
+        next: { revalidate: 300 }
+      })
+
+      if (marketWatchResponse.ok) {
+        const rssText = await marketWatchResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 10); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'MarketWatch',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('MarketWatch RSS fetch error:', error)
+    }
+
+    // Add Seeking Alpha RSS
+    try {
+      const seekingAlphaResponse = await fetch('https://seekingalpha.com/feed.xml', {
+        next: { revalidate: 300 }
+      })
+
+      if (seekingAlphaResponse.ok) {
+        const rssText = await seekingAlphaResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 10); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'Seeking Alpha',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Seeking Alpha RSS fetch error:', error)
+    }
+
+    // Add Financial Times RSS
+    try {
+      const ftResponse = await fetch('https://www.ft.com/?format=rss', {
+        next: { revalidate: 300 }
+      })
+
+      if (ftResponse.ok) {
+        const rssText = await ftResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 8); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'Financial Times',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Financial Times RSS fetch error:', error)
+    }
+
+    // Add Barron's RSS
+    try {
+      const barronsResponse = await fetch('https://www.barrons.com/rss/RSSMarketsMain.xml', {
+        next: { revalidate: 300 }
+      })
+
+      if (barronsResponse.ok) {
+        const rssText = await barronsResponse.text()
+        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
+        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
+        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
+        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+
+        const titles = Array.from(titleMatches).map(m => m[1])
+        const links = Array.from(linkMatches).map(m => m[1])
+        const descriptions = Array.from(descMatches).map(m => m[1])
+        const pubDates = Array.from(pubDateMatches).map(m => m[1])
+
+        for (let i = 1; i < Math.min(titles.length, 8); i++) {
+          if (titles[i] && links[i]) {
+            articles.push({
+              title: titles[i],
+              description: descriptions[i] || '',
+              url: links[i],
+              source: 'Barrons',
+              publishedAt: pubDates[i] || new Date().toISOString(),
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Barrons RSS fetch error:', error)
+    }
+
     // Sort by publishedAt (most recent first)
     articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
 
@@ -228,7 +364,8 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      articles: articles.slice(0, 40) // Return top 40
+      articles: articles.slice(0, 60), // Return top 60
+      sources: ['CoinDesk', 'Finnhub', 'Yahoo Finance', 'Bloomberg', 'Reuters', 'CNBC', 'MarketWatch', 'Seeking Alpha', 'Financial Times', 'Barrons']
     })
   } catch (error) {
     console.error('News fetch error:', error)

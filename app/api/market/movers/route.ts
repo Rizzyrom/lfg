@@ -10,11 +10,40 @@ interface MarketMover {
 }
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY
-const TOP_STOCKS = [
-  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B', 'JPM', 'V',
-  'WMT', 'JNJ', 'MA', 'PG', 'UNH', 'HD', 'DIS', 'BAC', 'ADBE', 'CRM',
-  'NFLX', 'COST', 'PEP', 'KO', 'ORCL', 'AMD', 'INTC', 'CSCO', 'VZ', 'PFE'
-]
+
+const STOCK_NAMES: Record<string, string> = {
+  'AAPL': 'Apple Inc',
+  'MSFT': 'Microsoft Corporation',
+  'GOOGL': 'Alphabet Inc',
+  'AMZN': 'Amazon.com Inc',
+  'NVDA': 'NVIDIA Corporation',
+  'META': 'Meta Platforms Inc',
+  'TSLA': 'Tesla Inc',
+  'JPM': 'JPMorgan Chase',
+  'V': 'Visa Inc',
+  'WMT': 'Walmart Inc',
+  'JNJ': 'Johnson & Johnson',
+  'MA': 'Mastercard Inc',
+  'PG': 'Procter & Gamble',
+  'UNH': 'UnitedHealth Group',
+  'HD': 'Home Depot Inc',
+  'DIS': 'Walt Disney Co',
+  'BAC': 'Bank of America',
+  'ADBE': 'Adobe Inc',
+  'CRM': 'Salesforce Inc',
+  'NFLX': 'Netflix Inc',
+  'COST': 'Costco Wholesale',
+  'PEP': 'PepsiCo Inc',
+  'KO': 'Coca-Cola Co',
+  'ORCL': 'Oracle Corporation',
+  'AMD': 'Advanced Micro Devices',
+  'INTC': 'Intel Corporation',
+  'CSCO': 'Cisco Systems',
+  'VZ': 'Verizon Communications',
+  'PFE': 'Pfizer Inc',
+}
+
+const TOP_STOCKS = Object.keys(STOCK_NAMES)
 
 async function fetchRealMarketMovers(): Promise<{ gainers: MarketMover[], losers: MarketMover[] }> {
   if (!FINNHUB_API_KEY) {
@@ -43,11 +72,11 @@ async function fetchRealMarketMovers(): Promise<{ gainers: MarketMover[], losers
 
           return {
             symbol,
-            name: symbol, // Simplified, could fetch full name from another endpoint
+            name: STOCK_NAMES[symbol] || symbol,
             price,
             change,
             changePercent,
-            volume: data.v || 0,
+            volume: 0, // Volume not available in quote endpoint
           }
         } catch (error) {
           console.error(`Failed to fetch ${symbol}:`, error)

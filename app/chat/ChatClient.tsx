@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import Message from '@/components/Message'
 import MentionAutocomplete from '@/components/MentionAutocomplete'
 import Toast from '@/components/Toast'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
-import { Paperclip, X, FileIcon, Send, Menu, Home, TrendingUp, MessageCircle, LogOut } from 'lucide-react'
+import { Paperclip, X, FileIcon, Send, MessageCircle } from 'lucide-react'
 
 interface Reaction {
   id: string
@@ -44,7 +42,6 @@ interface ChatClientProps {
 }
 
 export default function ChatClient({ username, userId }: ChatClientProps) {
-  const pathname = usePathname()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -332,16 +329,6 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     }
   }, [input, selectedFile, sending, replyingTo, handleCancelUpload, fetchMessages])
 
-  // Memoize handleLogout
-  const handleLogout = useCallback(async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-      window.location.href = '/login'
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }, [])
-
   // Memoize setReplyingTo callback
   const handleReplyClick = useCallback((message: { id: string; username: string; ciphertext: string }) => {
     setReplyingTo(message)
@@ -353,51 +340,8 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   }, [])
 
   return (
-    <div className="flex flex-col chat-container bg-tv-bg overflow-x-hidden">
-      {/* Top Navigation Bar - Minimal style */}
-      <header className="flex-shrink-0 h-16 bg-tv-panel border-b border-tv-grid flex items-center justify-between px-4 elevation-1 z-20">
-        <div className="flex items-center gap-4">
-          {/* Logo and Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-tv-blue flex items-center justify-center">
-              <span className="text-white font-bold text-lg">LFG</span>
-            </div>
-            <div>
-              <h1 className="text-base font-semibold text-tv-text">Group Chat</h1>
-              <p className="text-xs text-tv-text-soft">
-                {messages.length} messages
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation - Always visible, no menu */}
-        <nav className="flex items-center gap-2">
-          <Link
-            href="/feed"
-            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-tv-hover text-tv-text-soft hover:text-tv-text transition-all"
-          >
-            <Home className="w-4 h-4" />
-            <span className="text-sm font-medium">Feed</span>
-          </Link>
-          <Link
-            href="/watchlist"
-            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-tv-hover text-tv-text-soft hover:text-tv-text transition-all"
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-sm font-medium">Watchlist</span>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-tv-down hover:text-tv-down-hover transition-all"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline text-sm font-medium">Logout</span>
-          </button>
-        </nav>
-      </header>
-
-      {/* Messages Area - Takes full remaining height - NO HORIZONTAL SCROLL */}
+    <div className="flex flex-col h-full bg-tv-bg overflow-x-hidden">
+      {/* Messages Area - Takes full height - NO HORIZONTAL SCROLL */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
