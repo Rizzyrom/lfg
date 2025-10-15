@@ -80,7 +80,7 @@ export default function SettingsPage() {
         {isWarning && (
           <div className="mt-4 p-3 bg-tv-down bg-opacity-10 border border-tv-down rounded-lg">
             <p className="text-sm text-tv-down">
-              ⚠️ Warning: You're approaching the free tier limit. Consider deleting old files.
+              ⚠️ Warning: You&apos;re approaching the free tier limit. Consider deleting old files.
             </p>
           </div>
         )}
