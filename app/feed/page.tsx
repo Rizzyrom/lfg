@@ -3,14 +3,13 @@ import { getUser } from '@/lib/auth'
 import AppShell from '@/components/AppShell'
 import TrendingRail from '@/components/TrendingRail'
 import RightRail from '@/components/RightRail'
-import FeedClient from './FeedClient'
+import UnifiedFeed from '@/components/UnifiedFeed'
+
+export const dynamic = 'force-dynamic'
 
 export default async function FeedPage() {
   const user = await getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   return (
     <AppShell
@@ -19,7 +18,9 @@ export default async function FeedPage() {
       leftDrawerTitle="Top Gainers & Losers"
       rightDrawerTitle="AI Pulse"
     >
-      <FeedClient />
+      <div className="h-[calc(100vh-3.5rem)] overflow-y-auto p-4">
+        <UnifiedFeed />
+      </div>
     </AppShell>
   )
 }
