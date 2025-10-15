@@ -79,22 +79,23 @@ export default function RightRail({ selectedAsset }: RightRailProps = {}) {
       {/* Social Feed */}
       <SocialFeed />
 
-      {/* AI Pulse */}
-      <div className="card p-4">
-        <h2 className="text-lg font-bold text-tv-text mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5 text-tv-blue" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-          </svg>
-          AI Pulse
-        </h2>
+      {/* AI Pulse - Only show when asset is selected */}
+      {selectedAsset && (
+        <div className="card p-4 animate-slide-up">
+          <h2 className="text-lg font-bold text-tv-text mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-tv-blue" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+            </svg>
+            AI Pulse
+          </h2>
 
-        {loading ? (
-          <div className="space-y-3">
-            <div className="h-4 bg-tv-chip rounded animate-pulse" />
-            <div className="h-4 bg-tv-chip rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-tv-chip rounded animate-pulse w-1/2" />
-          </div>
-        ) : assetData ? (
+          {loading ? (
+            <div className="space-y-3">
+              <div className="h-4 bg-tv-chip rounded animate-pulse" />
+              <div className="h-4 bg-tv-chip rounded animate-pulse w-3/4" />
+              <div className="h-4 bg-tv-chip rounded animate-pulse w-1/2" />
+            </div>
+          ) : assetData ? (
           <div className="space-y-4">
             {/* Asset Header */}
             <div className="flex items-start gap-3">
@@ -231,10 +232,11 @@ export default function RightRail({ selectedAsset }: RightRailProps = {}) {
           </div>
         ) : (
           <p className="text-sm text-tv-text-soft italic">
-            Click on any asset in your watchlist to see detailed AI analysis
+            Loading asset analysis...
           </p>
         )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

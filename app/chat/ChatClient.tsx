@@ -49,7 +49,6 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -253,18 +252,10 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   }, [])
 
   return (
-    <div className="flex flex-col chat-container bg-[#1a1d29] overflow-hidden">
-      {/* Top Navigation Bar - Discord style */}
+    <div className="flex flex-col chat-container bg-[#1a1d29] overflow-x-hidden">
+      {/* Top Navigation Bar - Discord style - NO HAMBURGER MENU */}
       <header className="flex-shrink-0 h-16 bg-[#202225] border-b border-[#2f3136] flex items-center justify-between px-4 elevation-3 z-20">
         <div className="flex items-center gap-4">
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="lg:hidden p-2 hover:bg-[#36393f] rounded-lg transition-colors"
-          >
-            <Menu className="w-6 h-6 text-gray-400" />
-          </button>
-
           {/* Logo and Title */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#26A69A] to-[#2962FF] flex items-center justify-center shadow-lg">
@@ -282,100 +273,37 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           </div>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-2">
+        {/* Navigation - Always visible, no menu */}
+        <nav className="flex items-center gap-2">
           <Link
             href="/feed"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
           >
             <Home className="w-5 h-5" />
             <span className="text-sm font-medium">Feed</span>
           </Link>
           <Link
             href="/watchlist"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
           >
             <TrendingUp className="w-5 h-5" />
             <span className="text-sm font-medium">Watchlist</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm font-medium">Logout</span>
+            <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline text-sm font-medium">Logout</span>
           </button>
         </nav>
-
-        {/* Mobile user indicator */}
-        <div className="lg:hidden text-sm text-gray-400">
-          @{username}
-        </div>
       </header>
 
-      {/* Mobile Slide-out Menu */}
-      {showMobileMenu && (
-        <div
-          className="fixed inset-0 bg-black/70 z-50 lg:hidden"
-          onClick={() => setShowMobileMenu(false)}
-        >
-          <div
-            className="absolute left-0 top-0 bottom-0 w-72 bg-[#202225] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 border-b border-[#2f3136]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#26A69A] to-[#2962FF] flex items-center justify-center">
-                  <span className="text-xl font-bold text-white">{username[0]}</span>
-                </div>
-                <div>
-                  <p className="text-white font-bold">@{username}</p>
-                  <p className="text-xs text-gray-400">Online</p>
-                </div>
-              </div>
-            </div>
-            <nav className="p-4 space-y-2">
-              <Link
-                href="/feed"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                <Home className="w-5 h-5" />
-                <span className="font-medium">Feed</span>
-              </Link>
-              <Link
-                href="/watchlist"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                <TrendingUp className="w-5 h-5" />
-                <span className="font-medium">Watchlist</span>
-              </Link>
-              <Link
-                href="/chat"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#5865F2] text-white transition-all"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span className="font-medium">Chat</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">Logout</span>
-              </button>
-            </nav>
-          </div>
-        </div>
-      )}
-
-      {/* Messages Area - Takes full remaining height */}
+      {/* Messages Area - Takes full remaining height - NO HORIZONTAL SCROLL */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-2 smooth-scroll"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-2 smooth-scroll max-w-full"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">

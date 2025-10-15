@@ -51,15 +51,23 @@ export default function AppShell({
       <header className="sticky top-0 z-50 bg-tv-panel/95 border-b border-tv-grid backdrop-blur-xl elevation-2 safe-area-pt">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-6">
-            <Link href="/feed" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-tv-up to-tv-blue flex items-center justify-center elevation-2 group-hover:shadow-glow-blue transition-all hover-scale">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 22L8 16L12 20L22 2M22 2L15 2M22 2L22 9" />
-                </svg>
+            <Link href="/feed" className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-tv-blue via-tv-blue to-tv-up flex items-center justify-center elevation-3 group-hover:shadow-glow-blue transition-all hover-scale">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-tv-up rounded-full border-2 border-tv-bg animate-pulse"></div>
               </div>
-              <span className="text-xl sm:text-2xl font-black text-tv-text tracking-tight">
-                LFG
-              </span>
+              <div>
+                <span className="text-2xl sm:text-3xl font-black text-tv-text tracking-tight block leading-none">
+                  LFG
+                </span>
+                <span className="text-[10px] sm:text-xs font-bold text-tv-text-soft tracking-wide uppercase">
+                  Markets • Community • Intelligence
+                </span>
+              </div>
             </Link>
             <nav className="hidden md:flex gap-2">
               <Link

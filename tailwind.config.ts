@@ -10,35 +10,46 @@ const config: Config = {
     extend: {
       colors: {
         tv: {
-          bg: '#131722',
-          'bg-secondary': '#0F1218',
-          panel: '#1E222D',
-          'panel-hover': '#232732',
-          grid: '#2A2E39',
-          'grid-soft': 'rgba(42, 46, 57, 0.6)',
-          text: '#D1D4DC',
-          'text-soft': '#787B86',
-          'text-muted': '#4E5360',
-          blue: '#2962FF',
-          'blue-hover': '#3D76FF',
-          'blue-active': '#1E4FCC',
-          up: '#26A69A',
-          'up-hover': '#2CBBA9',
-          down: '#EF5350',
-          'down-hover': '#F44336',
-          chip: '#2B2F3A',
-          hover: '#313642',
+          // Modern black backgrounds (Robinhood/Coinbase style)
+          bg: '#000000',
+          'bg-secondary': '#0A0A0A',
+          panel: '#1A1A1A',
+          'panel-hover': '#242424',
+          grid: '#2A2A2A',
+          'grid-soft': 'rgba(42, 42, 42, 0.6)',
+
+          // Clean, high-contrast text
+          text: '#FFFFFF',
+          'text-soft': '#9CA3AF',
+          'text-muted': '#6B7280',
+
+          // Modern electric blue (primary action color)
+          blue: '#0066FF',
+          'blue-hover': '#0052CC',
+          'blue-active': '#003D99',
+
+          // Vibrant success green
+          up: '#00D084',
+          'up-hover': '#00B870',
+
+          // Bold danger red
+          down: '#FF4757',
+          'down-hover': '#E63946',
+
+          // UI elements
+          chip: '#242424',
+          hover: '#2E2E2E',
           border: 'rgba(255, 255, 255, 0.1)',
         },
       },
       boxShadow: {
-        panel: '0 0 0 1px #2A2E39',
+        panel: '0 0 0 1px #2A2A2A',
         'elevation-1': '0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15)',
         'elevation-2': '0 2px 4px rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2)',
         'elevation-3': '0 3px 6px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.3)',
         'elevation-4': '0 6px 12px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.4)',
-        'glow-blue': '0 0 20px rgba(41, 98, 255, 0.3)',
-        'glow-green': '0 0 20px rgba(38, 166, 154, 0.3)',
+        'glow-blue': '0 0 20px rgba(0, 102, 255, 0.4)',
+        'glow-green': '0 0 20px rgba(0, 208, 132, 0.4)',
       },
       fontFeatureSettings: {
         tnum: '"tnum" on',
