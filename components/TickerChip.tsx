@@ -60,8 +60,7 @@ export default function TickerChip({ symbol }: TickerChipProps) {
 
   const change = priceData.change24h ? parseFloat(priceData.change24h) : 0
   const isPositive = change >= 0
-  const bgColor = isPositive ? 'bg-tv-up/20' : 'bg-tv-down/20'
-  const textColor = isPositive ? 'text-tv-up' : 'text-tv-down'
+  const bgColor = isPositive ? 'bg-[#26A69A]' : 'bg-[#EF5350]'
   const arrow = isPositive ? '↑' : '↓'
   const changeText = isPositive ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`
 
@@ -85,7 +84,7 @@ export default function TickerChip({ symbol }: TickerChipProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 ${bgColor} ${textColor} rounded font-mono text-xs font-semibold cursor-help transition-opacity hover:opacity-80`}
+      className={`inline-flex items-center gap-1 px-2.5 py-1 ${bgColor} text-white rounded-md font-mono text-xs font-bold cursor-help transition-all hover:scale-105 shadow-sm`}
       title={`$${symbol} - Updated ${getTimeAgo(priceData.updatedAt)}`}
     >
       ${symbol} {arrow} {changeText}

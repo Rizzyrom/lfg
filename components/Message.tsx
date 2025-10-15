@@ -113,8 +113,8 @@ export default function Message({
   // Parse message text for tickers and mentions
   const parseMessage = (text: string): MessagePart[] => {
     const parts: MessagePart[] = []
-    // Regex to match $TICKER (1-5 uppercase letters) or @username
-    const regex = /(\$[A-Z]{1,5})|(@\w+)/g
+    // Regex to match $TICKER (1-5 letters, case-insensitive) or @username
+    const regex = /(\$[A-Za-z]{1,5})|(@\w+)/g
     let lastIndex = 0
     let match
 
@@ -126,7 +126,8 @@ export default function Message({
 
       // Add ticker or mention
       if (match[0].startsWith('$')) {
-        parts.push({ type: 'ticker', symbol: match[0].slice(1) })
+        // Convert ticker to uppercase for consistency
+        parts.push({ type: 'ticker', symbol: match[0].slice(1).toUpperCase() })
       } else if (match[0].startsWith('@')) {
         parts.push({ type: 'mention', username: match[0].slice(1) })
       }
