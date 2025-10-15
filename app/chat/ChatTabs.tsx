@@ -72,6 +72,25 @@ export default function ChatTabs({ mentions, tickers, attachments }: ChatTabsPro
       {/* Tab Content */}
       <div {...handlers} className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
+          {activeTab === 'chat' && (
+            <motion.div
+              key="chat"
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="h-full overflow-y-auto p-4"
+            >
+              <div className="text-center py-12">
+                <MessageCircle className="w-12 h-12 text-tv-blue mx-auto mb-3" />
+                <p className="text-tv-text font-semibold mb-2">Chat View Active</p>
+                <p className="text-tv-text-soft text-sm">
+                  Swipe left or click tabs to view mentions, tickers, and files
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === 'mentions' && (
             <motion.div
               key="mentions"

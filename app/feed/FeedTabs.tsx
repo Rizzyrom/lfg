@@ -79,6 +79,25 @@ export default function FeedTabs({ gainers, losers }: FeedTabsProps) {
       {/* Tab Content */}
       <div {...handlers} className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
+          {activeTab === 'feed' && (
+            <motion.div
+              key="feed"
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="p-4"
+            >
+              <div className="text-center py-12">
+                <Activity className="w-12 h-12 text-tv-blue mx-auto mb-3" />
+                <p className="text-tv-text font-semibold mb-2">Feed View Active</p>
+                <p className="text-tv-text-soft text-sm">
+                  Swipe left or click tabs to view top gainers and losers
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === 'gainers' && (
             <motion.div
               key="gainers"
