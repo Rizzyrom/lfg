@@ -1,8 +1,9 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { User, Settings, LogOut, RefreshCw } from 'lucide-react'
 
 interface AppShellProps {
   children: ReactNode
@@ -22,6 +23,8 @@ export default function AppShell({
   const pathname = usePathname()
   const [showLeftDrawer, setShowLeftDrawer] = useState(false)
   const [showRightDrawer, setShowRightDrawer] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const handleRefresh = async () => {
     try {
@@ -45,94 +48,116 @@ export default function AppShell({
     }
   }
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showUserMenu])
+
   return (
     <div className="min-h-screen bg-tv-bg">
-      {/* Top bar - Minimal design */}
-      <header className="sticky top-0 z-50 bg-tv-panel border-b border-tv-grid elevation-1 safe-area-pt">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/feed" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-tv-blue flex items-center justify-center transition-all group-hover:shadow-glow-blue">
-                <span className="text-white font-bold text-lg">LFG</span>
-              </div>
+      {/* Modern minimal header */}
+      <header className="sticky top-0 z-50 bg-tv-panel/80 backdrop-blur-xl border-b border-tv-border elevation-1 safe-area-pt">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          {/* Left: Main navigation */}
+          <nav className="hidden md:flex items-center gap-1">
+            <Link
+              href="/chat"
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                pathname === '/chat'
+                  ? 'bg-tv-blue text-white'
+                  : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+              }`}
+            >
+              Chat
             </Link>
-            <nav className="hidden md:flex gap-1">
-              <Link
-                href="/feed"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  pathname === '/feed'
-                    ? 'bg-tv-chip text-tv-text'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-                }`}
-              >
-                Feed
-              </Link>
-              <Link
-                href="/watchlist"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  pathname === '/watchlist'
-                    ? 'bg-tv-chip text-tv-text'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-                }`}
-              >
-                Watchlist
-              </Link>
-              <Link
-                href="/chat"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  pathname === '/chat'
-                    ? 'bg-tv-chip text-tv-text'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-                }`}
-              >
-                Chat
-              </Link>
-              <Link
-                href="/settings"
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  pathname === '/settings'
-                    ? 'bg-tv-chip text-tv-text'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-                }`}
-              >
-                Settings
-              </Link>
-            </nav>
-          </div>
+            <Link
+              href="/watchlist"
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                pathname === '/watchlist'
+                  ? 'bg-tv-blue text-white'
+                  : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+              }`}
+            >
+              Watchlist
+            </Link>
+            <Link
+              href="/feed"
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                pathname === '/feed'
+                  ? 'bg-tv-blue text-white'
+                  : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+              }`}
+            >
+              Feed
+            </Link>
+          </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mobile sidebar toggles */}
-            {leftRail && (
-              <button
-                onClick={() => setShowLeftDrawer(true)}
-                className="lg:hidden flex items-center justify-center w-10 h-10 min-h-[44px] min-w-[44px] rounded-lg bg-tv-chip hover:bg-tv-hover text-tv-text transition-all active:scale-95 touch-manipulation"
-                aria-label="Open market trends"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          {/* Mobile spacer */}
+          <div className="md:hidden" />
+
+          {/* Right: Logo with dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-tv-hover transition-all group"
+            >
+              {/* Modern minimalist logo */}
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-tv-blue to-tv-blue-hover flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
-              </button>
+              </div>
+              <span className="hidden sm:inline text-sm font-semibold text-tv-text">LFG</span>
+              <svg className={`w-4 h-4 text-tv-text-soft transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown menu */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-tv-panel border border-tv-border rounded-xl shadow-elevation-4 overflow-hidden">
+                <div className="p-2 space-y-1">
+                  <Link
+                    href="/settings"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-tv-hover text-tv-text transition-all group"
+                  >
+                    <Settings className="w-4 h-4 text-tv-text-soft group-hover:text-tv-blue transition-colors" />
+                    <span className="text-sm font-medium">Settings</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      handleRefresh()
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-tv-hover text-tv-text transition-all group"
+                  >
+                    <RefreshCw className="w-4 h-4 text-tv-text-soft group-hover:text-tv-blue transition-colors" />
+                    <span className="text-sm font-medium">Refresh Data</span>
+                  </button>
+                  <div className="h-px bg-tv-border my-1" />
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      handleLogout()
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 text-tv-down transition-all group"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </div>
+              </div>
             )}
-            <button
-              onClick={handleRefresh}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-lg bg-tv-chip hover:bg-tv-hover text-tv-text text-sm font-semibold transition-all active:scale-95"
-              aria-label="Refresh market data"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span className="hidden lg:inline">Refresh</span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-semibold transition-all active:scale-95"
-              aria-label="Logout"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="hidden sm:inline">Logout</span>
-            </button>
           </div>
         </div>
       </header>
@@ -162,22 +187,22 @@ export default function AppShell({
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-tv-panel/95 backdrop-blur-xl border-t border-tv-grid elevation-4 z-50">
           <div className="flex justify-around items-center h-16 px-1 safe-area-pb">
             <Link
-              href="/feed"
+              href="/chat"
               className={`flex flex-col items-center gap-1 px-6 py-2 min-h-[56px] min-w-[72px] rounded-xl transition-all active:scale-90 touch-manipulation ${
-                pathname === '/feed'
+                pathname === '/chat'
                   ? 'text-tv-blue'
                   : 'text-tv-text-soft'
               }`}
             >
-              <div className={`relative ${pathname === '/feed' ? 'animate-pulse' : ''}`}>
-                <svg className="w-7 h-7" fill={pathname === '/feed' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/feed' ? 0 : 2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <div className={`relative ${pathname === '/chat' ? 'animate-pulse' : ''}`}>
+                <svg className="w-7 h-7" fill={pathname === '/chat' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/chat' ? 0 : 2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                {pathname === '/feed' && (
+                {pathname === '/chat' && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-tv-blue rounded-full shadow-glow-blue" />
                 )}
               </div>
-              <span className="text-[11px] font-bold">Feed</span>
+              <span className="text-[11px] font-bold">Chat</span>
             </Link>
             <Link
               href="/watchlist"
@@ -198,22 +223,22 @@ export default function AppShell({
               <span className="text-[11px] font-bold">Watch</span>
             </Link>
             <Link
-              href="/chat"
+              href="/feed"
               className={`flex flex-col items-center gap-1 px-6 py-2 min-h-[56px] min-w-[72px] rounded-xl transition-all active:scale-90 touch-manipulation ${
-                pathname === '/chat'
+                pathname === '/feed'
                   ? 'text-tv-blue'
                   : 'text-tv-text-soft'
               }`}
             >
-              <div className={`relative ${pathname === '/chat' ? 'animate-pulse' : ''}`}>
-                <svg className="w-7 h-7" fill={pathname === '/chat' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/chat' ? 0 : 2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              <div className={`relative ${pathname === '/feed' ? 'animate-pulse' : ''}`}>
+                <svg className="w-7 h-7" fill={pathname === '/feed' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/feed' ? 0 : 2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                {pathname === '/chat' && (
+                {pathname === '/feed' && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-tv-blue rounded-full shadow-glow-blue" />
                 )}
               </div>
-              <span className="text-[11px] font-bold">Chat</span>
+              <span className="text-[11px] font-bold">Feed</span>
             </Link>
           </div>
         </nav>
