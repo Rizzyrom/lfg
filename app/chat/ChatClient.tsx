@@ -544,19 +544,12 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
       {/* Mention Autocomplete */}
       {showMentions && (
-        <div
-          style={{
-            position: 'fixed',
-            top: mentionPosition.top,
-            left: mentionPosition.left,
-          }}
-        >
-          <MentionAutocomplete
-            query={mentionQuery}
-            onSelect={handleMentionSelect}
-            onClose={() => setShowMentions(false)}
-          />
-        </div>
+        <MentionAutocomplete
+          query={mentionQuery}
+          onSelect={handleMentionSelect}
+          onClose={() => setShowMentions(false)}
+          position={mentionPosition}
+        />
       )}
 
       {/* Toast */}
