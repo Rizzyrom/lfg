@@ -3,14 +3,13 @@ import { getUser } from '@/lib/auth'
 import AppShell from '@/components/AppShell'
 import WatchlistRail from '@/components/WatchlistRail'
 import RightRail from '@/components/RightRail'
-import ChatLayout from './ChatLayout'
+import ChatClient from './ChatClient'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ChatPage() {
   const user = await getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   return (
     <AppShell
@@ -19,7 +18,9 @@ export default async function ChatPage() {
       leftDrawerTitle="Watchlist"
       rightDrawerTitle="AI Pulse"
     >
-      <ChatLayout username={user.username} userId={user.id} />
+      <div className="h-[calc(100vh-3.5rem)]">
+        <ChatClient username={user.username} userId={user.id} />
+      </div>
     </AppShell>
   )
 }
