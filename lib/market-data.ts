@@ -55,17 +55,63 @@ const cryptoIdMap: Record<string, string> = {
   'ARB': 'arbitrum',
 }
 
-export async function fetchCryptoPrice(symbol: string): Promise<{ price: string; change24h: string } | null> {
+async function findCoinId(symbol: string): Promise<string | null> {
   try {
     const symbolUpper = symbol.toUpperCase()
-    const coinId = cryptoIdMap[symbolUpper] || symbol.toLowerCase()
+
+    // Check hardcoded map first for common coins (faster)
+    if (cryptoIdMap[symbolUpper]) {
+      return cryptoIdMap[symbolUpper]
+    }
+
+    // If not in map, search CoinGecko for the coin ID
+    const headers: HeadersInit = {}
+    if (process.env.COINGECKO_API_KEY) {
+      headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
+    }
+
+    const searchResponse = await fetch(
+      `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(symbol)}`,
+      { headers, next: { revalidate: 3600 } } // Cache for 1 hour
+    )
+
+    if (!searchResponse.ok) {
+      return null
+    }
+
+    const searchData = await searchResponse.json()
+    const coins = searchData.coins || []
+
+    // Find exact symbol match
+    const exactMatch = coins.find((coin: any) =>
+      coin.symbol.toLowerCase() === symbol.toLowerCase()
+    )
+
+    return exactMatch ? exactMatch.id : null
+  } catch (error) {
+    console.error(`Error finding coin ID for ${symbol}:`, error)
+    return null
+  }
+}
+
+export async function fetchCryptoPrice(symbol: string): Promise<{ price: string; change24h: string } | null> {
+  try {
+    const coinId = await findCoinId(symbol)
+
+    if (!coinId) {
+      console.log(`Could not find CoinGecko ID for ${symbol}`)
+      return null
+    }
+
+    const headers: HeadersInit = {}
+    if (process.env.COINGECKO_API_KEY) {
+      headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
+    }
 
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
       {
-        headers: {
-          'x-cg-demo-api-key': process.env.COINGECKO_API_KEY || '',
-        },
+        headers,
         next: { revalidate: 30 } // Cache for 30 seconds
       }
     )

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import SkeletonRow from '@/components/SkeletonRow'
+import AssetSearchBar from './AssetSearchBar'
 
 interface WatchItem {
   id: string
@@ -15,8 +16,6 @@ interface WatchItem {
 export default function WatchlistClient() {
   const [items, setItems] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [symbol, setSymbol] = useState('')
-  const [source, setSource] = useState<'crypto' | 'stock'>('crypto')
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
@@ -40,8 +39,7 @@ export default function WatchlistClient() {
     }
   }
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAdd = async (symbol: string, source: 'crypto' | 'stock') => {
     if (!symbol.trim()) return
 
     setAdding(true)
@@ -53,7 +51,6 @@ export default function WatchlistClient() {
       })
 
       if (res.ok) {
-        setSymbol('')
         await fetchWatchlist()
       } else {
         const data = await res.json()
@@ -93,29 +90,8 @@ export default function WatchlistClient() {
       </div>
 
       <div className="card p-4 mb-6">
-        <h2 className="text-lg font-semibold text-tv-text mb-4">Add Symbol</h2>
-        <form onSubmit={handleAdd} className="flex gap-3">
-          <input
-            type="text"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
-            placeholder="BTC, AAPL, etc."
-            className="input flex-1"
-            disabled={adding}
-          />
-          <select
-            value={source}
-            onChange={(e) => setSource(e.target.value as 'crypto' | 'stock')}
-            className="input"
-            disabled={adding}
-          >
-            <option value="crypto">Crypto</option>
-            <option value="stock">Stock</option>
-          </select>
-          <button type="submit" disabled={adding} className="btn btn-primary">
-            {adding ? 'Adding...' : 'Add'}
-          </button>
-        </form>
+        <h2 className="text-lg font-semibold text-tv-text mb-4">Add Asset to Watchlist</h2>
+        <AssetSearchBar onAdd={handleAdd} disabled={adding} />
       </div>
 
       <div className="space-y-3">

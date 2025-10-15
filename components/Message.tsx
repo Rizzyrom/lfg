@@ -194,10 +194,27 @@ function Message({
     [timestamp]
   )
 
+  // Check if this is an agent message
+  const isAgent = username === 'LFG Agent'
+
   return (
     <div id={`message-${id}`} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 group`}>
       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col relative`}>
-        <div className="text-xs text-tv-text-soft mb-1">{username}</div>
+        <div className="text-xs text-tv-text-soft mb-1 flex items-center gap-2">
+          {isAgent && (
+            <span className="inline-flex items-center justify-center w-5 h-5 bg-tv-blue rounded-full">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </span>
+          )}
+          <span>{username}</span>
+          {isAgent && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-tv-blue text-white">
+              AI
+            </span>
+          )}
+        </div>
 
         {/* Reaction Picker (shows on hover) */}
         <div className="absolute -top-8 left-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -242,7 +259,11 @@ function Message({
 
         <div
           className={`px-4 py-2 rounded-xl ${
-            isOwn ? 'bg-tv-blue text-white' : 'bg-tv-chip text-tv-text'
+            isAgent
+              ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white border border-blue-400/30'
+              : isOwn
+              ? 'bg-tv-blue text-white'
+              : 'bg-tv-chip text-tv-text'
           }`}
         >
           <p className="text-sm break-words whitespace-pre-wrap">

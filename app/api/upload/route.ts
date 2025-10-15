@@ -67,10 +67,21 @@ export async function POST(request: NextRequest) {
       size: file.size,
       contentType: file.type,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload error:', error)
+
+    // Check if it's a Blob storage token issue
+    if (error?.message?.includes('BLOB_READ_WRITE_TOKEN')) {
+      return NextResponse.json(
+        { error: 'Vercel Blob storage not configured. Please set BLOB_READ_WRITE_TOKEN.' },
+        { status: 500 }
+      )
+    }
+
+    // Return specific error message if available
+    const errorMessage = error?.message || 'Failed to upload file'
     return NextResponse.json(
-      { error: 'Failed to upload file' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

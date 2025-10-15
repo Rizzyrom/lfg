@@ -59,9 +59,15 @@ export async function GET(request: NextRequest) {
       }))
       .filter(m => !query || m.username.toLowerCase().includes(query))
 
+    // Always include LFG Agent at the top if it matches the query
+    const agentMatches = !query || 'lfgent'.includes(query) || 'lfg agent'.includes(query)
+    const finalMembers = agentMatches
+      ? [{ id: 'agent', username: 'lfgent' }, ...filteredMembers]
+      : filteredMembers
+
     return NextResponse.json({
       success: true,
-      members: filteredMembers,
+      members: finalMembers,
     })
   } catch (error) {
     console.error('Members fetch error:', error)

@@ -134,8 +134,69 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     inputRef.current?.focus()
   }, [input, mentionStartPos, mentionQuery])
 
+  // Helper function to compress images
+  const compressImage = useCallback((file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      // Don't compress if file is already small (< 2MB)
+      if (file.size < 2 * 1024 * 1024) {
+        resolve(file)
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            resolve(file)
+            return
+          }
+
+          // Scale down large images
+          let width = img.width
+          let height = img.height
+          const maxDimension = 1920
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = (height / width) * maxDimension
+              width = maxDimension
+            } else {
+              width = (width / height) * maxDimension
+              height = maxDimension
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          ctx.drawImage(img, 0, 0, width, height)
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                })
+                resolve(compressedFile)
+              } else {
+                resolve(file)
+              }
+            },
+            'image/jpeg',
+            0.85
+          )
+        }
+        img.src = e.target?.result as string
+      }
+      reader.readAsDataURL(file)
+    })
+  }, [])
+
   // Memoize handleFileSelect
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -144,18 +205,32 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       return
     }
 
-    setSelectedFile(file)
+    // Compress image if it's an image file
+    let processedFile = file
+    if (file.type.startsWith('image/') && !file.type.includes('gif')) {
+      setToast({ message: 'Compressing image...', type: 'info' })
+      processedFile = await compressImage(file)
+      const savedSize = file.size - processedFile.size
+      if (savedSize > 0) {
+        setToast({
+          message: `Image compressed: saved ${(savedSize / 1024 / 1024).toFixed(1)}MB`,
+          type: 'success'
+        })
+      }
+    }
 
-    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+    setSelectedFile(processedFile)
+
+    if (processedFile.type.startsWith('image/') || processedFile.type.startsWith('video/')) {
       const reader = new FileReader()
       reader.onloadend = () => {
         setFilePreview(reader.result as string)
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(processedFile)
     } else {
       setFilePreview(null)
     }
-  }, [])
+  }, [compressImage])
 
   // Memoize handleCancelUpload
   const handleCancelUpload = useCallback(() => {
@@ -184,22 +259,37 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           setUploadProgress(prev => Math.min(prev + 10, 90))
         }, 200)
 
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        })
+        // Create an AbortController for timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minute timeout
 
-        clearInterval(progressInterval)
-        setUploadProgress(100)
+        try {
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal,
+          })
 
-        if (!uploadRes.ok) {
+          clearTimeout(timeoutId)
+          clearInterval(progressInterval)
+          setUploadProgress(100)
+
+          if (!uploadRes.ok) {
+            const uploadData = await uploadRes.json()
+            throw new Error(uploadData.error || 'Upload failed')
+          }
+
           const uploadData = await uploadRes.json()
-          throw new Error(uploadData.error || 'Upload failed')
+          mediaUrl = uploadData.url
+          handleCancelUpload()
+        } catch (uploadError: any) {
+          clearTimeout(timeoutId)
+          clearInterval(progressInterval)
+          if (uploadError.name === 'AbortError') {
+            throw new Error('Upload timed out. Try a smaller file or check your connection.')
+          }
+          throw uploadError
         }
-
-        const uploadData = await uploadRes.json()
-        mediaUrl = uploadData.url
-        handleCancelUpload()
       }
 
       const res = await fetch('/api/chat', {
@@ -213,17 +303,28 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       })
 
       if (res.ok) {
+        const data = await res.json()
         setInput('')
         setShowMentions(false)
         setReplyingTo(null)
+
+        // If there's an agent message, show a toast
+        if (data.agentMessage) {
+          setToast({ message: 'LFG Agent is responding...', type: 'info' })
+        }
+
         await fetchMessages()
       } else {
         const data = await res.json()
         setToast({ message: data.error || 'Failed to send', type: 'error' })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Send error:', error)
-      setToast({ message: String(error), type: 'error' })
+      const errorMessage = error?.message || String(error)
+      setToast({
+        message: errorMessage.includes('Error:') ? errorMessage : `Error: ${errorMessage}`,
+        type: 'error'
+      })
       handleCancelUpload()
     } finally {
       setSending(false)

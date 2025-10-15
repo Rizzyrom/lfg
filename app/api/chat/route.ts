@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireUser, verifyOrigin } from '@/lib/auth'
+import { callOpenAI } from '@/lib/openai'
 
 // GET - Fetch messages
 export async function GET(request: NextRequest) {
@@ -137,6 +138,88 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Check for @lfgent mention
+    let agentMessage = null
+    if (message.includes('@lfgent')) {
+      // Extract question after @lfgent
+      const question = message.replace(/@lfgent/gi, '').trim()
+
+      if (question) {
+        const aiResponse = await callOpenAI(question)
+
+        if (aiResponse.success && aiResponse.message) {
+          // Find or create LFG Agent user
+          let agentUser = await db.user.findUnique({
+            where: { username: 'LFG Agent' },
+          })
+
+          if (!agentUser) {
+            // Create agent user (won't be used for login, just for messages)
+            const { hash } = await import('@node-rs/argon2')
+            const randomPassword = Math.random().toString(36)
+            agentUser = await db.user.create({
+              data: {
+                username: 'LFG Agent',
+                passwordHash: await hash(randomPassword),
+              },
+            })
+
+            // Add agent to the group as BOT
+            await db.membership.create({
+              data: {
+                userId: agentUser.id,
+                groupId: targetGroupId,
+                role: 'BOT',
+              },
+            })
+          }
+
+          // Create agent response message
+          const agentResponse = await db.message.create({
+            data: {
+              groupId: targetGroupId,
+              senderId: agentUser.id,
+              ciphertext: aiResponse.message,
+              replyToId: newMessage.id,
+            },
+            include: {
+              sender: {
+                select: {
+                  username: true,
+                },
+              },
+            },
+          })
+
+          agentMessage = {
+            id: agentResponse.id,
+            senderId: agentResponse.senderId,
+            username: agentResponse.sender.username,
+            ciphertext: agentResponse.ciphertext,
+            mediaPtr: agentResponse.mediaPtr,
+            createdAt: agentResponse.createdAt.toISOString(),
+          }
+        }
+      }
+    }
+
+    // Check for feedback keywords (bugs/features)
+    const feedbackKeywords = ['bug', 'issue', 'broken', 'not working', 'error', 'feature', 'add', 'want', 'need', 'should', 'fix', 'improve', 'suggestion']
+    const messageLower = message.toLowerCase()
+    const hasFeedback = feedbackKeywords.some(keyword => messageLower.includes(keyword))
+
+    if (hasFeedback) {
+      // Save to feedback file (fire and forget)
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          username: user.username,
+        }),
+      }).catch(err => console.error('Failed to save feedback:', err))
+    }
+
     return NextResponse.json({
       success: true,
       message: {
@@ -147,6 +230,7 @@ export async function POST(request: NextRequest) {
         mediaPtr: newMessage.mediaPtr,
         createdAt: newMessage.createdAt.toISOString(),
       },
+      agentMessage,
     })
   } catch (error) {
     console.error('Chat send error:', error)
