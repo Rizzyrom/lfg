@@ -3,7 +3,7 @@ import { getUser } from '@/lib/auth'
 import AppShell from '@/components/AppShell'
 import WatchlistRail from '@/components/WatchlistRail'
 import RightRail from '@/components/RightRail'
-import WatchlistNewsClient from './WatchlistNewsClient'
+import WatchlistClient from './WatchlistClient'
 
 export default async function WatchlistPage() {
   const user = await getUser()
@@ -19,7 +19,7 @@ export default async function WatchlistPage() {
       leftDrawerTitle="Watchlist"
       rightDrawerTitle="AI Pulse"
     >
-      <WatchlistNewsClient />
+      <WatchlistClient />
     </AppShell>
   )
 }

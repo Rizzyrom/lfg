@@ -101,8 +101,17 @@ export default function AppShell({
             </Link>
           </nav>
 
-          {/* Mobile spacer */}
-          <div className="md:hidden" />
+          {/* Center: LFG Branding */}
+          <div className="md:hidden absolute left-1/2 -translate-x-1/2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-tv-blue to-tv-blue-hover flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <span className="text-base font-bold text-tv-text">LFG</span>
+            </div>
+          </div>
 
           {/* Right: Logo with dropdown */}
           <div className="relative" ref={menuRef}>
@@ -110,13 +119,13 @@ export default function AppShell({
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-tv-hover transition-all group"
             >
-              {/* Modern minimalist logo */}
+              {/* Modern minimalist logo - Desktop */}
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-tv-blue to-tv-blue-hover flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
                 <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
-              <span className="hidden sm:inline text-sm font-semibold text-tv-text">LFG</span>
+              <span className="hidden md:inline text-sm font-semibold text-tv-text">LFG</span>
               <svg className={`w-4 h-4 text-tv-text-soft transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>

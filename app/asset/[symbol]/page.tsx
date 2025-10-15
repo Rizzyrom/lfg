@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation'
 import { getUser } from '@/lib/auth'
+import AppShell from '@/components/AppShell'
+import WatchlistRail from '@/components/WatchlistRail'
+import RightRail from '@/components/RightRail'
 import AssetDetailClient from './AssetDetailClient'
 
 interface PageProps {
@@ -17,9 +20,16 @@ export default async function AssetDetailPage({ params, searchParams }: PageProp
   const { source } = await searchParams
 
   return (
-    <AssetDetailClient
-      symbol={decodeURIComponent(symbol)}
-      source={source || 'stock'}
-    />
+    <AppShell
+      leftRail={<WatchlistRail />}
+      rightRail={<RightRail />}
+      leftDrawerTitle="Watchlist"
+      rightDrawerTitle="AI Pulse"
+    >
+      <AssetDetailClient
+        symbol={decodeURIComponent(symbol)}
+        source={source || 'stock'}
+      />
+    </AppShell>
   )
 }
