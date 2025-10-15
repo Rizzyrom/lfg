@@ -47,55 +47,42 @@ export default function AppShell({
 
   return (
     <div className="min-h-screen bg-tv-bg">
-      {/* Top bar */}
-      <header className="sticky top-0 z-50 bg-tv-panel/95 border-b border-tv-grid backdrop-blur-xl elevation-2 safe-area-pt">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-6">
+      {/* Top bar - Minimal design */}
+      <header className="sticky top-0 z-50 bg-tv-panel border-b border-tv-grid elevation-1 safe-area-pt">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-6">
             <Link href="/feed" className="flex items-center gap-3 group">
-              <div className="relative">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-tv-blue via-tv-blue to-tv-up flex items-center justify-center elevation-3 group-hover:shadow-glow-blue transition-all hover-scale">
-                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-tv-up rounded-full border-2 border-tv-bg animate-pulse"></div>
-              </div>
-              <div>
-                <span className="text-2xl sm:text-3xl font-black text-tv-text tracking-tight block leading-none">
-                  LFG
-                </span>
-                <span className="text-[10px] sm:text-xs font-bold text-tv-text-soft tracking-wide uppercase">
-                  Markets • Community • Intelligence
-                </span>
+              <div className="w-10 h-10 rounded-xl bg-tv-blue flex items-center justify-center transition-all group-hover:shadow-glow-blue">
+                <span className="text-white font-bold text-lg">LFG</span>
               </div>
             </Link>
-            <nav className="hidden md:flex gap-2">
+            <nav className="hidden md:flex gap-1">
               <Link
                 href="/feed"
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === '/feed'
-                    ? 'bg-tv-blue text-white shadow-glow-blue'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover active:scale-95'
+                    ? 'bg-tv-chip text-tv-text'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
                 }`}
               >
                 Feed
               </Link>
               <Link
                 href="/watchlist"
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === '/watchlist'
-                    ? 'bg-tv-blue text-white shadow-glow-blue'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover active:scale-95'
+                    ? 'bg-tv-chip text-tv-text'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
                 }`}
               >
                 Watchlist
               </Link>
               <Link
                 href="/chat"
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === '/chat'
-                    ? 'bg-tv-blue text-white shadow-glow-blue'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover active:scale-95'
+                    ? 'bg-tv-chip text-tv-text'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
                 }`}
               >
                 Chat

@@ -1,6 +1,34 @@
 import { NextResponse } from 'next/server'
 
-const SUBREDDITS = ['wallstreetbets', 'cryptocurrency', 'stocks', 'CryptoMarkets']
+// Top stock subreddits
+const STOCK_SUBREDDITS = [
+  'wallstreetbets',
+  'stocks',
+  'investing',
+  'StockMarket',
+  'pennystocks',
+  'AlgoTrading',
+  'ValueInvesting',
+  'DueDiligence',
+  'UndervaluedStonks',
+  'trading'
+]
+
+// Top crypto subreddits
+const CRYPTO_SUBREDDITS = [
+  'CryptoCurrency',
+  'CryptoMarkets',
+  'Altcoin',
+  'CryptoTechnology',
+  'CryptoMoonShots',
+  'NFT',
+  'SatoshiStreetBets',
+  'defi',
+  'Crypto_General',
+  'crypto'
+]
+
+const SUBREDDITS = [...STOCK_SUBREDDITS, ...CRYPTO_SUBREDDITS]
 
 interface RedditPost {
   id: string

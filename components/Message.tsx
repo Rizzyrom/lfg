@@ -99,9 +99,25 @@ function Message({
   const [imageError, setImageError] = useState(false)
   const [showReactionPicker, setShowReactionPicker] = useState(false)
   const [reactions, setReactions] = useState<Array<{ emoji: string; count: number; userReacted: boolean }>>([])
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null)
 
   // Quick reaction emojis
   const quickReactions = ['👍', '❤️', '😂', '🎉', '🤔', '🙏']
+
+  // Long press handlers for mobile
+  const handleTouchStart = useCallback(() => {
+    const timer = setTimeout(() => {
+      setShowReactionPicker(true)
+    }, 1000) // 1 second long press
+    setLongPressTimer(timer)
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+      setLongPressTimer(null)
+    }
+  }, [longPressTimer])
 
   // Parse reactions
   useEffect(() => {
@@ -198,7 +214,13 @@ function Message({
   const isAgent = username === 'LFG Agent'
 
   return (
-    <div id={`message-${id}`} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 group`}>
+    <div
+      id={`message-${id}`}
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 group`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchEnd}
+    >
       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col relative`}>
         <div className="text-xs text-tv-text-soft mb-1 flex items-center gap-2">
           {isAgent && (
@@ -216,21 +238,33 @@ function Message({
           )}
         </div>
 
-        {/* Reaction Picker (shows on hover) */}
-        <div className="absolute -top-8 left-0 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <div className="flex items-center gap-1 bg-tv-panel border border-tv-grid rounded-full px-2 py-1 shadow-lg">
-            {quickReactions.map(emoji => (
+        {/* Reaction Picker (shows on long press for mobile OR hover for desktop) */}
+        {showReactionPicker && (
+          <div className="absolute -top-8 left-0 z-10 animate-fade-in">
+            <div className="flex items-center gap-1 bg-tv-panel border border-tv-grid rounded-full px-2 py-1 shadow-lg">
+              {quickReactions.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => {
+                    handleReaction(emoji)
+                    setShowReactionPicker(false)
+                  }}
+                  className="hover:scale-125 active:scale-110 transition-transform text-lg p-2 min-h-[44px] min-w-[44px] touch-manipulation"
+                  type="button"
+                >
+                  {emoji}
+                </button>
+              ))}
               <button
-                key={emoji}
-                onClick={() => handleReaction(emoji)}
-                className="hover:scale-125 active:scale-110 transition-transform text-lg p-2 min-h-[44px] min-w-[44px] touch-manipulation"
+                onClick={() => setShowReactionPicker(false)}
+                className="ml-2 text-tv-text-soft hover:text-tv-text"
                 type="button"
               >
-                {emoji}
+                ✕
               </button>
-            ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Reply Button (shows on hover) - increased touch target */}
         {onReply && (

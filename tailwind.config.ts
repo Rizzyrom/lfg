@@ -10,46 +10,45 @@ const config: Config = {
     extend: {
       colors: {
         tv: {
-          // Modern black backgrounds (Robinhood/Coinbase style)
-          bg: '#000000',
-          'bg-secondary': '#0A0A0A',
-          panel: '#1A1A1A',
-          'panel-hover': '#242424',
-          grid: '#2A2A2A',
-          'grid-soft': 'rgba(42, 42, 42, 0.6)',
+          // Ultra-minimal monochrome backgrounds
+          bg: '#FAFAFA',
+          'bg-secondary': '#F5F5F5',
+          panel: '#FFFFFF',
+          'panel-hover': '#F8F8F8',
+          grid: '#E5E5E5',
+          'grid-soft': 'rgba(0, 0, 0, 0.06)',
 
-          // Clean, high-contrast text
-          text: '#FFFFFF',
-          'text-soft': '#9CA3AF',
-          'text-muted': '#6B7280',
+          // Clean text hierarchy
+          text: '#000000',
+          'text-soft': '#6B7280',
+          'text-muted': '#9CA3AF',
 
-          // Modern electric blue (primary action color)
+          // Single accent color - modern blue
           blue: '#0066FF',
           'blue-hover': '#0052CC',
           'blue-active': '#003D99',
 
-          // Vibrant success green
-          up: '#00D084',
-          'up-hover': '#00B870',
+          // Minimal status colors
+          up: '#10B981',
+          'up-hover': '#059669',
 
-          // Bold danger red
-          down: '#FF4757',
-          'down-hover': '#E63946',
+          down: '#EF4444',
+          'down-hover': '#DC2626',
 
           // UI elements
-          chip: '#242424',
-          hover: '#2E2E2E',
-          border: 'rgba(255, 255, 255, 0.1)',
+          chip: '#F3F4F6',
+          hover: '#F9FAFB',
+          border: 'rgba(0, 0, 0, 0.08)',
         },
       },
       boxShadow: {
-        panel: '0 0 0 1px #2A2A2A',
-        'elevation-1': '0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15)',
-        'elevation-2': '0 2px 4px rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2)',
-        'elevation-3': '0 3px 6px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.3)',
-        'elevation-4': '0 6px 12px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.4)',
-        'glow-blue': '0 0 20px rgba(0, 102, 255, 0.4)',
-        'glow-green': '0 0 20px rgba(0, 208, 132, 0.4)',
+        panel: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        'elevation-1': '0 1px 2px rgba(0, 0, 0, 0.04)',
+        'elevation-2': '0 2px 4px rgba(0, 0, 0, 0.06)',
+        'elevation-3': '0 4px 8px rgba(0, 0, 0, 0.08)',
+        'elevation-4': '0 8px 16px rgba(0, 0, 0, 0.1)',
+        'glow-blue': '0 0 0 3px rgba(0, 102, 255, 0.1)',
+        'glow-green': '0 0 0 3px rgba(16, 185, 129, 0.1)',
       },
       fontFeatureSettings: {
         tnum: '"tnum" on',

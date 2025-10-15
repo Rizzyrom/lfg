@@ -7,20 +7,44 @@ import { NextResponse } from 'next/server'
 
 const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN
 
-// Trending stock/crypto accounts and hashtags to monitor
+// Top X accounts for stocks/investing
+const STOCK_ACCOUNTS = [
+  'awealthofcs',
+  '10kdiver',
+  'CNBC',
+  'Benzinga',
+  'BreakoutStocks',
+  'bespokeinvest',
+  'WSJMarkets',
+  'Stocktwits',
+  'ReformedBroker', // Josh Brown
+  'MebFaber'
+]
+
+// Top X accounts for crypto/web3
+const CRYPTO_ACCOUNTS = [
+  'VitalikButerin',
+  'cz_binance',
+  'CryptoMichNL',
+  'ali_charts',
+  'glassnode',
+  'WuBlockchain',
+  'intocryptoverse',
+  'rektcapital',
+  'CryptoRover',
+  'ilCapoOfCrypto'
+]
+
+// Build queries from top accounts
 const TRENDING_QUERIES = [
-  'from:elonmusk (#bitcoin OR #crypto OR #stocks)',
-  'from:michael_saylor bitcoin',
-  'from:CathieDWood (stocks OR investing)',
+  ...STOCK_ACCOUNTS.map(account => `from:${account}`),
+  ...CRYPTO_ACCOUNTS.map(account => `from:${account}`),
   '#Bitcoin',
   '#Ethereum',
-  '#Crypto',
   '#Stocks',
   '#WallStreetBets',
   '$BTC',
-  '$ETH',
-  '$SPY',
-  '$TSLA',
+  '$ETH'
 ]
 
 interface Tweet {
