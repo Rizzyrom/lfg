@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import Message from '@/components/Message'
 import MentionAutocomplete from '@/components/MentionAutocomplete'
 import Toast from '@/components/Toast'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
-import { Paperclip, X, FileIcon } from 'lucide-react'
+import { Paperclip, X, FileIcon, Send, Menu, Home, TrendingUp, MessageCircle, LogOut } from 'lucide-react'
 
 interface Reaction {
   id: string
@@ -42,10 +44,12 @@ interface ChatClientProps {
 }
 
 export default function ChatClient({ username, userId }: ChatClientProps) {
+  const pathname = usePathname()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -70,13 +74,11 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   const { scrollRef, showNewMessages, scrollToBottom, handleScroll, autoScrollOnNewContent } = useAutoScroll()
 
   useEffect(() => {
-    // Fetch messages initially and every 3 seconds
     fetchMessages()
     const interval = setInterval(fetchMessages, 3000)
     return () => clearInterval(interval)
   }, [])
 
-  // Auto-scroll when messages change
   autoScrollOnNewContent([messages])
 
   const fetchMessages = async () => {
@@ -91,29 +93,25 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     }
   }
 
-  // Handle input changes and detect @ mentions
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     const cursorPos = e.target.selectionStart || 0
     setInput(value)
 
-    // Detect @ mention
     const textBeforeCursor = value.slice(0, cursorPos)
     const lastAtIndex = textBeforeCursor.lastIndexOf('@')
 
     if (lastAtIndex !== -1) {
       const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1)
-      // Check if there's no space after @
       if (!textAfterAt.includes(' ')) {
         setMentionQuery(textAfterAt)
         setMentionStartPos(lastAtIndex)
         setShowMentions(true)
 
-        // Calculate dropdown position
         if (inputRef.current) {
           const rect = inputRef.current.getBoundingClientRect()
           setMentionPosition({
-            top: rect.top - 210, // Position above input
+            top: rect.top - 210,
             left: rect.left + 10,
           })
         }
@@ -125,7 +123,6 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     }
   }
 
-  // Handle mention selection
   const handleMentionSelect = (username: string) => {
     const before = input.slice(0, mentionStartPos)
     const after = input.slice(mentionStartPos + mentionQuery.length + 1)
@@ -134,12 +131,10 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     inputRef.current?.focus()
   }
 
-  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate size (50MB max for videos)
     if (file.size > 50 * 1024 * 1024) {
       setToast({ message: 'File size must be under 50MB', type: 'error' })
       return
@@ -147,7 +142,6 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
     setSelectedFile(file)
 
-    // Generate preview for images and videos
     if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -159,7 +153,6 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     }
   }
 
-  // Cancel file upload
   const handleCancelUpload = () => {
     setSelectedFile(null)
     setFilePreview(null)
@@ -176,13 +169,11 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     let mediaUrl: string | null = null
 
     try {
-      // Upload file first if attached
       if (selectedFile) {
         setUploading(true)
         const formData = new FormData()
         formData.append('file', selectedFile)
 
-        // Simulate progress
         const progressInterval = setInterval(() => {
           setUploadProgress(prev => Math.min(prev + 10, 90))
         }, 200)
@@ -202,12 +193,9 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
         const uploadData = await uploadRes.json()
         mediaUrl = uploadData.url
-
-        // Clear file state
         handleCancelUpload()
       }
 
-      // Send message with optional attachment and reply
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -222,17 +210,14 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         setInput('')
         setShowMentions(false)
         setReplyingTo(null)
-        await fetchMessages() // Refresh messages immediately
+        await fetchMessages()
       } else {
         const data = await res.json()
-        setToast({ message: data.error || 'Failed to send message', type: 'error' })
+        setToast({ message: data.error || 'Failed to send', type: 'error' })
       }
     } catch (error) {
-      console.error('Failed to send message:', error)
-      setToast({
-        message: error instanceof Error ? error.message : 'Failed to send message',
-        type: 'error'
-      })
+      console.error('Send error:', error)
+      setToast({ message: String(error), type: 'error' })
       handleCancelUpload()
     } finally {
       setSending(false)
@@ -240,205 +225,310 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
     }
   }
 
-  // Handle mobile keyboard behavior
-  const handleInputFocus = () => {
-    if (window.innerWidth < 768) {
-      // Small delay to ensure keyboard is visible
-      setTimeout(() => {
-        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-      }, 300)
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Logout failed:', error)
     }
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] lg:h-[calc(100vh-8rem)]">
-      <div className="mb-3 sm:mb-4">
-        <h1 className="text-xl sm:text-2xl font-bold text-tv-text">Group Chat</h1>
-        <p className="text-xs sm:text-sm text-tv-text-soft mt-1">
-          <span className="text-tv-up">● Live</span> - Updates every 3 seconds
-        </p>
-      </div>
+    <div className="flex flex-col h-screen bg-[#1a1d29]">
+      {/* Top Navigation Bar - Discord style */}
+      <header className="flex-shrink-0 h-16 bg-[#202225] border-b border-[#2f3136] flex items-center justify-between px-4 shadow-lg">
+        <div className="flex items-center gap-4">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="lg:hidden p-2 hover:bg-[#36393f] rounded-lg transition-colors"
+          >
+            <Menu className="w-6 h-6 text-gray-400" />
+          </button>
 
-      <div className="card flex-1 flex flex-col overflow-hidden relative">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3"
-        >
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-tv-text-soft text-center">
-                No messages yet. Start the conversation!
+          {/* Logo and Title */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#26A69A] to-[#2962FF] flex items-center justify-center shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2 22L8 16L12 20L22 2M22 2L15 2M22 2L22 9" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">Group Chat</h1>
+              <p className="text-xs text-gray-400">
+                <span className="text-[#26A69A]">● </span>
+                {messages.length} messages
               </p>
             </div>
-          ) : (
-            <>
-              {messages.map((msg) => (
-                <Message
-                  key={msg.id}
-                  id={msg.id}
-                  username={msg.username}
-                  ciphertext={msg.ciphertext}
-                  mediaPtr={msg.mediaPtr}
-                  timestamp={msg.createdAt}
-                  isOwn={msg.username === username}
-                  currentUserId={msg.senderId === userId ? userId : undefined}
-                  reactions={msg.reactions}
-                  replyTo={msg.replyTo}
-                  onReply={setReplyingTo}
-                />
-              ))}
-            </>
-          )}
+          </div>
         </div>
 
-        {/* New messages indicator */}
-        {showNewMessages && (
-          <button
-            onClick={() => scrollToBottom()}
-            className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-tv-blue text-white px-4 py-2 rounded-full shadow-lg hover:bg-opacity-90 transition-all text-sm font-medium"
+        {/* Desktop Navigation */}
+        <nav className="hidden lg:flex items-center gap-2">
+          <Link
+            href="/feed"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
           >
-            New messages ↓
+            <Home className="w-5 h-5" />
+            <span className="text-sm font-medium">Feed</span>
+          </Link>
+          <Link
+            href="/watchlist"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+          >
+            <TrendingUp className="w-5 h-5" />
+            <span className="text-sm font-medium">Watchlist</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-sm font-medium">Logout</span>
           </button>
-        )}
+        </nav>
 
-        {/* Reply Banner */}
-        {replyingTo && (
-          <div className="flex items-center justify-between bg-tv-panel border-t border-tv-grid px-4 py-3">
-            <div className="flex items-center gap-2">
-              <div className="w-1 h-8 bg-tv-blue rounded-full" />
-              <div>
-                <div className="text-xs text-tv-text-soft">Replying to @{replyingTo.username}</div>
-                <div className="text-sm text-tv-text truncate max-w-[300px]">
-                  {replyingTo.ciphertext}
+        {/* Mobile user indicator */}
+        <div className="lg:hidden text-sm text-gray-400">
+          @{username}
+        </div>
+      </header>
+
+      {/* Mobile Slide-out Menu */}
+      {showMobileMenu && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 lg:hidden"
+          onClick={() => setShowMobileMenu(false)}
+        >
+          <div
+            className="absolute left-0 top-0 bottom-0 w-72 bg-[#202225] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-[#2f3136]">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#26A69A] to-[#2962FF] flex items-center justify-center">
+                  <span className="text-xl font-bold text-white">{username[0]}</span>
+                </div>
+                <div>
+                  <p className="text-white font-bold">@{username}</p>
+                  <p className="text-xs text-gray-400">Online</p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setReplyingTo(null)}
-              className="p-1 hover:bg-tv-hover rounded transition-colors"
-              type="button"
-            >
-              <X className="w-4 h-4 text-tv-text-soft" />
-            </button>
+            <nav className="p-4 space-y-2">
+              <Link
+                href="/feed"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-medium">Feed</span>
+              </Link>
+              <Link
+                href="/watchlist"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#36393f] text-gray-300 hover:text-white transition-all"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <TrendingUp className="w-5 h-5" />
+                <span className="font-medium">Watchlist</span>
+              </Link>
+              <Link
+                href="/chat"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#5865F2] text-white transition-all"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span className="font-medium">Chat</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </nav>
           </div>
+        </div>
+      )}
+
+      {/* Messages Area - Takes full remaining height */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+        style={{ scrollBehavior: 'smooth' }}
+      >
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <MessageCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400 text-lg font-medium">No messages yet</p>
+              <p className="text-gray-500 text-sm mt-2">Start the conversation!</p>
+            </div>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <Message
+              key={msg.id}
+              id={msg.id}
+              username={msg.username}
+              ciphertext={msg.ciphertext}
+              mediaPtr={msg.mediaPtr}
+              timestamp={msg.createdAt}
+              isOwn={msg.username === username}
+              currentUserId={msg.senderId === userId ? userId : undefined}
+              reactions={msg.reactions}
+              replyTo={msg.replyTo}
+              onReply={setReplyingTo}
+            />
+          ))
         )}
+      </div>
 
-        {/* File Preview Panel */}
-        {selectedFile && (
-          <div className="border-t border-tv-grid bg-tv-panel p-3 sm:p-4">
-            <div className="flex items-center gap-3 bg-tv-bg border border-tv-grid rounded-lg p-3">
-              {/* Image Preview */}
-              {selectedFile.type.startsWith('image/') && filePreview && (
-                <img
-                  src={filePreview}
-                  alt="Preview"
-                  className="w-16 h-16 object-cover rounded"
-                />
-              )}
+      {/* New messages indicator */}
+      {showNewMessages && (
+        <button
+          onClick={() => scrollToBottom()}
+          className="absolute bottom-28 left-1/2 transform -translate-x-1/2 bg-[#5865F2] text-white px-6 py-3 rounded-full shadow-xl hover:bg-[#4752C4] transition-all font-medium"
+        >
+          New messages ↓
+        </button>
+      )}
 
-              {/* Video Preview */}
-              {selectedFile.type.startsWith('video/') && filePreview && (
-                <video
-                  src={filePreview}
-                  className="w-16 h-16 object-cover rounded"
-                  muted
-                />
-              )}
-
-              {/* PDF Icon */}
-              {selectedFile.type === 'application/pdf' && (
-                <FileIcon className="w-16 h-16 text-tv-text-soft" />
-              )}
-
-              {/* File Info */}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-tv-text truncate">{selectedFile.name}</div>
-                <div className="text-xs text-tv-text-soft">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </div>
+      {/* Reply Banner */}
+      {replyingTo && (
+        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-10 bg-[#5865F2] rounded-full" />
+            <div>
+              <div className="text-xs text-gray-400">Replying to @{replyingTo.username}</div>
+              <div className="text-sm text-gray-200 truncate max-w-[300px]">
+                {replyingTo.ciphertext}
               </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setReplyingTo(null)}
+            className="p-2 hover:bg-[#36393f] rounded transition-colors"
+            type="button"
+          >
+            <X className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
+      )}
 
-              {/* Upload Progress */}
+      {/* File Preview Panel */}
+      {selectedFile && (
+        <div className="flex-shrink-0 bg-[#2f3136] border-t border-[#202225] p-4">
+          <div className="flex items-center gap-3 bg-[#202225] border border-[#36393f] rounded-lg p-3">
+            {selectedFile.type.startsWith('image/') && filePreview && (
+              <img
+                src={filePreview}
+                alt="Preview"
+                className="w-16 h-16 object-cover rounded"
+              />
+            )}
+
+            {selectedFile.type.startsWith('video/') && filePreview && (
+              <video
+                src={filePreview}
+                className="w-16 h-16 object-cover rounded"
+                muted
+              />
+            )}
+
+            {selectedFile.type === 'application/pdf' && (
+              <FileIcon className="w-16 h-16 text-gray-400" />
+            )}
+
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-gray-200 truncate">{selectedFile.name}</div>
+              <div className="text-xs text-gray-400">
+                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+              </div>
               {uploading && (
-                <div className="flex-1">
-                  <div className="h-2 bg-tv-grid rounded-full overflow-hidden">
+                <div className="mt-2">
+                  <div className="w-full bg-[#36393f] rounded-full h-1.5">
                     <div
-                      className="h-full bg-tv-blue transition-all duration-300"
+                      className="bg-[#26A69A] h-1.5 rounded-full transition-all"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
-                  <div className="text-xs text-tv-text-soft mt-1 text-center">
-                    {uploadProgress}%
-                  </div>
                 </div>
               )}
-
-              {/* Cancel Button */}
-              <button
-                onClick={handleCancelUpload}
-                className="p-2 hover:bg-tv-hover rounded-lg transition-colors"
-                type="button"
-              >
-                <X className="w-4 h-4 text-tv-text-soft" />
-              </button>
             </div>
-          </div>
-        )}
 
-        <form onSubmit={handleSend} className="p-3 sm:p-4 border-t border-tv-grid">
-          <div className="flex items-center gap-2 relative">
-            {/* Hidden File Input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*,.pdf"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-
-            {/* Paperclip Button */}
             <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-lg hover:bg-tv-hover transition-colors"
+              onClick={handleCancelUpload}
+              className="p-2 hover:bg-[#36393f] rounded transition-colors"
               disabled={uploading}
             >
-              <Paperclip className="w-5 h-5 text-tv-text-soft" />
+              <X className="w-5 h-5 text-gray-400" />
             </button>
-
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-              placeholder="Type a message... (use @ to mention)"
-              className="input flex-1 text-sm sm:text-base"
-              disabled={sending}
-            />
-            <button
-              type="submit"
-              disabled={sending || (!input.trim() && !selectedFile) || uploading}
-              className="btn btn-primary px-4 sm:px-6 text-sm sm:text-base whitespace-nowrap"
-            >
-              {sending ? 'Sending...' : 'Send'}
-            </button>
-
-            {/* Mention Autocomplete */}
-            {showMentions && (
-              <MentionAutocomplete
-                query={mentionQuery}
-                onSelect={handleMentionSelect}
-                onClose={() => setShowMentions(false)}
-                position={mentionPosition}
-              />
-            )}
           </div>
-        </form>
-      </div>
+        </div>
+      )}
 
-      {/* Toast Notifications */}
+      {/* Input Area - Fixed at bottom */}
+      <form onSubmit={handleSend} className="flex-shrink-0 bg-[#202225] border-t border-[#2f3136] p-4">
+        <div className="flex items-center gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*,.pdf"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 rounded-lg hover:bg-[#36393f] transition-colors"
+            disabled={uploading}
+          >
+            <Paperclip className="w-5 h-5 text-gray-400" />
+          </button>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={handleInputChange}
+            placeholder={`Message @${username}`}
+            className="flex-1 bg-[#36393f] text-white placeholder-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#5865F2] transition-all"
+            disabled={sending || uploading}
+          />
+
+          <button
+            type="submit"
+            disabled={(!input.trim() && !selectedFile) || sending || uploading}
+            className="p-3 bg-[#5865F2] hover:bg-[#4752C4] disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-all shadow-lg"
+          >
+            <Send className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      </form>
+
+      {/* Mention Autocomplete */}
+      {showMentions && (
+        <div
+          style={{
+            position: 'fixed',
+            top: mentionPosition.top,
+            left: mentionPosition.left,
+          }}
+        >
+          <MentionAutocomplete
+            query={mentionQuery}
+            onSelect={handleMentionSelect}
+            onClose={() => setShowMentions(false)}
+          />
+        </div>
+      )}
+
+      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}
