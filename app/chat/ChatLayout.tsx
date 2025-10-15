@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import ChatClient from './ChatClient'
 import ChatTabs from './ChatTabs'
@@ -12,34 +12,46 @@ interface ChatLayoutProps {
 
 export default function ChatLayout({ username, userId }: ChatLayoutProps) {
   const [showSidebar, setShowSidebar] = useState(false)
+  const [mentions, setMentions] = useState<any[]>([])
+  const [tickers, setTickers] = useState<any[]>([])
+  const [attachments, setAttachments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock data - in production, fetch from API
-  const mentions = [
-    {
-      id: '1',
-      username: 'alice',
-      message: '@' + username + ' what do you think about $TSLA?',
-      timestamp: new Date().toISOString(),
-    },
-  ]
+  useEffect(() => {
+    fetchSidebarData()
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchSidebarData, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
-  const tickers = [
-    { symbol: 'BTC', mentions: 15, sentiment: 'bullish' as const },
-    { symbol: 'ETH', mentions: 8, sentiment: 'bullish' as const },
-    { symbol: 'TSLA', mentions: 12, sentiment: 'neutral' as const },
-    { symbol: 'AAPL', mentions: 6, sentiment: 'bearish' as const },
-  ]
+  const fetchSidebarData = async () => {
+    try {
+      const [mentionsRes, tickersRes, attachmentsRes] = await Promise.all([
+        fetch('/api/chat/mentions'),
+        fetch('/api/chat/tickers'),
+        fetch('/api/chat/attachments'),
+      ])
 
-  const attachments = [
-    {
-      id: '1',
-      filename: 'chart.png',
-      url: '/api/placeholder-image',
-      type: 'image/png',
-      uploadedBy: 'alice',
-      timestamp: new Date().toISOString(),
-    },
-  ]
+      if (mentionsRes.ok) {
+        const data = await mentionsRes.json()
+        setMentions(data.mentions || [])
+      }
+
+      if (tickersRes.ok) {
+        const data = await tickersRes.json()
+        setTickers(data.tickers || [])
+      }
+
+      if (attachmentsRes.ok) {
+        const data = await attachmentsRes.json()
+        setAttachments(data.attachments || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch sidebar data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden relative">
