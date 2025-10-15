@@ -69,11 +69,22 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Upload error:', error)
+    console.error('Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      cause: error?.cause
+    })
 
     // Check if it's a Blob storage token issue
-    if (error?.message?.includes('BLOB_READ_WRITE_TOKEN')) {
+    if (error?.message?.includes('BLOB_READ_WRITE_TOKEN') ||
+        error?.message?.includes('token') ||
+        error?.name === 'BlobAccessError') {
       return NextResponse.json(
-        { error: 'Vercel Blob storage not configured. Please set BLOB_READ_WRITE_TOKEN.' },
+        {
+          error: 'Vercel Blob storage not configured. Go to Vercel Dashboard → Storage → Create Blob Store → Copy BLOB_READ_WRITE_TOKEN and add to environment variables.',
+          details: error?.message
+        },
         { status: 500 }
       )
     }
@@ -81,7 +92,7 @@ export async function POST(request: NextRequest) {
     // Return specific error message if available
     const errorMessage = error?.message || 'Failed to upload file'
     return NextResponse.json(
-      { error: errorMessage },
+      { error: errorMessage, details: String(error) },
       { status: 500 }
     )
   }

@@ -87,6 +87,16 @@ export default function AppShell({
               >
                 Chat
               </Link>
+              <Link
+                href="/settings"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  pathname === '/settings'
+                    ? 'bg-tv-chip text-tv-text'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+                }`}
+              >
+                Settings
+              </Link>
             </nav>
           </div>
 

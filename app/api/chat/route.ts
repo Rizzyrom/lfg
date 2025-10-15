@@ -220,6 +220,19 @@ export async function POST(request: NextRequest) {
       }).catch(err => console.error('Failed to save feedback:', err))
     }
 
+    // Send push notifications to other group members (fire and forget)
+    const messagePreview = message.length > 100 ? message.substring(0, 100) + '...' : message
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/push/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `${user.username} sent a message`,
+        body: messagePreview,
+        url: '/chat',
+        groupId: targetGroupId,
+      }),
+    }).catch(err => console.error('Failed to send push notifications:', err))
+
     return NextResponse.json({
       success: true,
       message: {

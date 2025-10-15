@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { redirect } from 'next/navigation'
+import PushNotificationManager from '@/components/PushNotificationManager'
 
 interface UsageData {
   totalFiles: number
@@ -46,7 +46,15 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-tv-text mb-6">Storage Usage</h1>
+      <h1 className="text-2xl font-bold text-tv-text mb-6">Settings</h1>
+
+      {/* Push Notifications */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-tv-text mb-3">Notifications</h2>
+        <PushNotificationManager />
+      </div>
+
+      <h2 className="text-lg font-semibold text-tv-text mb-3">Storage Usage</h2>
 
       <div className="bg-tv-panel border border-tv-grid rounded-lg p-6">
         <div className="mb-4">
