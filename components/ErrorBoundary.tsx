@@ -79,7 +79,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {this.state.errorCount < 3 && (
               <p className="text-xs text-tv-text-soft text-center mb-4">
-                Don't worry, you can try again
+                Don&apos;t worry, you can try again
               </p>
             )}
 
