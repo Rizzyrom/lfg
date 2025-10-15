@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import SocialFeed from './SocialFeed'
 
 interface AssetData {
   name: string
@@ -75,6 +76,10 @@ export default function RightRail({ selectedAsset }: RightRailProps = {}) {
 
   return (
     <div className="space-y-4">
+      {/* Social Feed */}
+      <SocialFeed />
+
+      {/* AI Pulse */}
       <div className="card p-4">
         <h2 className="text-lg font-bold text-tv-text mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-tv-blue" fill="currentColor" viewBox="0 0 20 20">
