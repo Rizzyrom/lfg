@@ -21,7 +21,6 @@ export default function AssetSearchBar({ onAdd, disabled }: AssetSearchBarProps)
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  const [searchType, setSearchType] = useState<'all' | 'crypto' | 'stock'>('all')
   const searchRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<NodeJS.Timeout>()
 
@@ -60,19 +59,16 @@ export default function AssetSearchBar({ onAdd, disabled }: AssetSearchBarProps)
         clearTimeout(debounceRef.current)
       }
     }
-  }, [query, searchType])
+  }, [query])
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true)
     try {
-      const searches: Promise<Response>[] = []
-
-      if (searchType === 'all' || searchType === 'crypto') {
-        searches.push(fetch(`/api/search/crypto?q=${encodeURIComponent(searchQuery)}`))
-      }
-      if (searchType === 'all' || searchType === 'stock') {
-        searches.push(fetch(`/api/search/stocks?q=${encodeURIComponent(searchQuery)}`))
-      }
+      // Search both crypto and stocks
+      const searches: Promise<Response>[] = [
+        fetch(`/api/search/crypto?q=${encodeURIComponent(searchQuery)}`),
+        fetch(`/api/search/stocks?q=${encodeURIComponent(searchQuery)}`)
+      ]
 
       const responses = await Promise.all(searches)
       const data = await Promise.all(responses.map(r => r.json()))
@@ -107,35 +103,23 @@ export default function AssetSearchBar({ onAdd, disabled }: AssetSearchBarProps)
 
   return (
     <div className="relative" ref={searchRef}>
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => {
-              if (results.length > 0) setShowResults(true)
-            }}
-            placeholder="Add asset..."
-            className="w-full px-3 py-1.5 pr-10 bg-tv-bg border border-tv-border rounded-lg text-tv-text focus:outline-none focus:border-tv-blue focus:ring-1 focus:ring-tv-blue transition-all text-xs"
-            disabled={disabled}
-          />
-          {loading && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="animate-spin h-4 w-4 border-2 border-tv-blue border-t-transparent rounded-full" />
-            </div>
-          )}
-        </div>
-        <select
-          value={searchType}
-          onChange={(e) => setSearchType(e.target.value as 'all' | 'crypto' | 'stock')}
-          className="px-2 py-1.5 bg-tv-bg border border-tv-border rounded-lg text-tv-text text-xs focus:outline-none focus:border-tv-blue focus:ring-1 focus:ring-tv-blue transition-all cursor-pointer"
+      <div className="relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => {
+            if (results.length > 0) setShowResults(true)
+          }}
+          placeholder="Add asset..."
+          className="w-full px-3 py-1.5 pr-10 bg-tv-bg border border-tv-border rounded-lg text-tv-text focus:outline-none focus:border-tv-blue focus:ring-1 focus:ring-tv-blue transition-all text-xs"
           disabled={disabled}
-        >
-          <option value="all">All</option>
-          <option value="crypto">Crypto</option>
-          <option value="stock">Stock</option>
-        </select>
+        />
+        {loading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="animate-spin h-4 w-4 border-2 border-tv-blue border-t-transparent rounded-full" />
+          </div>
+        )}
       </div>
 
       {/* Search Results Dropdown */}

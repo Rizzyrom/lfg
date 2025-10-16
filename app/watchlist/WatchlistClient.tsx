@@ -45,21 +45,25 @@ export default function WatchlistClient() {
 
     setAdding(true)
     try {
+      console.log('Adding watchlist item:', { symbol, source })
       const res = await fetch('/api/watchlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbol: symbol.toUpperCase(), source }),
       })
 
+      const data = await res.json()
+      console.log('Add watchlist response:', { ok: res.ok, status: res.status, data })
+
       if (res.ok) {
         await fetchWatchlist()
       } else {
-        const data = await res.json()
-        alert(data.error || 'Failed to add item')
+        console.error('Failed to add item:', data)
+        alert(data.error || 'Failed to add item. Please try again.')
       }
     } catch (error) {
       console.error('Failed to add item:', error)
-      alert('Failed to add item')
+      alert('Network error. Please check your connection and try again.')
     } finally {
       setAdding(false)
     }

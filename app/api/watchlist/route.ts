@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { symbol, source, groupId, tags = [] } = body
 
+    console.log('Add watchlist item request:', { symbol, source, userId: user.id })
+
     if (!symbol || !source) {
       return NextResponse.json({ error: 'Missing symbol or source' }, { status: 400 })
     }
@@ -46,8 +48,11 @@ export async function POST(request: NextRequest) {
       const membership = await db.membership.findFirst({
         where: { userId: user.id },
       })
+      console.log('User membership:', membership)
       if (!membership) {
-        return NextResponse.json({ error: 'No group membership found' }, { status: 400 })
+        return NextResponse.json({
+          error: 'No group found. Please contact an admin to be added to a group.'
+        }, { status: 400 })
       }
       targetGroupId = membership.groupId
     }
@@ -76,13 +81,21 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log('Successfully created watchlist item:', item)
     return NextResponse.json({ success: true, item })
   } catch (error: any) {
     if (error.code === 'P2002') {
       return NextResponse.json({ error: 'Item already in watchlist' }, { status: 400 })
     }
     console.error('Watchlist add error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    })
+    return NextResponse.json({
+      error: `Failed to add item: ${error.message || 'Internal server error'}`
+    }, { status: 500 })
   }
 }
 
