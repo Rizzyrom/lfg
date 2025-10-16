@@ -72,7 +72,7 @@ export default function AppShell({
           {/* Left: Page title */}
           <div className="flex items-center gap-3">
             {pageTitle && (
-              <h1 className="text-lg font-bold text-tv-text">{pageTitle}</h1>
+              <h1 className="text-[22pt] font-bold text-tv-text">{pageTitle}</h1>
             )}
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center gap-1 ml-4">
