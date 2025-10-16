@@ -225,26 +225,26 @@ body {
    ======================================== */
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(42, 42, 42, 0.8);
-  border-radius: 5px;
-  border: 2px solid #000000;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 0px;
+  min-height: 7px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(42, 42, 42, 1);
+  background: rgba(0, 0, 0, 1);
 }
 
 ::-webkit-scrollbar-corner {
-  background: #000000;
+  background: transparent;
 }
 
 /* ========================================
