@@ -240,6 +240,31 @@ export default function AppShell({
           </div>
         </div>
       )}
+
+      {/* Bottom navigation indicator - 5px tall, 3 equal segments */}
+      <nav className="fixed bottom-0 left-0 right-0 h-[5px] bg-tv-border z-50 flex">
+        <Link
+          href="/chat"
+          className={`flex-1 transition-all ${
+            pathname === '/chat' ? 'bg-tv-blue' : 'bg-transparent hover:bg-tv-blue/20'
+          }`}
+          aria-label="Chat"
+        />
+        <Link
+          href="/watchlist"
+          className={`flex-1 transition-all ${
+            pathname === '/watchlist' ? 'bg-tv-blue' : 'bg-transparent hover:bg-tv-blue/20'
+          }`}
+          aria-label="Watchlist"
+        />
+        <Link
+          href="/feed"
+          className={`flex-1 transition-all ${
+            pathname === '/feed' ? 'bg-tv-blue' : 'bg-transparent hover:bg-tv-blue/20'
+          }`}
+          aria-label="Feed"
+        />
+      </nav>
     </div>
   )
 }
