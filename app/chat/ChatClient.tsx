@@ -346,6 +346,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-2 smooth-scroll max-w-full"
+        style={{ paddingBottom: 'calc(80px + 10pt)' }}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -386,9 +387,9 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         </div>
       )}
 
-      {/* Reply Banner - Fixed in flow */}
+      {/* Reply Banner - Fixed above input */}
       {replyingTo && (
-        <div className="flex-shrink-0 bg-tv-panel border-t border-tv-grid px-4 py-3 flex items-center justify-between animate-slide-in">
+        <div className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid px-4 py-3 flex items-center justify-between animate-slide-in z-40" style={{ bottom: 'calc(5px + 10pt + 65px)' }}>
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-1 h-10 bg-tv-blue rounded-full flex-shrink-0" />
             <div className="min-w-0 flex-1">
@@ -408,9 +409,9 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         </div>
       )}
 
-      {/* File Preview Panel - Fixed in flow */}
+      {/* File Preview Panel - Fixed above input */}
       {selectedFile && (
-        <div className="flex-shrink-0 bg-tv-panel border-t border-tv-grid p-4 animate-slide-in">
+        <div className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid p-4 animate-slide-in z-40" style={{ bottom: 'calc(5px + 10pt + 65px)' }}>
           <div className="flex items-center gap-3 bg-tv-bg border border-tv-grid rounded-lg p-3 elevation-1">
             {selectedFile.type.startsWith('image/') && filePreview && (
               <img
@@ -463,7 +464,8 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       {/* Input Area - Fixed at bottom with iOS safe area */}
       <form
         onSubmit={handleSend}
-        className="flex-shrink-0 bg-tv-panel border-t border-tv-grid safe-area-pb"
+        className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid z-40"
+        style={{ bottom: 'calc(5px + 10pt)' }}
       >
         <div className="flex items-center gap-2 px-4 py-3">
           <input
