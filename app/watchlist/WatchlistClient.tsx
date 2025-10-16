@@ -133,11 +133,19 @@ export default function WatchlistClient() {
                       href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
                       className="flex-1 min-w-0"
                     >
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg font-bold text-tv-text">{item.symbol}</h3>
                         <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase">
                           {item.source}
                         </span>
+                        {item.tags?.includes('auto-added') && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            From Chat
+                          </span>
+                        )}
                       </div>
                       {item.price && (
                         <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">

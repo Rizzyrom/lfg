@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireUser, verifyOrigin } from '@/lib/auth'
 import { callOpenAI } from '@/lib/openai'
+import { addTickersToWatchlist } from '@/lib/tickers'
 
 // GET - Fetch messages
 export async function GET(request: NextRequest) {
@@ -137,6 +138,15 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Auto-add tickers mentioned in message to watchlist (fire and forget)
+    addTickersToWatchlist(message, targetGroupId, user.id)
+      .then(result => {
+        if (result.added > 0) {
+          console.log(`Auto-added ${result.added} ticker(s) to watchlist: ${result.tickers.join(', ')}`)
+        }
+      })
+      .catch(err => console.error('Failed to auto-add tickers:', err))
 
     // Check for @lfgent mention
     let agentMessage = null
