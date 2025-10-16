@@ -125,13 +125,16 @@ export default function WatchlistClient() {
               return (
                 <div
                   key={item.id}
-                  className={`card p-4 transition-all hover:shadow-elevation-2 border-[3px] ${
-                    item.price
-                      ? isPositive
-                        ? 'border-tv-up hover:border-tv-up'
-                        : 'border-tv-down hover:border-tv-down'
-                      : 'border-tv-border hover:border-tv-blue'
-                  }`}
+                  className="bg-white rounded-xl p-4 transition-all hover:shadow-elevation-2"
+                  style={{
+                    border: `3px solid ${
+                      item.price
+                        ? isPositive
+                          ? '#10b981'  // tv-up green
+                          : '#ef4444'  // tv-down red
+                        : 'rgba(0, 0, 0, 0.1)'  // neutral gray
+                    }`
+                  }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <Link
