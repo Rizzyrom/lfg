@@ -137,14 +137,14 @@ export default function WatchlistClient() {
                       href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
                       className="flex-1 min-w-0"
                     >
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <div className="flex items-start gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg font-bold text-tv-text">{item.symbol}</h3>
-                        <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase">
+                        <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase self-center">
                           {item.source}
                         </span>
                         {item.mentionCount && item.mentionCount > 0 && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700 font-bold flex items-center gap-1">
-                            #{item.mentionCount}
+                          <span className="text-[0.5rem] leading-none text-red-600 font-bold">
+                            {item.mentionCount}
                           </span>
                         )}
                       </div>
