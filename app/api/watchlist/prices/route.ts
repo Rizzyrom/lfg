@@ -22,19 +22,25 @@ export async function GET() {
     const items = memberships.flatMap((m) => m.group.watchlist)
 
     // Fetch mention counts for each unique symbol/source combination across all groups
-    const groupIds = memberships.map(m => m.groupId)
-    const mentionCounts = await db.tickerMention.findMany({
-      where: {
-        groupId: { in: groupIds }
-      }
-    })
-
-    // Create a map of mention counts by symbol+source+groupId
+    // Gracefully handle if TickerMention table doesn't exist yet
     const mentionMap = new Map<string, number>()
-    mentionCounts.forEach(mention => {
-      const key = `${mention.symbol}-${mention.source}-${mention.groupId}`
-      mentionMap.set(key, mention.count)
-    })
+    try {
+      const groupIds = memberships.map(m => m.groupId)
+      const mentionCounts = await db.tickerMention.findMany({
+        where: {
+          groupId: { in: groupIds }
+        }
+      })
+
+      // Create a map of mention counts by symbol+source+groupId
+      mentionCounts.forEach(mention => {
+        const key = `${mention.symbol}-${mention.source}-${mention.groupId}`
+        mentionMap.set(key, mention.count)
+      })
+    } catch (mentionError) {
+      console.log('Mention tracking not available yet:', mentionError)
+      // Continue without mention counts - table may not exist yet
+    }
 
     // Fetch real-time prices for each item
     const pricesWithData = await Promise.all(
