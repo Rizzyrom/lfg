@@ -3,6 +3,7 @@ import { getUser } from '@/lib/auth'
 import AppShell from '@/components/AppShell'
 import WatchlistRail from '@/components/WatchlistRail'
 import RightRail from '@/components/RightRail'
+import MobileSwipeContainer from '@/components/MobileSwipeContainer'
 import WatchlistClient from './WatchlistClient'
 
 export default async function WatchlistPage() {
@@ -19,7 +20,9 @@ export default async function WatchlistPage() {
       leftDrawerTitle="Watchlist"
       rightDrawerTitle="AI Pulse"
     >
-      <WatchlistClient />
+      <MobileSwipeContainer>
+        <WatchlistClient />
+      </MobileSwipeContainer>
     </AppShell>
   )
 }
