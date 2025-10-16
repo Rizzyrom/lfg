@@ -142,14 +142,6 @@ export default function WatchlistClient() {
                         <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase">
                           {item.source}
                         </span>
-                        {item.tags?.includes('auto-added') && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                            </svg>
-                            From Chat
-                          </span>
-                        )}
                         {item.mentionCount && item.mentionCount > 0 && (
                           <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700 font-bold flex items-center gap-1">
                             #{item.mentionCount}
@@ -161,11 +153,13 @@ export default function WatchlistClient() {
                           <span className="text-base font-mono font-semibold text-tv-text">
                             ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
-                          <div className="flex items-center gap-2 text-sm font-medium">
+                          <div className="flex items-center gap-1 text-sm font-medium">
                             <span className={isPositive24h ? 'text-tv-up' : 'text-tv-down'}>
                               {isPositive24h ? '+' : ''}{change24h.toFixed(2)}%
                             </span>
+                            <span className="text-tv-text-soft text-xs">d</span>
                             <span className="text-tv-text-soft">|</span>
+                            <span className="text-tv-text-soft text-xs">m</span>
                             <span className={isPositive30d ? 'text-tv-up' : 'text-tv-down'}>
                               {isPositive30d ? '+' : ''}{change30d.toFixed(2)}%
                             </span>
