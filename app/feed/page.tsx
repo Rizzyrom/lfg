@@ -21,7 +21,7 @@ export default async function FeedPage() {
       pageTitle="# NEWS"
     >
       <MobileSwipeContainer>
-        <div className="h-[calc(100vh-3.5rem)] overflow-y-auto p-4">
+        <div className="h-[calc(100vh-3.5rem)] overflow-y-auto py-4">
           <UnifiedFeed />
         </div>
       </MobileSwipeContainer>
