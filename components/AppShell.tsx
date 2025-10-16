@@ -68,7 +68,7 @@ export default function AppShell({
     <div className="min-h-screen bg-tv-bg">
       {/* Modern minimal header */}
       <header className="sticky top-0 z-50 bg-tv-panel/80 backdrop-blur-xl border-b border-tv-border elevation-1 safe-area-pt">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-[1920px] mx-auto pl-4 pr-[7px] sm:pl-6 sm:pr-[7px] h-14 flex items-center justify-between">
           {/* Left: Page title */}
           <div className="flex items-center gap-3">
             {pageTitle && (
@@ -115,8 +115,8 @@ export default function AppShell({
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 bg-black flex items-center justify-center">
-                <span className="text-white text-[10px] font-bold leading-none">LFG</span>
+              <div className="w-10 h-10 bg-black flex items-center justify-center">
+                <span className="text-white text-[12.5px] font-bold leading-none">LFG</span>
               </div>
             </button>
 
