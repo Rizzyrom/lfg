@@ -165,7 +165,7 @@ export default function AppShell({
 
       {/* Main layout */}
       <div className="max-w-[1920px] mx-auto">
-        <div className="grid lg:grid-cols-[260px_minmax(0,1fr)_360px] xl:grid-cols-[280px_minmax(0,1fr)_380px] gap-3 sm:gap-4 p-3 sm:p-4 pb-20 lg:pb-4">
+        <div className="grid lg:grid-cols-[260px_minmax(0,1fr)_360px] xl:grid-cols-[280px_minmax(0,1fr)_380px] gap-3 sm:gap-4 p-3 sm:p-4 pb-4">
           {/* Left rail - hidden on mobile */}
           {leftRail && (
             <aside className="hidden lg:block">
@@ -183,66 +183,6 @@ export default function AppShell({
             </aside>
           )}
         </div>
-
-        {/* Mobile bottom nav - only show on mobile */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-tv-panel/95 backdrop-blur-xl border-t border-tv-grid elevation-4 z-50">
-          <div className="flex justify-around items-center h-16 px-1 safe-area-pb">
-            <Link
-              href="/chat"
-              className={`flex flex-col items-center gap-1 px-6 py-2 min-h-[56px] min-w-[72px] rounded-xl transition-all active:scale-90 touch-manipulation ${
-                pathname === '/chat'
-                  ? 'text-tv-blue'
-                  : 'text-tv-text-soft'
-              }`}
-            >
-              <div className={`relative ${pathname === '/chat' ? 'animate-pulse' : ''}`}>
-                <svg className="w-7 h-7" fill={pathname === '/chat' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/chat' ? 0 : 2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                {pathname === '/chat' && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-tv-blue rounded-full shadow-glow-blue" />
-                )}
-              </div>
-              <span className="text-[11px] font-bold">Chat</span>
-            </Link>
-            <Link
-              href="/watchlist"
-              className={`flex flex-col items-center gap-1 px-6 py-2 min-h-[56px] min-w-[72px] rounded-xl transition-all active:scale-90 touch-manipulation ${
-                pathname === '/watchlist'
-                  ? 'text-tv-blue'
-                  : 'text-tv-text-soft'
-              }`}
-            >
-              <div className={`relative ${pathname === '/watchlist' ? 'animate-pulse' : ''}`}>
-                <svg className="w-7 h-7" fill={pathname === '/watchlist' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/watchlist' ? 0 : 2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                {pathname === '/watchlist' && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-tv-blue rounded-full shadow-glow-blue" />
-                )}
-              </div>
-              <span className="text-[11px] font-bold">Watch</span>
-            </Link>
-            <Link
-              href="/feed"
-              className={`flex flex-col items-center gap-1 px-6 py-2 min-h-[56px] min-w-[72px] rounded-xl transition-all active:scale-90 touch-manipulation ${
-                pathname === '/feed'
-                  ? 'text-tv-blue'
-                  : 'text-tv-text-soft'
-              }`}
-            >
-              <div className={`relative ${pathname === '/feed' ? 'animate-pulse' : ''}`}>
-                <svg className="w-7 h-7" fill={pathname === '/feed' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/feed' ? 0 : 2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                {pathname === '/feed' && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-tv-blue rounded-full shadow-glow-blue" />
-                )}
-              </div>
-              <span className="text-[11px] font-bold">Feed</span>
-            </Link>
-          </div>
-        </nav>
       </div>
 
       {/* Mobile Left Drawer (Top Gainers/Losers) */}
