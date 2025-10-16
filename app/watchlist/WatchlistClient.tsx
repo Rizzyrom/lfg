@@ -125,7 +125,13 @@ export default function WatchlistClient() {
               return (
                 <div
                   key={item.id}
-                  className="card p-4 transition-all hover:border-tv-blue hover:shadow-elevation-2"
+                  className={`card p-4 transition-all hover:shadow-elevation-2 border-[3px] ${
+                    item.price
+                      ? isPositive
+                        ? 'border-tv-up hover:border-tv-up'
+                        : 'border-tv-down hover:border-tv-down'
+                      : 'border-tv-border hover:border-tv-blue'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <Link
