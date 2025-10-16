@@ -84,16 +84,19 @@ export default function WatchlistClient() {
   return (
     <div>
       <div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
-          <p className="text-sm text-tv-text-soft mt-1">
-            Click an asset to view details
-          </p>
-        </div>
+        {/* Header with compact search in upper right */}
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
+            <p className="text-sm text-tv-text-soft mt-1">
+              Click an asset to view details
+            </p>
+          </div>
 
-        <div className="card p-4 mb-6">
-          <h2 className="text-base font-semibold text-tv-text mb-4">Add Asset</h2>
-          <AssetSearchBar onAdd={handleAdd} disabled={adding} />
+          {/* Compact search bar - upper right */}
+          <div className="flex-shrink-0 w-64">
+            <AssetSearchBar onAdd={handleAdd} disabled={adding} />
+          </div>
         </div>
 
         <div className="space-y-2">

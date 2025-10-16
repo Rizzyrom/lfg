@@ -62,7 +62,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      items: pricesWithData.filter(item => item.price !== null)
+      items: pricesWithData // Return all items, even without prices
     })
   } catch (error) {
     console.error('Watchlist prices fetch error:', error)

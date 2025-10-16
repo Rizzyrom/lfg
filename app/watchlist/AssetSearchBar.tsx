@@ -107,7 +107,7 @@ export default function AssetSearchBar({ onAdd, disabled }: AssetSearchBarProps)
 
   return (
     <div className="relative" ref={searchRef}>
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <div className="flex-1 relative">
           <input
             type="text"
@@ -116,20 +116,20 @@ export default function AssetSearchBar({ onAdd, disabled }: AssetSearchBarProps)
             onFocus={() => {
               if (results.length > 0) setShowResults(true)
             }}
-            placeholder="Search any stock or crypto..."
-            className="input w-full pr-10"
+            placeholder="Add asset..."
+            className="w-full px-3 py-1.5 pr-10 bg-tv-bg border border-tv-border rounded-lg text-tv-text focus:outline-none focus:border-tv-blue focus:ring-1 focus:ring-tv-blue transition-all text-xs"
             disabled={disabled}
           />
           {loading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="animate-spin h-5 w-5 border-2 border-tv-blue border-t-transparent rounded-full" />
+              <div className="animate-spin h-4 w-4 border-2 border-tv-blue border-t-transparent rounded-full" />
             </div>
           )}
         </div>
         <select
           value={searchType}
           onChange={(e) => setSearchType(e.target.value as 'all' | 'crypto' | 'stock')}
-          className="input"
+          className="px-2 py-1.5 bg-tv-bg border border-tv-border rounded-lg text-tv-text text-xs focus:outline-none focus:border-tv-blue focus:ring-1 focus:ring-tv-blue transition-all cursor-pointer"
           disabled={disabled}
         >
           <option value="all">All</option>

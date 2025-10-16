@@ -141,24 +141,55 @@ export async function fetchCryptoPrice(symbol: string): Promise<{ price: string;
 
 export async function fetchStockPrice(symbol: string): Promise<{ price: string; change24h: string } | null> {
   try {
-    const response = await fetch(
-      `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_API_KEY}`,
-      { next: { revalidate: 30 } } // Cache for 30 seconds
+    const apiKey = process.env.FINNHUB_API_KEY
+
+    // Try Finnhub if API key is available
+    if (apiKey) {
+      const response = await fetch(
+        `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`,
+        { next: { revalidate: 30 } } // Cache for 30 seconds
+      )
+
+      if (response.ok) {
+        const data: StockQuote = await response.json()
+        if (data.c && data.c !== 0) {
+          return {
+            price: data.c.toString(),
+            change24h: data.dp?.toString() || '0'
+          }
+        }
+      }
+    }
+
+    // Fallback to Yahoo Finance (no API key required)
+    console.log(`Using Yahoo Finance fallback for ${symbol}`)
+    const yahooResponse = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`,
+      {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        next: { revalidate: 30 }
+      }
     )
 
-    if (!response.ok) {
-      console.error(`Finnhub API error for ${symbol}:`, response.status)
-      return null
+    if (yahooResponse.ok) {
+      const yahooData = await yahooResponse.json()
+      const quote = yahooData.chart?.result?.[0]
+      const meta = quote?.meta
+      const indicators = quote?.indicators?.quote?.[0]
+
+      if (meta?.regularMarketPrice) {
+        const currentPrice = meta.regularMarketPrice
+        const previousClose = meta.previousClose || meta.chartPreviousClose
+        const change24h = previousClose ? ((currentPrice - previousClose) / previousClose) * 100 : 0
+
+        return {
+          price: currentPrice.toString(),
+          change24h: change24h.toFixed(2)
+        }
+      }
     }
 
-    const data: StockQuote = await response.json()
-
-    if (!data.c || data.c === 0) return null
-
-    return {
-      price: data.c.toString(),
-      change24h: data.dp?.toString() || '0'
-    }
+    return null
   } catch (error) {
     console.error(`Error fetching stock price for ${symbol}:`, error)
     return null
