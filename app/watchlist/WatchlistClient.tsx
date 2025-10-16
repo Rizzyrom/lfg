@@ -71,21 +71,6 @@ export default function WatchlistClient() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Remove this item from watchlist?')) return
-
-    try {
-      const res = await fetch(`/api/watchlist?id=${id}`, {
-        method: 'DELETE',
-      })
-
-      if (res.ok) {
-        await fetchWatchlist()
-      }
-    } catch (error) {
-      console.error('Failed to delete item:', error)
-    }
-  }
 
   return (
     <div>
@@ -132,11 +117,10 @@ export default function WatchlistClient() {
                     }`
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <Link
-                      href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
-                      className="flex-1 min-w-0"
-                    >
+                  <Link
+                    href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
+                    className="block w-full"
+                  >
                       <div className="flex items-start gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg font-bold text-tv-text">{item.symbol}</h3>
                         <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase self-center">
@@ -169,14 +153,7 @@ export default function WatchlistClient() {
                       {!item.price && (
                         <p className="text-sm text-tv-text-soft">Loading...</p>
                       )}
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="px-2 py-1 rounded-lg bg-tv-panel hover:bg-red-50 text-tv-text-soft hover:text-tv-down text-xs font-medium transition-all active:scale-95 flex-shrink-0"
-                    >
-                      ×
-                    </button>
-                  </div>
+                  </Link>
                 </div>
               )
             })
