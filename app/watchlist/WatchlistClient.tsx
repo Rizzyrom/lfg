@@ -88,18 +88,20 @@ export default function WatchlistClient() {
   return (
     <div>
       <div>
-        {/* Header with compact search in upper right */}
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
-            <p className="text-sm text-tv-text-soft mt-1">
-              Click an asset to view details
-            </p>
-          </div>
+        {/* Header with search */}
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
+              <p className="text-sm text-tv-text-soft mt-1">
+                Click an asset to view details
+              </p>
+            </div>
 
-          {/* Compact search bar - upper right */}
-          <div className="flex-shrink-0 w-64">
-            <AssetSearchBar onAdd={handleAdd} disabled={adding} />
+            {/* Compact search bar - stacks on mobile, right side on desktop */}
+            <div className="w-full sm:w-64 sm:flex-shrink-0">
+              <AssetSearchBar onAdd={handleAdd} disabled={adding} />
+            </div>
           </div>
         </div>
 
@@ -121,21 +123,23 @@ export default function WatchlistClient() {
               const isPositive = change >= 0
 
               return (
-                <Link
+                <div
                   key={item.id}
-                  href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
-                  className="w-full card p-4 text-left transition-all cursor-pointer hover:border-tv-blue hover:shadow-elevation-2"
+                  className="card p-4 transition-all hover:border-tv-blue hover:shadow-elevation-2"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link
+                      href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
+                      className="flex-1 min-w-0"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
                         <h3 className="text-lg font-bold text-tv-text">{item.symbol}</h3>
                         <span className="text-xs px-2 py-0.5 rounded bg-tv-chip text-tv-text-soft uppercase">
                           {item.source}
                         </span>
                       </div>
                       {item.price && (
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
                           <span className="text-base font-mono font-semibold text-tv-text">
                             ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
@@ -147,18 +151,15 @@ export default function WatchlistClient() {
                       {!item.price && (
                         <p className="text-sm text-tv-text-soft">Loading...</p>
                       )}
-                    </div>
+                    </Link>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(item.id)
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-tv-down text-xs font-medium transition-all active:scale-95"
+                      onClick={() => handleDelete(item.id)}
+                      className="px-2 py-1 rounded-lg bg-tv-panel hover:bg-red-50 text-tv-text-soft hover:text-tv-down text-xs font-medium transition-all active:scale-95 flex-shrink-0"
                     >
-                      Remove
+                      ×
                     </button>
                   </div>
-                </Link>
+                </div>
               )
             })
           )}
