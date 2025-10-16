@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireUser, verifyOrigin } from '@/lib/auth'
 import { callOpenAI } from '@/lib/openai'
-import { addTickersToWatchlist } from '@/lib/tickers'
+import { addTickersToWatchlist, trackTickerMentions } from '@/lib/tickers'
 
 // GET - Fetch messages
 export async function GET(request: NextRequest) {
@@ -138,6 +138,15 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Track ticker mentions for ranking (fire and forget)
+    trackTickerMentions(message, targetGroupId)
+      .then(count => {
+        if (count > 0) {
+          console.log(`Tracked ${count} ticker mention(s)`)
+        }
+      })
+      .catch(err => console.error('Failed to track ticker mentions:', err))
 
     // Auto-add tickers mentioned in message to watchlist (fire and forget)
     addTickersToWatchlist(message, targetGroupId, user.id)

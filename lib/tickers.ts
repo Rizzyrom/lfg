@@ -35,6 +35,86 @@ export function getTickerSource(symbol: string): 'stock' | 'crypto' {
 }
 
 /**
+ * Track ticker mentions for ranking
+ * Increments mention count and updates lastMentionedAt timestamp
+ */
+export async function trackTickerMentions(
+  message: string,
+  groupId: string
+): Promise<number> {
+  const tickers = extractTickers(message)
+
+  if (tickers.length === 0) {
+    return 0
+  }
+
+  let trackedCount = 0
+
+  for (const ticker of tickers) {
+    try {
+      const source = getTickerSource(ticker)
+      const symbol = ticker.toUpperCase()
+
+      // Upsert: increment count if exists, create new if doesn't
+      await db.tickerMention.upsert({
+        where: {
+          symbol_source_groupId: {
+            symbol,
+            source,
+            groupId,
+          },
+        },
+        update: {
+          count: {
+            increment: 1,
+          },
+          lastMentionedAt: new Date(),
+        },
+        create: {
+          symbol,
+          source,
+          groupId,
+          count: 1,
+          lastMentionedAt: new Date(),
+        },
+      })
+
+      trackedCount++
+      console.log(`Tracked mention for ${ticker} in group ${groupId}`)
+    } catch (error) {
+      console.error(`Failed to track mention for ${ticker}:`, error)
+    }
+  }
+
+  return trackedCount
+}
+
+/**
+ * Clean up mentions older than 21 days
+ * Returns the number of records deleted
+ */
+export async function cleanupOldMentions(): Promise<number> {
+  const twentyOneDaysAgo = new Date()
+  twentyOneDaysAgo.setDate(twentyOneDaysAgo.getDate() - 21)
+
+  try {
+    const result = await db.tickerMention.deleteMany({
+      where: {
+        lastMentionedAt: {
+          lt: twentyOneDaysAgo,
+        },
+      },
+    })
+
+    console.log(`Cleaned up ${result.count} old ticker mentions`)
+    return result.count
+  } catch (error) {
+    console.error('Failed to clean up old mentions:', error)
+    return 0
+  }
+}
+
+/**
  * Add tickers from a message to the group's watchlist
  * Returns the number of tickers successfully added
  */
