@@ -102,6 +102,7 @@ model PriceCache {
   source    String
   price     Decimal
   change24h Decimal?
+  change30d Decimal?
   updatedAt DateTime @default(now())
 
   @@id([symbol, source])
@@ -143,4 +144,15 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model TickerMention {
+  symbol          String
+  source          String
+  groupId         String
+  count           Int      @default(1)
+  lastMentionedAt DateTime @default(now())
+
+  @@id([symbol, source, groupId])
+  @@index([groupId, count])
 }

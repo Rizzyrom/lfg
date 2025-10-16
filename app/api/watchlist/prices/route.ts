@@ -21,6 +21,21 @@ export async function GET() {
 
     const items = memberships.flatMap((m) => m.group.watchlist)
 
+    // Fetch mention counts for each unique symbol/source combination across all groups
+    const groupIds = memberships.map(m => m.groupId)
+    const mentionCounts = await db.tickerMention.findMany({
+      where: {
+        groupId: { in: groupIds }
+      }
+    })
+
+    // Create a map of mention counts by symbol+source+groupId
+    const mentionMap = new Map<string, number>()
+    mentionCounts.forEach(mention => {
+      const key = `${mention.symbol}-${mention.source}-${mention.groupId}`
+      mentionMap.set(key, mention.count)
+    })
+
     // Fetch real-time prices for each item
     const pricesWithData = await Promise.all(
       items.map(async (item) => {
@@ -40,14 +55,20 @@ export async function GET() {
               source: item.source,
               price: priceData.price,
               change24h: priceData.change24h,
+              change30d: priceData.change30d,
             },
             update: {
               price: priceData.price,
               change24h: priceData.change24h,
+              change30d: priceData.change30d,
               updatedAt: new Date(),
             },
           })
         }
+
+        // Get mention count for this item
+        const mentionKey = `${item.symbol}-${item.source}-${item.groupId}`
+        const mentionCount = mentionMap.get(mentionKey) || 0
 
         return {
           id: item.id,
@@ -56,13 +77,23 @@ export async function GET() {
           tags: item.tags,
           price: priceData?.price || null,
           change24h: priceData?.change24h || null,
+          change30d: priceData?.change30d || null,
+          mentionCount,
         }
       })
     )
 
+    // Sort by mention count (descending), then by symbol alphabetically
+    const sortedItems = pricesWithData.sort((a, b) => {
+      if (b.mentionCount !== a.mentionCount) {
+        return b.mentionCount - a.mentionCount
+      }
+      return a.symbol.localeCompare(b.symbol)
+    })
+
     return NextResponse.json({
       success: true,
-      items: pricesWithData // Return all items, even without prices
+      items: sortedItems // Return all items, sorted by mention count
     })
   } catch (error) {
     console.error('Watchlist prices fetch error:', error)

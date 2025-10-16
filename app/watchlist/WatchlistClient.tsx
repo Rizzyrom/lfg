@@ -12,6 +12,8 @@ interface WatchItem {
   tags: string[]
   price?: string | null
   change24h?: string | null
+  change30d?: string | null
+  mentionCount?: number
 }
 
 export default function WatchlistClient() {
@@ -111,8 +113,10 @@ export default function WatchlistClient() {
             </div>
           ) : (
             items.map((item) => {
-              const change = item.change24h ? parseFloat(item.change24h) : 0
-              const isPositive = change >= 0
+              const change24h = item.change24h ? parseFloat(item.change24h) : 0
+              const change30d = item.change30d ? parseFloat(item.change30d) : 0
+              const isPositive24h = change24h >= 0
+              const isPositive30d = change30d >= 0
 
               return (
                 <div
@@ -121,7 +125,7 @@ export default function WatchlistClient() {
                   style={{
                     border: `3px solid ${
                       item.price
-                        ? isPositive
+                        ? isPositive24h
                           ? '#10b981'  // tv-up green
                           : '#ef4444'  // tv-down red
                         : 'rgba(0, 0, 0, 0.1)'  // neutral gray
@@ -146,15 +150,26 @@ export default function WatchlistClient() {
                             From Chat
                           </span>
                         )}
+                        {item.mentionCount && item.mentionCount > 0 && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700 font-bold flex items-center gap-1">
+                            #{item.mentionCount}
+                          </span>
+                        )}
                       </div>
                       {item.price && (
                         <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
                           <span className="text-base font-mono font-semibold text-tv-text">
                             ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
-                          <span className={`text-sm font-medium ${isPositive ? 'text-tv-up' : 'text-tv-down'}`}>
-                            {isPositive ? '+' : ''}{change.toFixed(2)}%
-                          </span>
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <span className={isPositive24h ? 'text-tv-up' : 'text-tv-down'}>
+                              {isPositive24h ? '+' : ''}{change24h.toFixed(2)}%
+                            </span>
+                            <span className="text-tv-text-soft">|</span>
+                            <span className={isPositive30d ? 'text-tv-up' : 'text-tv-down'}>
+                              {isPositive30d ? '+' : ''}{change30d.toFixed(2)}%
+                            </span>
+                          </div>
                         </div>
                       )}
                       {!item.price && (

@@ -94,7 +94,7 @@ async function findCoinId(symbol: string): Promise<string | null> {
   }
 }
 
-export async function fetchCryptoPrice(symbol: string): Promise<{ price: string; change24h: string } | null> {
+export async function fetchCryptoPrice(symbol: string): Promise<{ price: string; change24h: string; change30d: string } | null> {
   try {
     const coinId = await findCoinId(symbol)
 
@@ -109,7 +109,7 @@ export async function fetchCryptoPrice(symbol: string): Promise<{ price: string;
     }
 
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_30d_change=true`,
       {
         headers,
         next: { revalidate: 30 } // Cache for 30 seconds
@@ -131,7 +131,8 @@ export async function fetchCryptoPrice(symbol: string): Promise<{ price: string;
 
     return {
       price: coinData.usd.toString(),
-      change24h: coinData.usd_24h_change?.toString() || '0'
+      change24h: coinData.usd_24h_change?.toString() || '0',
+      change30d: coinData.usd_30d_change?.toString() || '0'
     }
   } catch (error) {
     console.error(`Error fetching crypto price for ${symbol}:`, error)
@@ -139,31 +140,15 @@ export async function fetchCryptoPrice(symbol: string): Promise<{ price: string;
   }
 }
 
-export async function fetchStockPrice(symbol: string): Promise<{ price: string; change24h: string } | null> {
+export async function fetchStockPrice(symbol: string): Promise<{ price: string; change24h: string; change30d: string } | null> {
   try {
     const apiKey = process.env.FINNHUB_API_KEY
 
-    // Try Finnhub if API key is available
-    if (apiKey) {
-      const response = await fetch(
-        `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`,
-        { next: { revalidate: 30 } } // Cache for 30 seconds
-      )
+    // Use Yahoo Finance for comprehensive data (current price + 30-day history)
+    console.log(`Fetching stock data for ${symbol}`)
 
-      if (response.ok) {
-        const data: StockQuote = await response.json()
-        if (data.c && data.c !== 0) {
-          return {
-            price: data.c.toString(),
-            change24h: data.dp?.toString() || '0'
-          }
-        }
-      }
-    }
-
-    // Fallback to Yahoo Finance (no API key required)
-    console.log(`Using Yahoo Finance fallback for ${symbol}`)
-    const yahooResponse = await fetch(
+    // Fetch current price and daily change
+    const yahooCurrentResponse = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`,
       {
         headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -171,20 +156,62 @@ export async function fetchStockPrice(symbol: string): Promise<{ price: string; 
       }
     )
 
-    if (yahooResponse.ok) {
-      const yahooData = await yahooResponse.json()
-      const quote = yahooData.chart?.result?.[0]
-      const meta = quote?.meta
-      const indicators = quote?.indicators?.quote?.[0]
+    // Fetch 30-day historical data
+    const yahoo30dResponse = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1mo`,
+      {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        next: { revalidate: 300 } // Cache for 5 minutes (less frequent updates for historical data)
+      }
+    )
 
-      if (meta?.regularMarketPrice) {
-        const currentPrice = meta.regularMarketPrice
-        const previousClose = meta.previousClose || meta.chartPreviousClose
+    if (yahooCurrentResponse.ok && yahoo30dResponse.ok) {
+      const currentData = await yahooCurrentResponse.json()
+      const historicalData = await yahoo30dResponse.json()
+
+      const currentQuote = currentData.chart?.result?.[0]
+      const currentMeta = currentQuote?.meta
+      const historicalQuote = historicalData.chart?.result?.[0]
+
+      if (currentMeta?.regularMarketPrice) {
+        const currentPrice = currentMeta.regularMarketPrice
+        const previousClose = currentMeta.previousClose || currentMeta.chartPreviousClose
         const change24h = previousClose ? ((currentPrice - previousClose) / previousClose) * 100 : 0
+
+        // Calculate 30-day change
+        let change30d = 0
+        const closePrices = historicalQuote?.indicators?.quote?.[0]?.close
+        if (closePrices && closePrices.length > 0) {
+          // Get the first valid closing price from 30 days ago
+          const price30dAgo = closePrices.find((p: number | null) => p !== null && p !== undefined)
+          if (price30dAgo) {
+            change30d = ((currentPrice - price30dAgo) / price30dAgo) * 100
+          }
+        }
 
         return {
           price: currentPrice.toString(),
-          change24h: change24h.toFixed(2)
+          change24h: change24h.toFixed(2),
+          change30d: change30d.toFixed(2)
+        }
+      }
+    }
+
+    // Fallback to Finnhub if Yahoo Finance fails (but without 30-day data)
+    if (apiKey) {
+      const response = await fetch(
+        `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`,
+        { next: { revalidate: 30 } }
+      )
+
+      if (response.ok) {
+        const data: StockQuote = await response.json()
+        if (data.c && data.c !== 0) {
+          return {
+            price: data.c.toString(),
+            change24h: data.dp?.toString() || '0',
+            change30d: '0' // Finnhub doesn't provide 30-day change
+          }
         }
       }
     }
