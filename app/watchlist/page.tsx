@@ -19,6 +19,7 @@ export default async function WatchlistPage() {
       rightRail={<RightRail />}
       leftDrawerTitle="Watchlist"
       rightDrawerTitle="AI Pulse"
+      pageTitle="$assets"
     >
       <MobileSwipeContainer>
         <WatchlistClient />

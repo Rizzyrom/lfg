@@ -11,6 +11,7 @@ interface AppShellProps {
   rightRail?: ReactNode
   leftDrawerTitle?: string
   rightDrawerTitle?: string
+  pageTitle?: string
 }
 
 export default function AppShell({
@@ -18,7 +19,8 @@ export default function AppShell({
   leftRail,
   rightRail,
   leftDrawerTitle = 'Market Trends',
-  rightDrawerTitle = 'AI Analysis'
+  rightDrawerTitle = 'AI Analysis',
+  pageTitle
 }: AppShellProps) {
   const pathname = usePathname()
   const [showLeftDrawer, setShowLeftDrawer] = useState(false)
@@ -67,42 +69,45 @@ export default function AppShell({
       {/* Modern minimal header */}
       <header className="sticky top-0 z-50 bg-tv-panel/80 backdrop-blur-xl border-b border-tv-border elevation-1 safe-area-pt">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          {/* Left: Main navigation - desktop only */}
-          <nav className="hidden md:flex items-center gap-1">
-            <Link
-              href="/chat"
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                pathname === '/chat'
-                  ? 'bg-tv-blue text-white'
-                  : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-              }`}
-            >
-              Chat
-            </Link>
-            <Link
-              href="/watchlist"
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                pathname === '/watchlist'
-                  ? 'bg-tv-blue text-white'
-                  : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-              }`}
-            >
-              Watchlist
-            </Link>
-            <Link
-              href="/feed"
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                pathname === '/feed'
-                  ? 'bg-tv-blue text-white'
-                  : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
-              }`}
-            >
-              Feed
-            </Link>
-          </nav>
-
-          {/* Mobile spacer */}
-          <div className="md:hidden" />
+          {/* Left: Page title */}
+          <div className="flex items-center gap-3">
+            {pageTitle && (
+              <h1 className="text-lg font-bold text-tv-text">{pageTitle}</h1>
+            )}
+            {/* Desktop navigation */}
+            <nav className="hidden md:flex items-center gap-1 ml-4">
+              <Link
+                href="/chat"
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  pathname === '/chat'
+                    ? 'bg-tv-blue text-white'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+                }`}
+              >
+                Chat
+              </Link>
+              <Link
+                href="/watchlist"
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  pathname === '/watchlist'
+                    ? 'bg-tv-blue text-white'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+                }`}
+              >
+                Watchlist
+              </Link>
+              <Link
+                href="/feed"
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  pathname === '/feed'
+                    ? 'bg-tv-blue text-white'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+                }`}
+              >
+                Feed
+              </Link>
+            </nav>
+          </div>
 
           {/* Right: LFG Logo with dropdown menu */}
           <div className="relative" ref={menuRef}>

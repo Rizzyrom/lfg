@@ -18,6 +18,7 @@ export default async function FeedPage() {
       rightRail={<RightRail />}
       leftDrawerTitle="Top Gainers & Losers"
       rightDrawerTitle="AI Pulse"
+      pageTitle="#news"
     >
       <MobileSwipeContainer>
         <div className="h-[calc(100vh-3.5rem)] overflow-y-auto p-4">
