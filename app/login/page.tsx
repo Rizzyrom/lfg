@@ -32,7 +32,7 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (res.ok) {
-        router.push('/feed')
+        router.push('/chat')
       } else {
         setError(data.error || 'Authentication failed')
       }
