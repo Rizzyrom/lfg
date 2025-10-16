@@ -88,18 +88,10 @@ export default function WatchlistClient() {
   return (
     <div>
       <div>
-        {/* Header with search */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-tv-text">Watchlist</h1>
-              <p className="text-sm text-tv-text-soft mt-1">
-                Click an asset to view details
-              </p>
-            </div>
-
-            {/* Compact search bar - stacks on mobile, right side on desktop */}
-            <div className="w-full sm:w-64 sm:flex-shrink-0">
+        {/* Search bar */}
+        <div className="mb-6">
+          <div className="flex justify-end">
+            <div className="w-full sm:w-64">
               <AssetSearchBar onAdd={handleAdd} disabled={adding} />
             </div>
           </div>
