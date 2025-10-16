@@ -4,8 +4,8 @@
   "description": "Real-time crypto and stock market community platform",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#131722",
-  "theme_color": "#131722",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "icons": [
     {
