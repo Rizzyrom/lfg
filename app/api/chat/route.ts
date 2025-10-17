@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireUser, verifyOrigin } from '@/lib/auth'
 import { callOpenAI } from '@/lib/openai'
 import { addTickersToWatchlist, trackTickerMentions } from '@/lib/tickers'
+import { executeCommand } from '@/lib/commands/exec'
 
 // GET - Fetch messages
 export async function GET(request: NextRequest) {
@@ -119,6 +120,44 @@ export async function POST(request: NextRequest) {
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this group' }, { status: 403 })
+    }
+
+    // Check if this is a slash command
+    if (message.trim().startsWith('/')) {
+      const result = await executeCommand({
+        groupId: targetGroupId,
+        userId: user.id,
+        raw: message.trim(),
+      })
+
+      // Create a system message with the command result
+      const systemMessage = await db.message.create({
+        data: {
+          groupId: targetGroupId,
+          senderId: user.id,
+          ciphertext: `[System] ${result.message}${result.detail ? '\n' + result.detail : ''}`,
+          mediaPtr: null,
+        },
+        include: {
+          sender: {
+            select: {
+              username: true,
+            },
+          },
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: {
+          id: systemMessage.id,
+          senderId: systemMessage.senderId,
+          username: systemMessage.sender.username,
+          ciphertext: systemMessage.ciphertext,
+          mediaPtr: systemMessage.mediaPtr,
+          createdAt: systemMessage.createdAt.toISOString(),
+        },
+      })
     }
 
     // Create message
