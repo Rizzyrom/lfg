@@ -1,34 +1,16 @@
 import { NextResponse } from 'next/server'
 
-// Top stock subreddits
-const STOCK_SUBREDDITS = [
+// Top stock and crypto subreddits as requested
+const SUBREDDITS = [
   'wallstreetbets',
-  'stocks',
   'investing',
   'StockMarket',
-  'pennystocks',
-  'AlgoTrading',
-  'ValueInvesting',
-  'DueDiligence',
-  'UndervaluedStonks',
-  'trading'
-]
-
-// Top crypto subreddits
-const CRYPTO_SUBREDDITS = [
+  'options',
+  'algotrading',
+  'superstonk',
   'CryptoCurrency',
   'CryptoMarkets',
-  'Altcoin',
-  'CryptoTechnology',
-  'CryptoMoonShots',
-  'NFT',
-  'SatoshiStreetBets',
-  'defi',
-  'Crypto_General',
-  'crypto'
 ]
-
-const SUBREDDITS = [...STOCK_SUBREDDITS, ...CRYPTO_SUBREDDITS]
 
 interface RedditPost {
   id: string
@@ -44,47 +26,78 @@ interface RedditPost {
   postHint?: string
 }
 
-// Generate mock fallback posts when Reddit is unavailable
-function generateFallbackPosts(): RedditPost[] {
-  const mockPosts = [
-    { title: 'Market Analysis: Tech stocks showing strength', subreddit: 'stocks', score: 245 },
-    { title: 'DD on emerging AI companies', subreddit: 'wallstreetbets', score: 189 },
-    { title: 'Bitcoin breaking resistance levels', subreddit: 'CryptoCurrency', score: 567 },
-    { title: 'Value investing opportunities in 2025', subreddit: 'investing', score: 134 },
-    { title: 'Earnings report preview: What to watch', subreddit: 'StockMarket', score: 98 },
-  ]
+// Cache for Reddit OAuth token
+let cachedToken: { access_token: string; expires_at: number } | null = null
 
-  return mockPosts.map((post, i) => ({
-    id: `fallback-${i}`,
-    title: post.title,
-    author: 'AutoPost',
-    subreddit: post.subreddit,
-    score: post.score,
-    numComments: Math.floor(post.score / 5),
-    url: `https://reddit.com/r/${post.subreddit}`,
-    permalink: `https://reddit.com/r/${post.subreddit}`,
-    created: Date.now() / 1000 - (i * 3600),
-  }))
+// Get Reddit OAuth token
+async function getRedditToken(): Promise<string | null> {
+  // Return cached token if still valid
+  if (cachedToken && cachedToken.expires_at > Date.now()) {
+    return cachedToken.access_token
+  }
+
+  const clientId = process.env.REDDIT_CLIENT_ID
+  const clientSecret = process.env.REDDIT_CLIENT_SECRET
+
+  if (!clientId || !clientSecret) {
+    console.warn('Reddit API credentials not configured')
+    return null
+  }
+
+  try {
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+    const response = await fetch('https://www.reddit.com/api/v1/access_token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'LFG:v1.0.0 (by /u/LFGmarketpulse)',
+      },
+      body: 'grant_type=client_credentials',
+    })
+
+    if (!response.ok) {
+      console.error('Reddit OAuth failed:', response.status, await response.text())
+      return null
+    }
+
+    const data = await response.json()
+    cachedToken = {
+      access_token: data.access_token,
+      expires_at: Date.now() + (data.expires_in * 1000) - 60000, // Refresh 1 min before expiry
+    }
+
+    console.log('Reddit OAuth token obtained')
+    return cachedToken.access_token
+  } catch (error) {
+    console.error('Reddit OAuth error:', error)
+    return null
+  }
 }
 
 export async function GET() {
   try {
+    const token = await getRedditToken()
     const allPosts: RedditPost[] = []
-    let successfulFetches = 0
 
-    // Fetch hot posts from multiple subreddits concurrently
-    const fetchPromises = SUBREDDITS.slice(0, 10).map(async (subreddit) => {
+    // Fetch from all requested subreddits
+    const fetchPromises = SUBREDDITS.map(async (subreddit) => {
       try {
-        const response = await fetch(
-          `https://old.reddit.com/r/${subreddit}/hot/.json?limit=5`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'application/json',
-            },
-            next: { revalidate: 180 }, // Cache for 3 minutes
-          }
-        )
+        const url = `https://oauth.reddit.com/r/${subreddit}/hot?limit=10`
+        const headers: HeadersInit = {
+          'User-Agent': 'LFG:v1.0.0 (by /u/LFGmarketpulse)',
+          'Accept': 'application/json',
+        }
+
+        // Use OAuth if available, otherwise fallback to public API
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+
+        const response = await fetch(url, {
+          headers,
+          next: { revalidate: 120 }, // Cache for 2 minutes
+        })
 
         if (!response.ok) {
           console.warn(`Failed to fetch r/${subreddit}: ${response.status}`)
@@ -92,23 +105,24 @@ export async function GET() {
         }
 
         const data = await response.json()
-        successfulFetches++
 
-        return data.data.children.map((child: any) => ({
-          id: child.data.id,
-          title: child.data.title,
-          author: child.data.author,
-          subreddit: child.data.subreddit,
-          score: child.data.score,
-          numComments: child.data.num_comments,
-          url: child.data.url,
-          permalink: `https://reddit.com${child.data.permalink}`,
-          created: child.data.created_utc,
-          thumbnail: child.data.thumbnail !== 'self' && child.data.thumbnail !== 'default'
-            ? child.data.thumbnail
-            : undefined,
-          postHint: child.data.post_hint,
-        }))
+        return data.data.children
+          .filter((child: any) => !child.data.stickied) // Filter out stickied posts
+          .map((child: any) => ({
+            id: child.data.id,
+            title: child.data.title,
+            author: child.data.author,
+            subreddit: child.data.subreddit,
+            score: child.data.score,
+            numComments: child.data.num_comments,
+            url: child.data.url,
+            permalink: `https://reddit.com${child.data.permalink}`,
+            created: child.data.created_utc,
+            thumbnail: child.data.thumbnail !== 'self' && child.data.thumbnail !== 'default'
+              ? child.data.thumbnail
+              : undefined,
+            postHint: child.data.post_hint,
+          }))
       } catch (err) {
         console.warn(`Error fetching r/${subreddit}:`, err)
         return []
@@ -118,38 +132,27 @@ export async function GET() {
     const results = await Promise.all(fetchPromises)
     results.forEach(posts => allPosts.push(...posts))
 
-    // If no posts fetched, use fallback
-    if (allPosts.length === 0) {
-      console.warn('Reddit API unavailable, using fallback posts')
-      return NextResponse.json({
-        success: true,
-        posts: generateFallbackPosts(),
-        fallback: true,
-        timestamp: new Date().toISOString(),
-      })
-    }
-
-    // Sort by created time (most recent first) and take top 30
+    // Sort by score and recency (weighted combination)
     const topPosts = allPosts
-      .sort((a, b) => b.created - a.created)
-      .slice(0, 30)
+      .sort((a, b) => {
+        const aScore = a.score + (a.created * 0.01) // Weight recent posts slightly
+        const bScore = b.score + (b.created * 0.01)
+        return bScore - aScore
+      })
+      .slice(0, 40)
 
-    console.log(`Fetched ${topPosts.length} Reddit posts from ${successfulFetches}/${SUBREDDITS.slice(0, 10).length} subreddits`)
+    console.log(`Fetched ${topPosts.length} Reddit posts from ${SUBREDDITS.length} subreddits`)
 
     return NextResponse.json({
       success: true,
       posts: topPosts,
-      fallback: false,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error('Reddit fetch error:', error)
-    // Return fallback on error
-    return NextResponse.json({
-      success: true,
-      posts: generateFallbackPosts(),
-      fallback: true,
-      timestamp: new Date().toISOString(),
-    })
+    return NextResponse.json(
+      { error: 'Failed to fetch Reddit posts' },
+      { status: 500 }
+    )
   }
 }

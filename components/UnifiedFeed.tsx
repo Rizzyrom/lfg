@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { TrendingUp, TrendingDown, ExternalLink, ThumbsUp, MessageCircle, Share2, Newspaper } from 'lucide-react'
 
 interface NewsArticle {
@@ -19,6 +19,7 @@ interface RedditPost {
   subreddit: string
   score: number
   numComments: number
+  url: string
   permalink: string
   created: number
 }
@@ -52,19 +53,15 @@ export default function UnifiedFeed() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'social' | 'news' | 'market'>('all')
+  const [displayCount, setDisplayCount] = useState(15) // Initial load: 15 items
 
-  useEffect(() => {
-    fetchAllFeeds()
-    const interval = setInterval(fetchAllFeeds, 60000) // Refresh every minute
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchAllFeeds = async () => {
+  const fetchAllFeeds = useCallback(async () => {
     try {
+      // Fetch feeds in parallel with optimized limits
       const [newsRes, redditRes, twitterRes] = await Promise.all([
-        fetch('/api/news'),
-        fetch('/api/social/reddit'),
-        fetch('/api/social/twitter'),
+        fetch('/api/news', { next: { revalidate: 180 } }),
+        fetch('/api/social/reddit', { next: { revalidate: 120 } }),
+        fetch('/api/social/twitter', { next: { revalidate: 120 } }),
       ])
 
       const [newsData, redditData, twitterData] = await Promise.all([
@@ -75,9 +72,9 @@ export default function UnifiedFeed() {
 
       const items: FeedItem[] = []
 
-      // Add news articles
+      // Add news articles (limit to 15 for performance)
       if (newsData.articles) {
-        newsData.articles.slice(0, 10).forEach((article: NewsArticle) => {
+        newsData.articles.slice(0, 15).forEach((article: NewsArticle) => {
           items.push({
             type: 'news',
             timestamp: new Date(article.publishedAt).getTime(),
@@ -86,9 +83,9 @@ export default function UnifiedFeed() {
         })
       }
 
-      // Add Reddit posts
+      // Add Reddit posts (limit to 20)
       if (redditData.posts) {
-        redditData.posts.slice(0, 8).forEach((post: RedditPost) => {
+        redditData.posts.slice(0, 20).forEach((post: RedditPost) => {
           items.push({
             type: 'reddit',
             timestamp: post.created * 1000,
@@ -97,9 +94,9 @@ export default function UnifiedFeed() {
         })
       }
 
-      // Add tweets
+      // Add tweets (limit to 10)
       if (twitterData.tweets) {
-        twitterData.tweets.slice(0, 8).forEach((tweet: Tweet) => {
+        twitterData.tweets.slice(0, 10).forEach((tweet: Tweet) => {
           items.push({
             type: 'twitter',
             timestamp: new Date(tweet.createdAt).getTime(),
@@ -117,7 +114,14 @@ export default function UnifiedFeed() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchAllFeeds()
+    // Increased interval to 3 minutes for better performance
+    const interval = setInterval(fetchAllFeeds, 180000)
+    return () => clearInterval(interval)
+  }, [fetchAllFeeds])
 
   const getTimeAgo = (timestamp: number) => {
     const now = Date.now()
@@ -136,13 +140,26 @@ export default function UnifiedFeed() {
     return num.toString()
   }
 
-  const filteredItems = feedItems.filter((item) => {
-    if (filter === 'all') return true
-    if (filter === 'social') return item.type === 'reddit' || item.type === 'twitter'
-    if (filter === 'news') return item.type === 'news'
-    if (filter === 'market') return item.type === 'gainer' || item.type === 'loser'
-    return true
-  })
+  // Memoize filtered items for performance
+  const filteredItems = useMemo(() => {
+    return feedItems.filter((item) => {
+      if (filter === 'all') return true
+      if (filter === 'social') return item.type === 'reddit' || item.type === 'twitter'
+      if (filter === 'news') return item.type === 'news'
+      if (filter === 'market') return item.type === 'gainer' || item.type === 'loser'
+      return true
+    })
+  }, [feedItems, filter])
+
+  // Display items with lazy loading
+  const displayedItems = useMemo(() =>
+    filteredItems.slice(0, displayCount),
+    [filteredItems, displayCount]
+  )
+
+  const loadMore = useCallback(() => {
+    setDisplayCount(prev => Math.min(prev + 10, filteredItems.length))
+  }, [filteredItems.length])
 
   const renderFeedItem = (item: FeedItem) => {
     switch (item.type) {
@@ -318,7 +335,17 @@ export default function UnifiedFeed() {
             <p className="text-tv-text-soft">No feed items available at the moment.</p>
           </div>
         ) : (
-          filteredItems.map((item) => renderFeedItem(item))
+          <>
+            {displayedItems.map((item) => renderFeedItem(item))}
+            {displayCount < filteredItems.length && (
+              <button
+                onClick={loadMore}
+                className="w-full py-3 px-4 bg-tv-chip hover:bg-tv-hover rounded-lg text-tv-text font-bold transition-all"
+              >
+                Load More ({filteredItems.length - displayCount} remaining)
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

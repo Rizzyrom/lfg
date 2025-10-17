@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import Link from 'next/link'
 import SkeletonRow from '@/components/SkeletonRow'
 import AssetSearchBar from './AssetSearchBar'
@@ -21,16 +21,11 @@ export default function WatchlistClient() {
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
 
-  useEffect(() => {
-    fetchWatchlist()
-    // Auto-refresh prices every 30 seconds
-    const interval = setInterval(fetchWatchlist, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchWatchlist = async () => {
+  const fetchWatchlist = useCallback(async () => {
     try {
-      const res = await fetch('/api/watchlist/prices')
+      const res = await fetch('/api/watchlist/prices', {
+        next: { revalidate: 60 }, // Cache for 1 minute
+      })
       if (res.ok) {
         const data = await res.json()
         setItems(data.items || [])
@@ -40,7 +35,14 @@ export default function WatchlistClient() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchWatchlist()
+    // Optimized: refresh every 60 seconds instead of 30
+    const interval = setInterval(fetchWatchlist, 60000)
+    return () => clearInterval(interval)
+  }, [fetchWatchlist])
 
   const handleAdd = async (symbol: string, source: 'crypto' | 'stock') => {
     if (!symbol.trim()) return
@@ -72,9 +74,15 @@ export default function WatchlistClient() {
   }
 
 
-  // Separate items into stocks and crypto
-  const stockItems = items.filter(item => item.source === 'stock')
-  const cryptoItems = items.filter(item => item.source === 'crypto')
+  // Memoize separated items for performance
+  const stockItems = useMemo(() =>
+    items.filter(item => item.source === 'stock'),
+    [items]
+  )
+  const cryptoItems = useMemo(() =>
+    items.filter(item => item.source === 'crypto'),
+    [items]
+  )
 
   // Render asset bubble component
   const renderAssetBubble = (item: WatchItem) => {

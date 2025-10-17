@@ -85,7 +85,8 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
 
   useEffect(() => {
     fetchMessages()
-    const interval = setInterval(fetchMessages, 3000)
+    // Optimized: Increased polling interval to 5 seconds
+    const interval = setInterval(fetchMessages, 5000)
     return () => clearInterval(interval)
   }, [fetchMessages])
 
