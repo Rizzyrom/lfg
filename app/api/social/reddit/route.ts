@@ -51,7 +51,7 @@ async function getRedditToken(): Promise<string | null> {
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'LFG:v1.0.0 (by /u/LFGmarketpulse)',
+        'User-Agent': 'LFG:v1.0.0 (by /u/LFGapp)',
       },
       body: 'grant_type=client_credentials',
     })
@@ -85,7 +85,7 @@ export async function GET() {
       try {
         const url = `https://oauth.reddit.com/r/${subreddit}/hot?limit=10`
         const headers: HeadersInit = {
-          'User-Agent': 'LFG:v1.0.0 (by /u/LFGmarketpulse)',
+          'User-Agent': 'LFG:v1.0.0 (by /u/LFGapp)',
           'Accept': 'application/json',
         }
 

@@ -172,3 +172,62 @@ model TweetSnapshot {
   @@index([isAvailable])
   @@index([validatedAt])
 }
+
+// Chat Enhancement Models
+model SystemEvent {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  command   String
+  args      Json?
+  status    String   @default("ok")
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([groupId, createdAt])
+}
+
+model ChatContextSetting {
+  groupId         String   @id
+  contextEnabled  Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+model SocialFeedSource {
+  id         String   @id @default(cuid())
+  groupId    String
+  platform   String   // "x" or "reddit"
+  handle     String
+  platformId String?
+  addedById  String
+  addedAt    DateTime @default(now())
+
+  @@unique([groupId, platform, handle])
+  @@index([groupId])
+}
+
+model ChatAlert {
+  id          String   @id @default(cuid())
+  groupId     String
+  userId      String
+  alertType   String   // "price" or "keyword"
+  targetSymbol String?
+  targetKeyword String?
+  threshold   Decimal?
+  direction   String?  // "above" or "below"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([groupId, isActive])
+  @@index([userId])
+}
+
+model ChatPin {
+  id        String   @id @default(cuid())
+  groupId   String
+  messageId String   @unique
+  pinnedBy  String
+  pinnedAt  DateTime @default(now())
+
+  @@index([groupId, pinnedAt])
+}

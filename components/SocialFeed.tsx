@@ -58,8 +58,12 @@ export default function SocialFeed() {
     try {
       const res = await fetch('/api/social/twitter')
       const data = await res.json()
+      console.log('SocialFeed - Twitter API response:', data)
       if (data.success) {
+        console.log('SocialFeed - Setting tweets:', data.tweets.length)
         setTweets(data.tweets)
+      } else {
+        console.log('SocialFeed - No tweets or failed:', data)
       }
     } catch (error) {
       console.error('Failed to fetch Twitter:', error)

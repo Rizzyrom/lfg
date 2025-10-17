@@ -1,6 +1,7 @@
 {
   "name": "lfg",
   "version": "0.1.0",
+  "description": "LFG - Market Community Platform",
   "private": true,
   "scripts": {
     "dev": "next dev",

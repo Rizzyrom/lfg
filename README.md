@@ -10,6 +10,11 @@ A private, invite-only market community platform built with Next.js 14, featurin
 - **Real-Time Chat**: E2EE-ready WebSocket chat (requires separate WS server)
 - **AI Pulse**: Generate market summaries from public headlines (LLM-powered)
 - **n8n Integration**: Refresh market data via webhook
+- **Chat Commands**: Slash commands for quick actions (/help, /analyze, /alert, etc.)
+- **AI Agent**: Ask questions with @agent or @chat mentions
+- **Auto-Subscribe**: Automatically follow X/Reddit accounts shared in chat
+- **Quick Tagging**: Long-press attachments to tag as $ (Market) or # (News)
+- **Alerts**: Price and keyword alerts for symbols
 
 ## Tech Stack
 
@@ -52,16 +57,23 @@ Required variables:
 - `APP_WEBHOOK_SECRET`: Random 32-character secret for inbound webhooks
 - `ALLOWED_ORIGINS`: Comma-separated list of allowed origins (e.g., `http://localhost:3000`)
 
-Optional (for AI Pulse):
-- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+Optional (for AI features):
+- `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`: For AI Pulse and Agent Q&A
+- `LLM_PROVIDER`: Set to `openai` or `anthropic` (default: `openai`)
+- `X_BEARER_TOKEN`: Twitter/X API bearer token for handle validation and whois command
+  - Get from: https://developer.twitter.com/en/portal/dashboard
+  - Required for: `/whois @handle` command and auto-subscribe validation
 
 ### 3. Database Setup
 
-Run Prisma migrations:
+Run Prisma migrations and apply chat enhancements:
 
 ```bash
 npx prisma migrate dev --name init
 npx prisma generate
+
+# Apply chat enhancements migration (if using Supabase or raw SQL)
+psql $DATABASE_URL < supabase/migrations/20250117_chat_enhancements.sql
 ```
 
 ### 4. Create First Admin User
@@ -141,6 +153,64 @@ Click the **Refresh** button in the top bar to trigger the n8n webhook. The webh
 2. Navigate to **Chat** tab
 3. Send encrypted messages to your group
 
+### Chat Commands
+
+Type `/` to see available commands:
+
+- **`/help`** - List all available commands
+- **`/summarize [N]`** - Summarize last N messages (default: 100)
+- **`/analyze [symbol|url]`** - Analyze a ticker (e.g., TSLA) or URL
+- **`/alert [SYMBOL] [>PRICE|<PRICE|keyword:WORD]`** - Create price/keyword alert
+  - Examples: `/alert BTC >50000`, `/alert TSLA keyword:earnings`
+- **`/pin`** - Pin the selected message
+- **`/snapshot [N]`** - Save last N messages as a feed note
+- **`/whois [@handle|r/sub]`** - Lookup X/Reddit account and auto-subscribe
+  - Examples: `/whois @elonmusk`, `/whois r/wallstreetbets`
+- **`/feed refresh`** - Trigger manual feed refresh via n8n
+- **`/context on|off`** - Toggle chat memory for AI agent
+- **`/ask <question>`** - Ask the AI agent a question
+
+### AI Agent
+
+Ask questions using mentions:
+
+- `@agent what happened to NVDA today?`
+- `@chat summarize the sentiment on BTC`
+
+The agent uses:
+- Recent chat history (if context is enabled via `/context on`)
+- Public feed items (news, market data)
+- Your watchlist data
+
+**Privacy**: Use `/context off` to restrict the agent to public data only (no chat history).
+
+### Auto-Subscribe to Social Accounts
+
+Simply paste X (Twitter) or Reddit links in chat:
+
+```
+Check this out: https://x.com/elonmusk/status/123456789
+Interesting discussion: https://reddit.com/r/wallstreetbets
+```
+
+The system will:
+1. Detect and validate the account
+2. Auto-subscribe your group to that source
+3. Show a toast notification: "Added @elonmusk to sources"
+
+You can also manually subscribe using `/whois @handle`.
+
+### Long-Press Attachment Tagging
+
+On messages with images, videos, or documents:
+
+1. **Mobile**: Long-press the attachment (0.7s)
+2. **Desktop**: Right-click the attachment
+3. Select **$ Market** or **# News**
+4. The message is tagged and added to your public feed as a snapshot
+
+This is useful for quickly categorizing shared charts, screenshots, or articles.
+
 ## API Routes
 
 | Route | Method | Description |
@@ -156,6 +226,10 @@ Click the **Refresh** button in the top bar to trigger the n8n webhook. The webh
 | `/api/price-cache` | GET | Get cached prices |
 | `/api/cache/upsert` | POST | Upsert prices (from n8n) |
 | `/api/pulse/public` | POST | Generate AI summary |
+| `/api/commands` | POST | Execute chat command |
+| `/api/agent/ask` | POST | Ask AI agent a question |
+| `/api/chat/action` | POST | Tag message attachment |
+| `/api/social/subscribe` | POST | Subscribe to X/Reddit source |
 
 ## Deployment
 
