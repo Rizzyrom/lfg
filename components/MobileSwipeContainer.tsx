@@ -40,12 +40,12 @@ export default function MobileSwipeContainer({ children }: MobileSwipeContainerP
     let targetIndex = currentIndex
 
     // Swipe left = next page (show page to the right)
-    if (deltaX < -50 && currentIndex < PAGES.length - 1) {
+    if (deltaX < -125 && currentIndex < PAGES.length - 1) {
       targetIndex = currentIndex + 1
       setDirection(-1)
     }
     // Swipe right = previous page (show page to the left)
-    else if (deltaX > 50 && currentIndex > 0) {
+    else if (deltaX > 125 && currentIndex > 0) {
       targetIndex = currentIndex - 1
       setDirection(1)
     }
