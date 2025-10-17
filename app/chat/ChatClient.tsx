@@ -5,7 +5,7 @@ import Message from '@/components/Message'
 import MentionAutocomplete from '@/components/MentionAutocomplete'
 import Toast from '@/components/Toast'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
-import { Paperclip, X, FileIcon, Send, MessageCircle } from 'lucide-react'
+import { Paperclip, X, FileIcon, Send, MessageCircle, DollarSign } from 'lucide-react'
 
 interface Reaction {
   id: string
@@ -485,6 +485,20 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
             aria-label="Attach file"
           >
             <Paperclip className="w-5 h-5 text-tv-text-soft" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setInput(prev => prev + '$')
+              inputRef.current?.focus()
+            }}
+            className="p-3 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
+            disabled={sending || uploading}
+            aria-label="Insert ticker symbol"
+            title="Insert $ for ticker"
+          >
+            <DollarSign className="w-5 h-5 text-tv-green" />
           </button>
 
           <div className="flex-1 min-w-0">
