@@ -2,9 +2,10 @@ import type { CommandContext, CommandResult } from '../types';
 import { createClient } from '@/lib/supabase/server';
 
 export async function handlePin(
-  ctx: CommandContext
+  ctx: CommandContext,
+  args: string[]
 ): Promise<CommandResult> {
-  const messageId = ctx.args[0];
+  const messageId = args[0];
 
   if (!messageId) {
     return {

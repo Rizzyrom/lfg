@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { validateSocialSource } from '../../social/normalize';
 
 export async function handleWhois(
-  ctx: CommandContext
+  ctx: CommandContext,
+  args: string[]
 ): Promise<CommandResult> {
-  const input = ctx.args[0];
+  const input = args[0];
 
   if (!input) {
     return {

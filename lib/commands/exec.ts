@@ -158,30 +158,30 @@ export async function executeCommand(
         break;
       case 'summarize':
       case 'sum':
-        result = await handlers.handleSummarize(ctx);
+        result = await handlers.handleSummarize(ctx, parsed.args);
         break;
       case 'analyze':
       case 'a':
         result = await handlers.handleAnalyze(ctx, parsed.args);
         break;
       case 'alert':
-        result = await handlers.handleAlert(ctx);
+        result = await handlers.handleAlert(ctx, parsed.args);
         break;
       case 'pin':
-        result = await handlers.handlePin(ctx);
+        result = await handlers.handlePin(ctx, parsed.args);
         break;
       case 'snapshot':
       case 'snap':
-        result = await handlers.handleSnapshot(ctx);
+        result = await handlers.handleSnapshot(ctx, parsed.args);
         break;
       case 'whois':
-        result = await handlers.handleWhois(ctx);
+        result = await handlers.handleWhois(ctx, parsed.args);
         break;
       case 'feed':
         result = await handlers.handleFeed(ctx, parsed.args);
         break;
       case 'context':
-        result = await handlers.handleContext(ctx);
+        result = await handlers.handleContext(ctx, parsed.args);
         break;
       case 'ask':
       case 'q':

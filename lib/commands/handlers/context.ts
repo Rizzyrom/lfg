@@ -2,9 +2,10 @@ import type { CommandContext, CommandResult } from '../types';
 import { createClient } from '@/lib/supabase/server';
 
 export async function handleContext(
-  ctx: CommandContext
+  ctx: CommandContext,
+  args: string[]
 ): Promise<CommandResult> {
-  const action = ctx.args[0]; // 'on' or 'off'
+  const action = args[0]; // 'on' or 'off'
 
   if (!action || (action !== 'on' && action !== 'off')) {
     return {

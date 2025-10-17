@@ -1,9 +1,10 @@
 import type { CommandContext, CommandResult } from '../types';
 
 export async function handleSummarize(
-  ctx: CommandContext
+  ctx: CommandContext,
+  args: string[]
 ): Promise<CommandResult> {
-  const countArg = ctx.args[0];
+  const countArg = args[0];
   const count = countArg ? parseInt(countArg, 10) : 10;
 
   if (isNaN(count) || count < 1 || count > 100) {

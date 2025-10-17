@@ -2,11 +2,12 @@ import type { CommandContext, CommandResult } from '../types';
 import { createClient } from '@/lib/supabase/server';
 
 export async function handleAlert(
-  ctx: CommandContext
+  ctx: CommandContext,
+  args: string[]
 ): Promise<CommandResult> {
-  const type = ctx.args[0]; // 'price' or 'keyword'
-  const target = ctx.args[1];
-  const threshold = ctx.args[2];
+  const type = args[0]; // 'price' or 'keyword'
+  const target = args[1];
+  const threshold = args[2];
 
   if (!type || !target) {
     return {
