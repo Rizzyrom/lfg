@@ -38,7 +38,7 @@ export async function createClient() {
             data: {
               user: {
                 id: session.user.id,
-                email: session.user.email,
+                email: session.user.username, // Using username as email for compatibility
                 user_metadata: {},
               },
             },
