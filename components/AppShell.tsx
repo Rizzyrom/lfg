@@ -65,9 +65,9 @@ export default function AppShell({
   }, [showUserMenu])
 
   return (
-    <div className="min-h-screen bg-tv-bg">
+    <div className="h-screen bg-tv-bg flex flex-col overflow-hidden" style={{ touchAction: 'none' }}>
       {/* Modern minimal header */}
-      <header className="sticky top-0 z-50 bg-tv-panel/80 backdrop-blur-xl border-b border-tv-border elevation-1 safe-area-pt">
+      <header className="flex-shrink-0 z-50 bg-tv-panel/80 backdrop-blur-xl border-b border-tv-border elevation-1 safe-area-pt">
         <div className="max-w-[1920px] mx-auto pl-4 pr-[7px] sm:pl-6 sm:pr-[7px] h-14 flex items-center justify-between">
           {/* Left: Page title */}
           <div className="flex items-center gap-3">
@@ -161,22 +161,22 @@ export default function AppShell({
       </header>
 
       {/* Main layout */}
-      <div className="max-w-[1920px] mx-auto">
-        <div className="grid lg:grid-cols-[260px_minmax(0,1fr)_360px] xl:grid-cols-[280px_minmax(0,1fr)_380px] gap-3 sm:gap-4 p-3 sm:p-4 pb-4">
+      <div className="flex-1 max-w-[1920px] mx-auto w-full overflow-hidden pb-[5px]">
+        <div className="grid lg:grid-cols-[260px_minmax(0,1fr)_360px] xl:grid-cols-[280px_minmax(0,1fr)_380px] gap-3 sm:gap-4 p-3 sm:p-4 h-full">
           {/* Left rail - hidden on mobile */}
           {leftRail && (
-            <aside className="hidden lg:block">
-              <div className="sticky top-20">{leftRail}</div>
+            <aside className="hidden lg:block overflow-y-auto">
+              <div>{leftRail}</div>
             </aside>
           )}
 
           {/* Main content - full width on mobile */}
-          <main className="min-w-0 w-full">{children}</main>
+          <main className="min-w-0 w-full h-full overflow-hidden">{children}</main>
 
           {/* Right rail - hidden on mobile */}
           {rightRail && (
-            <aside className="hidden lg:block">
-              <div className="sticky top-20">{rightRail}</div>
+            <aside className="hidden lg:block overflow-y-auto">
+              <div>{rightRail}</div>
             </aside>
           )}
         </div>

@@ -92,7 +92,7 @@ export default function MobileSwipeContainer({ children }: MobileSwipeContainerP
 
   // On mobile, wrap with swipe detection and animation
   return (
-    <div {...swipeHandlers} className="relative h-full w-full overflow-hidden">
+    <div {...swipeHandlers} className="relative h-full w-full overflow-hidden" style={{ touchAction: 'pan-y' }}>
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={pathname}

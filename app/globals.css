@@ -10,6 +10,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html, body {
+  overflow: hidden;
+  height: 100%;
+  position: fixed;
+  width: 100%;
+}
+
 body {
   background: #FAFAFA;
   color: #000000;
@@ -247,6 +254,16 @@ body {
   background: transparent;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
+
 /* ========================================
    MOBILE OPTIMIZATIONS
    ======================================== */
@@ -325,10 +342,6 @@ body {
   button, a, [role="button"] {
     min-height: 44px;
     min-width: 44px;
-  }
-
-  /* Prevent double-tap zoom */
-  * {
     touch-action: manipulation;
   }
 }
