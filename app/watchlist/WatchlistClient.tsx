@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, memo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import SkeletonRow from '@/components/SkeletonRow'
 import AssetSearchBar from './AssetSearchBar'
 
@@ -16,19 +17,26 @@ interface WatchItem {
   mentionCount?: number
 }
 
+const STAGGER_INTERVAL = 5000 // 5 seconds between each item update
+const REFRESH_CYCLE = 5 * 60 * 1000 // 5 minutes total cycle
+
 export default function WatchlistClient() {
   const [items, setItems] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const pathname = usePathname()
+  const updateTimersRef = useRef<NodeJS.Timeout[]>([])
+  const isVisibleRef = useRef(true)
+  const isFirstLoadRef = useRef(true)
 
-  const fetchWatchlist = useCallback(async () => {
+  // Initial load: fetch ALL prices in parallel for fast first load
+  const fetchAllPrices = useCallback(async () => {
     try {
-      const res = await fetch('/api/watchlist/prices', {
-        next: { revalidate: 60 }, // Cache for 1 minute
-      })
+      const res = await fetch('/api/watchlist/prices')
       if (res.ok) {
         const data = await res.json()
         setItems(data.items || [])
+        isFirstLoadRef.current = false
       }
     } catch (error) {
       console.error('Failed to fetch watchlist:', error)
@@ -37,12 +45,95 @@ export default function WatchlistClient() {
     }
   }, [])
 
+  // Update price for a single item
+  const updateItemPrice = useCallback(async (item: WatchItem) => {
+    try {
+      const res = await fetch(`/api/watchlist/price/${item.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.item) {
+          setItems(prevItems =>
+            prevItems.map(i =>
+              i.id === item.id ? { ...i, ...data.item } : i
+            )
+          )
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to update price for ${item.symbol}:`, error)
+    }
+  }, [])
+
+  // Start staggered price updates
+  const startStaggeredUpdates = useCallback((itemsList: WatchItem[]) => {
+    // Clear existing timers
+    updateTimersRef.current.forEach(timer => clearTimeout(timer))
+    updateTimersRef.current = []
+
+    if (itemsList.length === 0) return
+
+    // Calculate stagger delay to spread updates across 5 minutes
+    const staggerDelay = Math.min(STAGGER_INTERVAL, REFRESH_CYCLE / itemsList.length)
+
+    // Schedule updates for each item
+    itemsList.forEach((item, index) => {
+      const initialDelay = index * staggerDelay
+
+      // Initial update
+      const initialTimer = setTimeout(() => {
+        if (isVisibleRef.current) {
+          updateItemPrice(item)
+        }
+      }, initialDelay)
+
+      updateTimersRef.current.push(initialTimer)
+
+      // Recurring updates every 5 minutes
+      const recurringTimer = setInterval(() => {
+        if (isVisibleRef.current) {
+          updateItemPrice(item)
+        }
+      }, REFRESH_CYCLE)
+
+      updateTimersRef.current.push(recurringTimer as any)
+    })
+  }, [updateItemPrice])
+
+  // Handle visibility changes (page visibility API)
   useEffect(() => {
-    fetchWatchlist()
-    // Optimized: refresh every 60 seconds instead of 30
-    const interval = setInterval(fetchWatchlist, 60000)
-    return () => clearInterval(interval)
-  }, [fetchWatchlist])
+    const handleVisibilityChange = () => {
+      isVisibleRef.current = !document.hidden
+
+      // When page becomes visible, trigger immediate updates for stale prices
+      if (isVisibleRef.current && items.length > 0 && !isFirstLoadRef.current) {
+        items.forEach((item, index) => {
+          setTimeout(() => updateItemPrice(item), index * 100) // Quick stagger
+        })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [items, updateItemPrice])
+
+  // Initial load: fetch all prices in parallel
+  useEffect(() => {
+    if (isFirstLoadRef.current) {
+      fetchAllPrices()
+    }
+  }, [fetchAllPrices])
+
+  // Start staggered updates AFTER first load completes
+  useEffect(() => {
+    if (items.length > 0 && !loading && !isFirstLoadRef.current) {
+      startStaggeredUpdates(items)
+    }
+
+    return () => {
+      updateTimersRef.current.forEach(timer => clearTimeout(timer))
+      updateTimersRef.current = []
+    }
+  }, [items.length, loading, startStaggeredUpdates])
 
   const handleAdd = async (symbol: string, source: 'crypto' | 'stock') => {
     if (!symbol.trim()) return
@@ -60,7 +151,8 @@ export default function WatchlistClient() {
       console.log('Add watchlist response:', { ok: res.ok, status: res.status, data })
 
       if (res.ok) {
-        await fetchWatchlist()
+        // Fetch all prices again to immediately show the new item
+        await fetchAllPrices()
       } else {
         console.error('Failed to add item:', data)
         alert(data.error || 'Failed to add item. Please try again.')
