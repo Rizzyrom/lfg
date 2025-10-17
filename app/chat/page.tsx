@@ -18,7 +18,7 @@ export default async function ChatPage() {
       rightRail={<RightRail />}
       leftDrawerTitle="Watchlist"
       rightDrawerTitle="AI Pulse"
-      pageTitle={`@ ${user.username}`}
+      pageTitle="@ CHAT"
     >
       <MobileSwipeContainer>
         <div className="h-[calc(100vh-3.5rem)]">
