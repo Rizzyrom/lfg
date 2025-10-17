@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
+import { batchValidateTweets } from '@/lib/twitter-validator'
 
 // Note: This is a simplified version. For full Twitter API access, you'll need:
-// 1. Twitter API v2 Bearer Token
-// 2. Set TWITTER_BEARER_TOKEN in environment variables
+// 1. Twitter API v2 Bearer Token (X_BEARER_TOKEN or TWITTER_BEARER_TOKEN)
+// 2. Set in environment variables
 // 3. Twitter Developer Account
 
-const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN
+const TWITTER_BEARER_TOKEN = process.env.X_BEARER_TOKEN || process.env.TWITTER_BEARER_TOKEN
 
 // Top X accounts for stocks/investing
 const STOCK_ACCOUNTS = [
@@ -139,6 +140,12 @@ export async function GET() {
     const topTweets = tweets
       .sort((a, b) => (b.likes + b.retweets) - (a.likes + a.retweets))
       .slice(0, 20)
+
+    // Validate and snapshot tweets in background (don't await)
+    const tweetIds = topTweets.map(t => t.id)
+    batchValidateTweets(tweetIds)
+      .then(() => console.log(`Validated ${tweetIds.length} tweets`))
+      .catch(err => console.error('Failed to validate tweets:', err))
 
     return NextResponse.json({
       success: true,
