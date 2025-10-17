@@ -10,6 +10,7 @@ interface RedditPost {
   subreddit: string
   score: number
   numComments: number
+  url: string
   permalink: string
   created: number
 }
@@ -39,8 +40,12 @@ export default function SocialFeed() {
     try {
       const res = await fetch('/api/social/reddit')
       const data = await res.json()
-      if (data.success) {
+      console.log('SocialFeed - Reddit API response:', data)
+      if (data.success && data.posts) {
+        console.log('SocialFeed - Setting Reddit posts:', data.posts.length)
         setRedditPosts(data.posts)
+      } else {
+        console.log('SocialFeed - No posts or failed:', data)
       }
     } catch (error) {
       console.error('Failed to fetch Reddit:', error)
@@ -116,6 +121,11 @@ export default function SocialFeed() {
         </div>
       ) : (
         <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+          {activeTab === 'reddit' && redditPosts.length === 0 && (
+            <div className="text-center py-8 text-tv-text-soft">
+              No Reddit posts available
+            </div>
+          )}
           {activeTab === 'reddit' &&
             redditPosts.map((post) => (
               <a

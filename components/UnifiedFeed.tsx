@@ -85,13 +85,17 @@ export default function UnifiedFeed() {
 
       // Add Reddit posts (limit to 20)
       if (redditData.posts) {
+        console.log('Reddit posts received:', redditData.posts.length)
         redditData.posts.slice(0, 20).forEach((post: RedditPost) => {
+          console.log('Adding Reddit post:', post.title.substring(0, 50))
           items.push({
             type: 'reddit',
             timestamp: post.created * 1000,
             data: post,
           })
         })
+      } else {
+        console.log('No Reddit posts in response:', redditData)
       }
 
       // Add tweets (limit to 10)
