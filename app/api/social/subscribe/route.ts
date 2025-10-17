@@ -66,23 +66,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upsert source
+    // Upsert source using Prisma
     const { data, error } = await supabase
-      .from('social_feed_source')
+      .from('SocialFeedSource')
       .upsert(
         {
-          group_id: groupId,
+          groupId,
           platform: source.platform,
           handle: source.handle,
-          url: source.url,
-          added_by: user.id,
+          platformId: null, // Will be populated by background job
+          addedById: user.id,
         },
         {
-          onConflict: 'group_id,platform,handle',
+          onConflict: 'groupId_platform_handle',
         }
-      )
-      .select()
-      .single();
+      );
 
     if (error) {
       console.error('Upsert error:', error);
@@ -93,9 +91,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Log system event
-    await supabase.from('system_event').insert({
-      group_id: groupId,
-      user_id: user.id,
+    await supabase.from('SystemEvent').insert({
+      groupId,
+      userId: user.id,
       command: 'subscribe',
       args: { platform, handle: source.handle },
       status: 'ok',

@@ -1,77 +1,43 @@
+import type { CommandContext, CommandResult } from '../types';
 import { createClient } from '@/lib/supabase/server';
-import { CommandContext, CommandResult } from '../types';
 
 export async function handleAlert(
-  ctx: CommandContext,
-  args: string[]
+  ctx: CommandContext
 ): Promise<CommandResult> {
-  if (args.length < 2) {
+  const type = ctx.args[0]; // 'price' or 'keyword'
+  const target = ctx.args[1];
+  const threshold = ctx.args[2];
+
+  if (!type || !target) {
     return {
       status: 'error',
-      message: 'Invalid syntax',
-      detail: 'Usage: /alert SYMBOL >PRICE or /alert SYMBOL keyword:WORD',
-    };
-  }
-
-  const symbol = args[0].toUpperCase();
-  const conditionArg = args.slice(1).join(' ');
-
-  // Parse condition
-  let kind: 'price' | 'keyword';
-  let condition: any;
-
-  if (conditionArg.startsWith('>')) {
-    kind = 'price';
-    const price = parseFloat(conditionArg.substring(1));
-    if (isNaN(price)) {
-      return {
-        status: 'error',
-        message: 'Invalid price',
-        detail: 'Use format: >900',
-      };
-    }
-    condition = { gt: price };
-  } else if (conditionArg.startsWith('<')) {
-    kind = 'price';
-    const price = parseFloat(conditionArg.substring(1));
-    if (isNaN(price)) {
-      return {
-        status: 'error',
-        message: 'Invalid price',
-        detail: 'Use format: <900',
-      };
-    }
-    condition = { lt: price };
-  } else if (conditionArg.startsWith('keyword:')) {
-    kind = 'keyword';
-    const keyword = conditionArg.substring(8).trim();
-    if (!keyword) {
-      return {
-        status: 'error',
-        message: 'Invalid keyword',
-        detail: 'Use format: keyword:earnings',
-      };
-    }
-    condition = { keyword };
-  } else {
-    return {
-      status: 'error',
-      message: 'Invalid condition',
-      detail: 'Use >PRICE, <PRICE, or keyword:WORD',
+      message: 'Usage: /alert <price|keyword> <target> [threshold]',
     };
   }
 
   const supabase = await createClient();
 
-  // Create alert
-  const { error } = await supabase.from('chat_alert').insert({
-    group_id: ctx.groupId,
-    user_id: ctx.userId,
-    symbol,
-    kind,
-    condition,
-    active: true,
-  });
+  const alertData: any = {
+    groupId: ctx.groupId,
+    userId: ctx.userId,
+    alertType: type,
+    isActive: true,
+  };
+
+  if (type === 'price' && threshold) {
+    alertData.targetSymbol = target.toUpperCase();
+    alertData.threshold = parseFloat(threshold);
+    alertData.direction = 'above'; // Default
+  } else if (type === 'keyword') {
+    alertData.targetKeyword = target.toLowerCase();
+  } else {
+    return {
+      status: 'error',
+      message: 'Invalid alert type. Use "price" or "keyword"',
+    };
+  }
+
+  const { error } = await supabase.from('ChatAlert').insert(alertData);
 
   if (error) {
     return {
@@ -81,17 +47,8 @@ export async function handleAlert(
     };
   }
 
-  let message = `✅ Alert created for **${symbol}**\n`;
-  if (kind === 'price') {
-    const op = condition.gt ? '>' : '<';
-    const price = condition.gt || condition.lt;
-    message += `Trigger: Price ${op} $${price}`;
-  } else {
-    message += `Trigger: Keyword "${condition.keyword}"`;
-  }
-
   return {
     status: 'ok',
-    message,
+    message: `${type} alert created for "${target}"`,
   };
 }

@@ -1,43 +1,25 @@
+import type { CommandContext, CommandResult } from '../types';
 import { createClient } from '@/lib/supabase/server';
-import { CommandContext, CommandResult } from '../types';
 
 export async function handleContext(
-  ctx: CommandContext,
-  args: string[]
+  ctx: CommandContext
 ): Promise<CommandResult> {
-  if (args.length === 0) {
+  const action = ctx.args[0]; // 'on' or 'off'
+
+  if (!action || (action !== 'on' && action !== 'off')) {
     return {
       status: 'error',
-      message: 'Missing argument',
-      detail: 'Use: /context on or /context off',
+      message: 'Usage: /context <on|off>',
     };
   }
-
-  const setting = args[0].toLowerCase();
-
-  if (setting !== 'on' && setting !== 'off') {
-    return {
-      status: 'error',
-      message: 'Invalid argument',
-      detail: 'Use: on or off',
-    };
-  }
-
-  const enabled = setting === 'on';
 
   const supabase = await createClient();
+  const enabled = action === 'on';
 
-  // Upsert context setting
-  const { error } = await supabase.from('chat_context_setting').upsert(
-    {
-      group_id: ctx.groupId,
-      context_enabled: enabled,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: 'group_id',
-    }
-  );
+  const { error } = await supabase.from('ChatContextSetting').upsert({
+    groupId: ctx.groupId,
+    contextEnabled: enabled,
+  });
 
   if (error) {
     return {
@@ -47,12 +29,8 @@ export async function handleContext(
     };
   }
 
-  const message = enabled
-    ? '✅ Context enabled - Agent will use chat history'
-    : '✅ Context disabled - Agent will use public data only';
-
   return {
     status: 'ok',
-    message,
+    message: `Agent context ${enabled ? 'enabled' : 'disabled'}`,
   };
 }

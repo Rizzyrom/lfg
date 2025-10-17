@@ -25,12 +25,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify group membership
+    // Verify group membership using Prisma table name
     const { data: membership } = await supabase
-      .from('group_member')
+      .from('Membership')
       .select('role')
-      .eq('group_id', groupId)
-      .eq('user_id', user.id)
+      .eq('groupId', groupId)
+      .eq('userId', user.id)
       .single();
 
     if (!membership) {

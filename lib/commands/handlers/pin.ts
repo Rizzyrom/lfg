@@ -1,40 +1,25 @@
+import type { CommandContext, CommandResult } from '../types';
 import { createClient } from '@/lib/supabase/server';
-import { CommandContext, CommandResult } from '../types';
 
 export async function handlePin(
-  ctx: CommandContext,
-  args: string[]
+  ctx: CommandContext
 ): Promise<CommandResult> {
-  if (!ctx.messageId) {
+  const messageId = ctx.args[0];
+
+  if (!messageId) {
     return {
       status: 'error',
-      message: 'No message selected',
-      detail: 'Use this command on a specific message',
+      message: 'Usage: /pin <message_id>',
     };
   }
 
   const supabase = await createClient();
 
-  // Check if already pinned
-  const { data: existing } = await supabase
-    .from('chat_pin')
-    .select('id')
-    .eq('group_id', ctx.groupId)
-    .eq('message_id', ctx.messageId)
-    .single();
-
-  if (existing) {
-    return {
-      status: 'error',
-      message: 'Message already pinned',
-    };
-  }
-
-  // Create pin
-  const { error } = await supabase.from('chat_pin').insert({
-    group_id: ctx.groupId,
-    message_id: ctx.messageId,
-    user_id: ctx.userId,
+  // Insert pin
+  const { error } = await supabase.from('ChatPin').insert({
+    groupId: ctx.groupId,
+    messageId,
+    pinnedBy: ctx.userId,
   });
 
   if (error) {
@@ -47,6 +32,6 @@ export async function handlePin(
 
   return {
     status: 'ok',
-    message: '📌 Message pinned',
+    message: 'Message pinned successfully',
   };
 }

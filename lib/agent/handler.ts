@@ -40,28 +40,21 @@ export async function handleAgentQuestion(
   // Fetch recent messages if context enabled
   if (contextEnabled) {
     const { data: messages } = await supabase
-      .from('msg')
-      .select('content')
-      .eq('group_id', ctx.groupId)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .from('Message')
+      .select('ciphertext')
+      .eq('groupId', ctx.groupId)
+      .order('createdAt', { ascending: false })
+      .limit(50)
+      .execute();
 
     if (messages) {
-      chatHistory = messages.map((m) => m.content).reverse();
+      chatHistory = messages.map((m: any) => m.ciphertext).reverse();
     }
   }
 
-  // Fetch recent public feed items
-  const { data: feed } = await supabase
-    .from('public_feed_item')
-    .select('title, text, category')
-    .eq('group_id', ctx.groupId)
-    .order('created_at', { ascending: false })
-    .limit(20);
-
-  if (feed) {
-    feedItems = feed.map((item) => `[${item.category}] ${item.title}: ${item.text?.substring(0, 200)}`);
-  }
+  // TODO: Fetch recent public feed items when table is implemented
+  // For now, using empty feed items
+  feedItems = [];
 
   // Build prompt
   const prompt = buildPrompt(ctx.question, chatHistory, feedItems, contextEnabled);
