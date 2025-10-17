@@ -58,9 +58,9 @@ async function logSystemEvent(
 ) {
   try {
     const supabase = await createClient();
-    await supabase.from('system_event').insert({
-      group_id: ctx.groupId,
-      user_id: ctx.userId,
+    await supabase.from('SystemEvent').insert({
+      groupId: ctx.groupId,
+      userId: ctx.userId,
       command,
       args,
       status,
@@ -119,10 +119,10 @@ export async function executeCommand(
   // Verify group membership
   const supabase = await createClient();
   const { data: membership } = await supabase
-    .from('group_member')
+    .from('Membership')
     .select('role')
-    .eq('group_id', ctx.groupId)
-    .eq('user_id', ctx.userId)
+    .eq('groupId', ctx.groupId)
+    .eq('userId', ctx.userId)
     .single();
 
   if (!membership) {
