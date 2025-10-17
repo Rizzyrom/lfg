@@ -9,8 +9,9 @@ interface TickerMention {
 }
 
 // Extract tickers from message content ($SYMBOL format)
+// Case-insensitive to support both $TSLA and $tsla
 function extractTickers(content: string): string[] {
-  const tickerRegex = /\$([A-Z]{1,5})\b/g
+  const tickerRegex = /\$([A-Za-z]{1,5})\b/gi
   const matches = content.matchAll(tickerRegex)
   return Array.from(matches, m => m[1])
 }

@@ -12,10 +12,11 @@ const CRYPTO_SYMBOLS = new Set([
 
 /**
  * Extract ticker symbols from a message
- * Matches $SYMBOL pattern (e.g., $AAPL, $BTC, $META)
+ * Matches $SYMBOL pattern (e.g., $AAPL, $BTC, $META, $meta)
+ * Case-insensitive to support both $TSLA and $tsla
  */
 export function extractTickers(message: string): string[] {
-  const tickerRegex = /\$([A-Z]{1,5})\b/g
+  const tickerRegex = /\$([A-Za-z]{1,5})\b/gi
   const matches = message.match(tickerRegex)
 
   if (!matches) return []
