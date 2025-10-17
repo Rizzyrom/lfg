@@ -158,7 +158,7 @@ export async function executeCommand(
         break;
       case 'summarize':
       case 'sum':
-        result = await handlers.handleSummarize(ctx, parsed.args);
+        result = await handlers.handleSummarize(ctx);
         break;
       case 'analyze':
       case 'a':
