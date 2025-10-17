@@ -13,7 +13,7 @@ interface TickerMention {
 function extractTickers(content: string): string[] {
   const tickerRegex = /\$([A-Za-z]{1,5})\b/gi
   const matches = content.matchAll(tickerRegex)
-  return Array.from(matches, m => m[1])
+  return Array.from(matches, m => m[1].toUpperCase())
 }
 
 // Simple sentiment analysis based on keywords

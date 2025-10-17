@@ -21,8 +21,8 @@ export function extractTickers(message: string): string[] {
 
   if (!matches) return []
 
-  // Extract just the symbol (remove $)
-  const tickers = matches.map(match => match.substring(1))
+  // Extract just the symbol (remove $) and normalize to uppercase
+  const tickers = matches.map(match => match.substring(1).toUpperCase())
 
   // Return unique tickers
   return [...new Set(tickers)]
