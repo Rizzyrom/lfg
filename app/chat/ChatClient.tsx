@@ -346,8 +346,8 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-2 smooth-scroll max-w-full"
-        style={{ paddingBottom: '80px' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden pt-2 pb-0 space-y-1 smooth-scroll max-w-full"
+        style={{ paddingBottom: '75px' }}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -465,10 +465,10 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       {/* Input Area - Fixed at bottom aligned with nav bar */}
       <form
         onSubmit={handleSend}
-        className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid z-40"
+        className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid/50 z-40"
         style={{ bottom: '5px' }}
       >
-        <div className="flex items-center gap-2 px-4 py-3">
+        <div className="flex items-center gap-1.5 px-3 py-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -480,11 +480,11 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
+            className="p-2 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
             disabled={uploading}
             aria-label="Attach file"
           >
-            <Paperclip className="w-5 h-5 text-tv-text-soft" />
+            <Paperclip className="w-4 h-4 text-tv-text-soft" />
           </button>
 
           <button
@@ -493,12 +493,12 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
               setInput(prev => prev + '$')
               inputRef.current?.focus()
             }}
-            className="p-3 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
+            className="p-2 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
             disabled={sending || uploading}
             aria-label="Insert ticker symbol"
             title="Insert $ for ticker"
           >
-            <DollarSign className="w-5 h-5 text-tv-green" />
+            <DollarSign className="w-4 h-4 text-tv-green" />
           </button>
 
           <div className="flex-1 min-w-0">
@@ -508,7 +508,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
               value={input}
               onChange={handleInputChange}
               placeholder={`Message @${username}`}
-              className="w-full bg-tv-bg text-tv-text placeholder-tv-text-muted rounded-lg px-4 py-3 border border-tv-grid focus:outline-none focus:ring-2 focus:ring-tv-blue focus:border-tv-blue transition-all"
+              className="w-full bg-tv-bg text-tv-text placeholder-tv-text-muted rounded-lg px-3 py-2 border border-tv-grid/60 focus:outline-none focus:ring-1 focus:ring-tv-blue focus:border-tv-blue transition-all"
               disabled={sending || uploading}
               style={{ fontSize: '16px' }}
             />
@@ -517,13 +517,13 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="submit"
             disabled={(!input.trim() && !selectedFile) || sending || uploading}
-            className="p-3 bg-tv-blue hover:bg-tv-blue-hover disabled:bg-tv-text-muted disabled:cursor-not-allowed rounded-lg transition-all elevation-2 flex-shrink-0 active:scale-95"
+            className="p-2 bg-tv-blue hover:bg-tv-blue-hover disabled:bg-tv-text-muted disabled:cursor-not-allowed rounded-lg transition-all elevation-2 flex-shrink-0 active:scale-95"
             aria-label="Send message"
           >
             {sending ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send className="w-5 h-5 text-white" />
+              <Send className="w-4 h-4 text-white" />
             )}
           </button>
         </div>
