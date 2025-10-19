@@ -10,53 +10,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
     }
 
-    const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY
+    const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY
 
-    if (!PERPLEXITY_API_KEY) {
+    if (!BRAVE_API_KEY) {
       return NextResponse.json({
-        answer: 'Perplexity API key not configured. Please add PERPLEXITY_API_KEY to your environment variables.'
+        answer: 'Brave Search API key not configured. Please add BRAVE_SEARCH_API_KEY to your environment variables.',
+        results: []
       })
     }
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful financial market assistant. Provide concise, accurate information about stocks, crypto, and market trends. Include sources when available.',
-          },
-          {
-            role: 'user',
-            content: query,
-          },
-        ],
-        temperature: 0.2,
-        max_tokens: 500,
-      }),
-    })
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    )
 
     if (!response.ok) {
       const error = await response.text()
-      console.error('Perplexity API error:', error)
+      console.error('Brave Search API error:', error)
       return NextResponse.json({
-        answer: 'Failed to get response from Perplexity. Please try again.'
+        answer: 'Failed to search. Please try again.',
+        results: []
       })
     }
 
     const data = await response.json()
-    const answer = data.choices?.[0]?.message?.content || 'No answer available'
+    const webResults = data.web?.results || []
 
-    return NextResponse.json({ answer })
+    // Format results into a readable summary
+    let answer = ''
+    const results = webResults.slice(0, 5).map((result: any) => {
+      answer += `**${result.title}**\n${result.description}\n\n`
+      return {
+        title: result.title,
+        url: result.url,
+        description: result.description,
+      }
+    })
+
+    if (!answer) {
+      answer = 'No results found for your query.'
+    }
+
+    return NextResponse.json({ answer: answer.trim(), results })
   } catch (error) {
-    console.error('Perplexity search error:', error)
+    console.error('Brave search error:', error)
     return NextResponse.json({
-      answer: 'An error occurred while searching. Please try again.'
+      answer: 'An error occurred while searching. Please try again.',
+      results: []
     }, { status: 500 })
   }
 }

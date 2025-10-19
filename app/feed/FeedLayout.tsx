@@ -85,7 +85,7 @@ export default function FeedLayout() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Ask Perplexity anything about markets..."
+                placeholder="Search news, stocks, crypto..."
                 className="w-full pl-10 pr-4 py-2 bg-tv-panel text-tv-text placeholder-tv-text-muted rounded-lg border border-tv-grid/60 focus:outline-none focus:ring-1 focus:ring-tv-blue focus:border-tv-blue transition-all"
                 disabled={searching}
               />
@@ -104,7 +104,7 @@ export default function FeedLayout() {
             <div className="mt-3 p-4 bg-tv-panel rounded-lg border border-tv-grid">
               <div className="flex items-start gap-2 mb-2">
                 <Search className="w-4 h-4 text-tv-blue mt-0.5 flex-shrink-0" />
-                <div className="text-sm font-medium text-tv-text-soft">Perplexity AI</div>
+                <div className="text-sm font-medium text-tv-text-soft">Brave Search</div>
               </div>
               <div className="text-sm text-tv-text whitespace-pre-wrap">{searchResults}</div>
             </div>
