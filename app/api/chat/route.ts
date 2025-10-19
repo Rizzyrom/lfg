@@ -198,12 +198,17 @@ export async function POST(request: NextRequest) {
 
     // Check for @lfgent mention
     let agentMessage = null
+    console.log('[AGENT DEBUG] Checking message for @lfgent:', message)
     if (message.includes('@lfgent')) {
+      console.log('[AGENT DEBUG] @lfgent detected!')
       // Extract question after @lfgent
       const question = message.replace(/@lfgent/gi, '').trim()
+      console.log('[AGENT DEBUG] Extracted question:', question)
 
       if (question) {
+        console.log('[AGENT DEBUG] Calling OpenAI API...')
         const aiResponse = await callOpenAI(question)
+        console.log('[AGENT DEBUG] OpenAI response:', aiResponse)
 
         if (aiResponse.success && aiResponse.message) {
           // Find or create LFG Agent user
@@ -233,6 +238,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Create agent response message
+          console.log('[AGENT DEBUG] Creating agent response message...')
           const agentResponse = await db.message.create({
             data: {
               groupId: targetGroupId,
@@ -248,6 +254,7 @@ export async function POST(request: NextRequest) {
               },
             },
           })
+          console.log('[AGENT DEBUG] Agent response created:', agentResponse)
 
           agentMessage = {
             id: agentResponse.id,
