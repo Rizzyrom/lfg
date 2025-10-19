@@ -39,7 +39,7 @@ export default function ChatTabs({ mentions, tickers, attachments }: ChatTabsPro
   return (
     <div className="h-full flex flex-col">
       {/* Tab Headers */}
-      <div className="flex-shrink-0 border-b border-tv-border bg-tv-panel">
+      <div className="flex-shrink-0 bg-tv-panel">
         <div className="flex items-center justify-around px-2 h-12">
           {tabs.map((tab) => {
             const Icon = tab.icon
