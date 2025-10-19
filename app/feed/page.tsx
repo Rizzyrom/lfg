@@ -4,7 +4,7 @@ import AppShell from '@/components/AppShell'
 import TrendingRail from '@/components/TrendingRail'
 import RightRail from '@/components/RightRail'
 import MobileSwipeContainer from '@/components/MobileSwipeContainer'
-import UnifiedFeed from '@/components/UnifiedFeed'
+import FeedLayout from './FeedLayout'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,9 +21,7 @@ export default async function FeedPage() {
       pageTitle="# NEWS"
     >
       <MobileSwipeContainer>
-        <div className="h-[calc(100vh-3.5rem)] overflow-y-auto py-4">
-          <UnifiedFeed />
-        </div>
+        <FeedLayout />
       </MobileSwipeContainer>
     </AppShell>
   )
