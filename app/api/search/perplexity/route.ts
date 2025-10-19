@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await fetch(
-      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=20`,
       {
         headers: {
           'Accept': 'application/json',
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Format results into a readable summary
     let answer = ''
-    const results = webResults.slice(0, 5).map((result: any) => {
+    const results = webResults.slice(0, 20).map((result: any) => {
       answer += `**${result.title}**\n${result.description}\n\n`
       return {
         title: result.title,

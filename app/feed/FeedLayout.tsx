@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, ExternalLink } from 'lucide-react'
 import UnifiedFeed from '@/components/UnifiedFeed'
 
@@ -14,6 +14,31 @@ export default function FeedLayout() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+
+  // Load latest news on mount
+  useEffect(() => {
+    loadLatestNews()
+  }, [])
+
+  const loadLatestNews = async () => {
+    setSearching(true)
+    try {
+      const res = await fetch('/api/search/perplexity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'latest stock market crypto news today' }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setSearchResults(data.results || [])
+      }
+    } catch (error) {
+      console.error('Failed to load latest news:', error)
+    } finally {
+      setSearching(false)
+    }
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
