@@ -242,8 +242,13 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   // Memoize handleSend
   const handleSend = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    if ((!input.trim() && !selectedFile) || sending) return
+    console.log('[CHAT DEBUG] handleSend called, input:', input)
+    if ((!input.trim() && !selectedFile) || sending) {
+      console.log('[CHAT DEBUG] Send blocked - empty input or already sending')
+      return
+    }
 
+    console.log('[CHAT DEBUG] Sending message:', input)
     setSending(true)
     let mediaUrl: string | null = null
 
@@ -290,6 +295,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         }
       }
 
+      console.log('[CHAT DEBUG] Making POST request to /api/chat')
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -300,6 +306,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         }),
       })
 
+      console.log('[CHAT DEBUG] POST response status:', res.status)
       if (res.ok) {
         const data = await res.json()
         setInput('')
