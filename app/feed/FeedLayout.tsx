@@ -14,30 +14,49 @@ export default function FeedLayout() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(0)
 
   // Load latest news on mount
   useEffect(() => {
     loadLatestNews()
   }, [])
 
-  const loadLatestNews = async () => {
-    setSearching(true)
+  const loadLatestNews = async (pageNum = 0) => {
+    if (pageNum === 0) {
+      setSearching(true)
+    } else {
+      setLoadingMore(true)
+    }
+
     try {
       const res = await fetch('/api/search/perplexity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: 'latest stock market crypto news today' }),
+        body: JSON.stringify({
+          query: `latest stock market crypto news today page ${pageNum + 1}`
+        }),
       })
 
       if (res.ok) {
         const data = await res.json()
-        setSearchResults(data.results || [])
+        if (pageNum === 0) {
+          setSearchResults(data.results || [])
+        } else {
+          setSearchResults(prev => [...prev, ...(data.results || [])])
+        }
+        setPage(pageNum)
       }
     } catch (error) {
       console.error('Failed to load latest news:', error)
     } finally {
       setSearching(false)
+      setLoadingMore(false)
     }
+  }
+
+  const loadMore = () => {
+    loadLatestNews(page + 1)
   }
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -46,6 +65,7 @@ export default function FeedLayout() {
 
     setSearching(true)
     setSearchResults([])
+    setPage(0)
 
     try {
       const res = await fetch('/api/search/perplexity', {
@@ -126,6 +146,17 @@ export default function FeedLayout() {
                   </div>
                 </a>
               ))}
+
+              {/* Load More Button */}
+              {searchResults.length > 0 && (
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full mt-4 px-4 py-3 bg-tv-panel hover:bg-tv-grid/40 border border-tv-grid rounded-lg text-tv-text font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingMore ? 'Loading more articles...' : 'Load More Articles'}
+                </button>
+              )}
             </div>
           )}
         </div>
