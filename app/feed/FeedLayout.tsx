@@ -1,12 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, ExternalLink } from 'lucide-react'
 import UnifiedFeed from '@/components/UnifiedFeed'
+
+interface SearchResult {
+  title: string
+  url: string
+  description: string
+}
 
 export default function FeedLayout() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<string>('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -14,7 +20,7 @@ export default function FeedLayout() {
     if (!searchQuery.trim()) return
 
     setSearching(true)
-    setSearchResults('')
+    setSearchResults([])
 
     try {
       const res = await fetch('/api/search/perplexity', {
@@ -25,13 +31,13 @@ export default function FeedLayout() {
 
       if (res.ok) {
         const data = await res.json()
-        setSearchResults(data.answer || 'No results found')
+        setSearchResults(data.results || [])
       } else {
-        setSearchResults('Failed to search. Please try again.')
+        setSearchResults([])
       }
     } catch (error) {
       console.error('Search error:', error)
-      setSearchResults('Failed to search. Please try again.')
+      setSearchResults([])
     } finally {
       setSearching(false)
     }
@@ -65,13 +71,36 @@ export default function FeedLayout() {
           </form>
 
           {/* Search Results */}
-          {searchResults && (
-            <div className="mt-3 p-4 bg-tv-panel rounded-lg border border-tv-grid">
-              <div className="flex items-start gap-2 mb-2">
-                <Search className="w-4 h-4 text-tv-blue mt-0.5 flex-shrink-0" />
-                <div className="text-sm font-medium text-tv-text-soft">Brave Search</div>
+          {searchResults.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2 px-2">
+                <Search className="w-4 h-4 text-tv-blue" />
+                <div className="text-sm font-medium text-tv-text-soft">Search Results</div>
               </div>
-              <div className="text-sm text-tv-text whitespace-pre-wrap">{searchResults}</div>
+              {searchResults.map((result, idx) => (
+                <a
+                  key={idx}
+                  href={result.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 bg-tv-panel rounded-lg border border-tv-grid hover:border-tv-blue transition-all group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-tv-text group-hover:text-tv-blue transition-colors line-clamp-2 mb-1">
+                        {result.title}
+                      </h3>
+                      <p className="text-sm text-tv-text-soft line-clamp-2">
+                        {result.description}
+                      </p>
+                      <div className="mt-2 text-xs text-tv-text-muted truncate">
+                        {new URL(result.url).hostname}
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-tv-text-muted group-hover:text-tv-blue transition-colors flex-shrink-0 mt-1" />
+                  </div>
+                </a>
+              ))}
             </div>
           )}
         </div>
