@@ -26,6 +26,14 @@ body {
   overscroll-behavior: none;
 }
 
+/* Adapt to system dark mode */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #000000;
+    color: #FFFFFF;
+  }
+}
+
 /* iOS safe area support */
 @supports (padding: env(safe-area-inset-bottom)) {
   .safe-area-pb {
