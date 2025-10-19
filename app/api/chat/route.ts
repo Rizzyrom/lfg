@@ -196,13 +196,14 @@ export async function POST(request: NextRequest) {
       })
       .catch(err => console.error('Failed to auto-add tickers:', err))
 
-    // Check for @lfgent mention
+    // Check for @LFG mention (case-insensitive, also accepts @lfgent, @agent for backward compatibility)
     let agentMessage = null
-    console.log('[AGENT DEBUG] Checking message for @lfgent:', message)
-    if (message.includes('@lfgent')) {
-      console.log('[AGENT DEBUG] @lfgent detected!')
-      // Extract question after @lfgent
-      const question = message.replace(/@lfgent/gi, '').trim()
+    console.log('[AGENT DEBUG] Checking message for @LFG:', message)
+    const mentionPattern = /@(lfg|lfgent|agent)\b/i
+    if (mentionPattern.test(message)) {
+      console.log('[AGENT DEBUG] @LFG mention detected!')
+      // Extract question after @LFG/@lfgent/@agent
+      const question = message.replace(mentionPattern, '').trim()
       console.log('[AGENT DEBUG] Extracted question:', question)
 
       if (question) {
@@ -211,9 +212,9 @@ export async function POST(request: NextRequest) {
         console.log('[AGENT DEBUG] OpenAI response:', aiResponse)
 
         if (aiResponse.success && aiResponse.message) {
-          // Find or create LFG Agent user
+          // Find or create LFG user
           let agentUser = await db.user.findUnique({
-            where: { username: 'LFG Agent' },
+            where: { username: 'LFG' },
           })
 
           if (!agentUser) {
@@ -222,7 +223,7 @@ export async function POST(request: NextRequest) {
             const randomPassword = Math.random().toString(36)
             agentUser = await db.user.create({
               data: {
-                username: 'LFG Agent',
+                username: 'LFG',
                 passwordHash: await hash(randomPassword),
               },
             })
