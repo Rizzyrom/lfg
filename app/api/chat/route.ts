@@ -208,7 +208,29 @@ export async function POST(request: NextRequest) {
 
       if (question) {
         console.log('[AGENT DEBUG] Calling OpenAI API...')
-        const aiResponse = await callOpenAI(question)
+
+        // Get previous 5 messages for context
+        const previousMessages = await db.message.findMany({
+          where: { groupId: targetGroupId },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            sender: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        })
+
+        // Format context from previous messages (reverse to chronological order)
+        const context = previousMessages
+          .reverse()
+          .map(msg => `${msg.sender.username}: ${msg.ciphertext}`)
+          .join('\n')
+
+        console.log('[AGENT DEBUG] Context:', context)
+        const aiResponse = await callOpenAI(question, context)
         console.log('[AGENT DEBUG] OpenAI response:', aiResponse)
 
         if (aiResponse.success && aiResponse.message) {

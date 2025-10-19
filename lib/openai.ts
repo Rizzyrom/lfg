@@ -18,7 +18,7 @@ You help users with:
 Be concise, helpful, and professional. Keep responses under 200 words.
 If you don't know something, say so. Never provide financial advice - only educational information.`
 
-export async function callOpenAI(userQuestion: string): Promise<AgentResponse> {
+export async function callOpenAI(userQuestion: string, context?: string): Promise<AgentResponse> {
   if (!OPENAI_API_KEY) {
     return {
       success: false,
@@ -27,6 +27,24 @@ export async function callOpenAI(userQuestion: string): Promise<AgentResponse> {
   }
 
   try {
+    // Build messages array with context if provided
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+    ]
+
+    // Add context as assistant message if provided
+    if (context) {
+      messages.push({
+        role: 'user',
+        content: `Previous conversation context:\n${context}\n\nNow responding to: ${userQuestion}`,
+      })
+    } else {
+      messages.push({
+        role: 'user',
+        content: userQuestion,
+      })
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -35,10 +53,7 @@ export async function callOpenAI(userQuestion: string): Promise<AgentResponse> {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userQuestion },
-        ],
+        messages,
         max_tokens: 300,
         temperature: 0.7,
       }),
