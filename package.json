@@ -21,6 +21,7 @@
     "decimal.js": "^10.4.3",
     "emoji-picker-react": "^4.14.0",
     "framer-motion": "^12.23.24",
+    "lightweight-charts": "^5.0.9",
     "lucia": "^3.2.0",
     "lucide-react": "^0.545.0",
     "next": "^14.2.0",
@@ -28,6 +29,7 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-swipeable": "^7.0.2",
+    "swr": "^2.3.6",
     "web-push": "^3.6.7",
     "ws": "^8.18.0"
   },
