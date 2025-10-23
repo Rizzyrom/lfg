@@ -106,7 +106,7 @@ export async function fetchRedditFeeds(groupId: string): Promise<FeedItem[]> {
 
   // Fetch posts from all sources in parallel
   await Promise.all(
-    sources.map(async (source) => {
+    sources.map(async (source: { id: string; handle: string }) => {
       let posts: RedditPost[] = [];
 
       // Determine if it's a subreddit or user

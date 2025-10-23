@@ -122,7 +122,7 @@ export async function fetchXFeeds(groupId: string): Promise<FeedItem[]> {
   const feedItems: FeedItem[] = [];
 
   await Promise.all(
-    sources.map(async (source) => {
+    sources.map(async (source: { id: string; handle: string }) => {
       const tweets = await fetchUserTweets(source.handle.replace('@', ''), bearerToken);
 
       tweets.forEach((tweet: XTweet) => {
