@@ -11,9 +11,19 @@ export interface AgentContext {
   userId: string;
 }
 
+export interface LinkPreview {
+  url: string;
+  title: string;
+  description: string;
+  thumbnail?: string;
+  source: string;
+  engagement?: number;
+}
+
 export interface AgentResponse {
   answer: string;
   sources?: string[];
+  links?: LinkPreview[];
 }
 
 /**
@@ -161,9 +171,57 @@ export async function handleAgentQuestion(
     sources.push('market-data');
   }
 
+  // Extract top 3 most relevant and valuable links from feed
+  const links: LinkPreview[] = [];
+  if (feeds && feeds.length > 0) {
+    // Sort by engagement and relevance
+    const sortedFeeds = [...feeds]
+      .filter((f: any) => f.post_url && f.post_url.startsWith('http'))
+      .sort((a: any, b: any) => (b.engagement_score || 0) - (a.engagement_score || 0))
+      .slice(0, 5); // Get top 5 for relevance matching
+
+    // Extract question keywords for relevance scoring
+    const questionWords = ctx.question
+      .toLowerCase()
+      .split(' ')
+      .filter(w => w.length > 3 && !['what', 'when', 'where', 'which', 'this', 'that', 'with', 'from'].includes(w));
+
+    // Score feeds by relevance to question
+    const scoredFeeds = sortedFeeds.map((feed: any) => {
+      const content = (feed.content || '').toLowerCase();
+      const relevanceScore = questionWords.reduce((score, word) => {
+        return score + (content.includes(word) ? 1 : 0);
+      }, 0);
+
+      return {
+        feed,
+        score: relevanceScore + (feed.engagement_score || 0) / 1000, // Combine relevance + engagement
+      };
+    });
+
+    // Get top 3 most relevant links
+    scoredFeeds
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .forEach(({ feed }: any) => {
+        // Extract title from content (first line or first sentence)
+        const contentLines = feed.content.split('\n').filter((l: string) => l.trim());
+        const title = contentLines[0] || feed.content.slice(0, 100);
+
+        links.push({
+          url: feed.post_url,
+          title: title.slice(0, 150),
+          description: feed.content.slice(0, 200),
+          source: feed.handle,
+          engagement: feed.engagement_score || 0,
+        });
+      });
+  }
+
   return {
     answer,
     sources,
+    links: links.length > 0 ? links : undefined,
   };
 }
 
@@ -234,6 +292,7 @@ ANALYSIS FRAMEWORK:
 - Use clear formatting with headers and bullet points for readability
 - If you don't have sufficient data for a comprehensive answer, explain what additional information would be helpful
 - Be honest about uncertainty - distinguish between facts and speculation
+- When relevant sources exist in the feed data, naturally reference them (e.g., "According to [source]..." or "Recent reports indicate...")
 
 Think step-by-step and provide insights that add real value beyond just summarizing the data.`;
 

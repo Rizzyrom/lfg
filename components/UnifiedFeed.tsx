@@ -215,7 +215,7 @@ export default function UnifiedFeed() {
                   <span className="text-xs text-tv-text-soft">u/{reddit.author}</span>
                   <span className="text-xs text-tv-text-soft">• {getTimeAgo(item.timestamp)}</span>
                 </div>
-                <a href={reddit.permalink} target="_blank" rel="noopener noreferrer" className="block">
+                <a href={`https://reddit.com${reddit.permalink}`} target="_blank" rel="noopener noreferrer" className="block">
                   <h3 className="text-base font-bold text-tv-text mb-2 group-hover:text-[#FF4500] transition line-clamp-2">
                     {reddit.title}
                   </h3>
