@@ -64,6 +64,16 @@ export async function createClient() {
             ...options,
             where: { ...options.where, [column]: value },
           }),
+        gte: (column: string, value: any) =>
+          buildQuery({
+            ...options,
+            where: { ...options.where, [column]: { gte: value } },
+          }),
+        lt: (column: string, value: any) =>
+          buildQuery({
+            ...options,
+            where: { ...options.where, [column]: { lt: value } },
+          }),
         order: (column: string, opts?: { ascending?: boolean }) =>
           buildQuery({
             ...options,
