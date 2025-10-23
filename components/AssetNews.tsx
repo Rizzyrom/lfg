@@ -22,8 +22,9 @@ export default function AssetNews({ symbol, source, className = '' }: AssetNewsP
     `/api/asset-news?symbol=${symbol}&source=${source}`,
     fetcher,
     {
-      refreshInterval: 300000, // Refresh every 5 minutes
-      revalidateOnFocus: true,
+      refreshInterval: 600000, // Refresh every 10 minutes
+      revalidateOnFocus: false,
+      dedupingInterval: 120000,
     }
   )
 

@@ -22,8 +22,9 @@ export default function MarketDataPanel({ symbol, source, className = '' }: Mark
     `/api/market-data?symbol=${symbol}&source=${source}`,
     fetcher,
     {
-      refreshInterval: 30000, // Refresh every 30 seconds
-      revalidateOnFocus: true,
+      refreshInterval: 300000, // Refresh every 5 minutes
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
     }
   )
 

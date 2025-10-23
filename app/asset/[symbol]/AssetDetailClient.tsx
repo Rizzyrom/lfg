@@ -3,12 +3,26 @@
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import AssetChart from '@/components/AssetChart'
-import MarketDataPanel from '@/components/MarketDataPanel'
-import TechnicalIndicators from '@/components/TechnicalIndicators'
-import SentimentPanel from '@/components/SentimentPanel'
-import AssetNews from '@/components/AssetNews'
+
+// Lazy load heavy components for better performance
+const AssetChart = dynamic(() => import('@/components/AssetChart'), {
+  loading: () => <div className="card p-6 h-[450px] animate-pulse bg-tv-bg-secondary" />,
+  ssr: false,
+})
+const MarketDataPanel = dynamic(() => import('@/components/MarketDataPanel'), {
+  loading: () => <div className="card p-6 h-[200px] animate-pulse bg-tv-bg-secondary" />,
+})
+const TechnicalIndicators = dynamic(() => import('@/components/TechnicalIndicators'), {
+  loading: () => <div className="card p-6 h-[400px] animate-pulse bg-tv-bg-secondary" />,
+})
+const SentimentPanel = dynamic(() => import('@/components/SentimentPanel'), {
+  loading: () => <div className="card p-6 h-[300px] animate-pulse bg-tv-bg-secondary" />,
+})
+const AssetNews = dynamic(() => import('@/components/AssetNews'), {
+  loading: () => <div className="card p-6 h-[600px] animate-pulse bg-tv-bg-secondary" />,
+})
 
 interface AssetDetailClientProps {
   symbol: string

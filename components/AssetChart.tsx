@@ -40,13 +40,14 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
   const [currentPrice, setCurrentPrice] = useState<number | null>(null)
   const [priceChange, setPriceChange] = useState<number | null>(null)
 
-  // Fetch chart data with SWR (30 second cache)
+  // Fetch chart data with SWR
   const { data: chartData, error, isLoading } = useSWR<PriceData[]>(
     `/api/chart?symbol=${symbol}&source=${source}&days=${timeFrameToDays[timeFrame]}`,
     fetcher,
     {
-      refreshInterval: 30000, // Refresh every 30 seconds
-      revalidateOnFocus: true,
+      refreshInterval: 300000, // Refresh every 5 minutes (much less aggressive)
+      revalidateOnFocus: false, // Don't refetch on tab focus
+      dedupingInterval: 60000, // Dedupe requests within 1 minute
     }
   )
 
