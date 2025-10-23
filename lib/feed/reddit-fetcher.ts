@@ -92,7 +92,8 @@ export async function fetchRedditFeeds(groupId: string): Promise<FeedItem[]> {
     .from('social_feed_source')
     .select('id, handle')
     .eq('group_id', groupId)
-    .eq('platform', 'reddit');
+    .eq('platform', 'reddit')
+    .execute();
 
   if (error || !sources || sources.length === 0) {
     console.log('No Reddit sources found for group:', groupId);

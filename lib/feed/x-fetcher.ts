@@ -108,7 +108,8 @@ export async function fetchXFeeds(groupId: string): Promise<FeedItem[]> {
     .from('social_feed_source')
     .select('id, handle')
     .eq('group_id', groupId)
-    .eq('platform', 'x');
+    .eq('platform', 'x')
+    .execute();
 
   if (error || !sources || sources.length === 0) {
     console.log('No X sources found for group:', groupId);
