@@ -62,7 +62,8 @@ export async function handleAgentQuestion(
     .eq('group_id', ctx.groupId)
     .gte('published_at', oneDayAgo.toISOString())
     .order('published_at', { ascending: false })
-    .limit(50);
+    .limit(50)
+    .execute();
 
   if (feeds && feeds.length > 0) {
     // Format feed items for the prompt
