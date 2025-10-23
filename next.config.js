@@ -16,8 +16,6 @@ const nextConfig = {
       bodySizeLimit: '50mb',
     },
     serverComponentsExternalPackages: ['@node-rs/argon2'],
-    // Optimize route loading
-    optimizeCss: true,
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
