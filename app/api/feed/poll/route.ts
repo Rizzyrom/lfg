@@ -107,19 +107,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Clean up old items (older than 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const { error: cleanupError } = await supabase
-      .from('social_feed_item')
-      .delete()
-      .eq('group_id', groupId)
-      .lt('published_at', sevenDaysAgo.toISOString());
-
-    if (cleanupError) {
-      console.error('Error cleaning up old feed items:', cleanupError);
-    }
+   // Note: Cleanup of old items (>7 days) can be done via scheduled job
+  // using the cleanup_old_feed_items() function in the database
 
     // Log system event
     await supabase.from('system_event').insert({
