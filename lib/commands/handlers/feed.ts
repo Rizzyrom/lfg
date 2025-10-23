@@ -12,26 +12,16 @@ export async function handleFeed(
     };
   }
 
-  // Call n8n webhook to refresh feed
-  const n8nUrl = process.env.N8N_WEBHOOK_URL;
-
-  if (!n8nUrl) {
-    return {
-      status: 'error',
-      message: 'Feed refresh not configured',
-      detail: 'N8N_WEBHOOK_URL missing',
-    };
-  }
-
   try {
-    const response = await fetch(n8nUrl, {
+    // Call internal feed polling API
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/feed/poll`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         groupId: ctx.groupId,
-        trigger: 'manual',
       }),
     });
 
@@ -43,9 +33,21 @@ export async function handleFeed(
       };
     }
 
+    const data = await response.json();
+
+    // Also trigger n8n webhook if configured (for backward compatibility)
+    const n8nUrl = process.env.N8N_WEBHOOK_URL;
+    if (n8nUrl) {
+      fetch(n8nUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId: ctx.groupId, trigger: 'manual' }),
+      }).catch((err) => console.error('n8n webhook error:', err));
+    }
+
     return {
       status: 'ok',
-      message: '🔄 Feed refresh triggered',
+      message: `🔄 Feed refreshed: ${data.stats.x} X, ${data.stats.reddit} Reddit, ${data.stats.news} News`,
     };
   } catch (error: any) {
     return {

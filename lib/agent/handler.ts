@@ -52,9 +52,26 @@ export async function handleAgentQuestion(
     }
   }
 
-  // TODO: Fetch recent public feed items when table is implemented
-  // For now, using empty feed items
-  feedItems = [];
+  // Fetch recent feed items (last 24 hours)
+  const oneDayAgo = new Date();
+  oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+  const { data: feeds } = await supabase
+    .from('social_feed_item')
+    .select('platform, handle, content, published_at, engagement_score')
+    .eq('group_id', ctx.groupId)
+    .gte('published_at', oneDayAgo.toISOString())
+    .order('published_at', { ascending: false })
+    .limit(50);
+
+  if (feeds && feeds.length > 0) {
+    // Format feed items for the prompt
+    feedItems = feeds.map((feed: any) => {
+      const timestamp = new Date(feed.published_at).toLocaleString();
+      const platform = feed.platform === 'x' ? '𝕏' : feed.platform === 'reddit' ? 'Reddit' : 'News';
+      return `[${platform}] ${feed.handle} (${timestamp}):\n${feed.content.slice(0, 300)}${feed.content.length > 300 ? '...' : ''}`;
+    });
+  }
 
   // Build prompt
   const prompt = buildPrompt(ctx.question, chatHistory, feedItems, contextEnabled);
@@ -62,9 +79,21 @@ export async function handleAgentQuestion(
   // Call LLM
   const answer = await callLLM(prompt);
 
+  // Build sources list based on what data was actually used
+  const sources: string[] = [];
+  if (contextEnabled && chatHistory.length > 0) {
+    sources.push('chat-history');
+  }
+  if (feeds && feeds.length > 0) {
+    const platforms = [...new Set(feeds.map((f: any) => f.platform))];
+    if (platforms.includes('x')) sources.push('x-twitter');
+    if (platforms.includes('reddit')) sources.push('reddit');
+    if (platforms.includes('news')) sources.push('financial-news');
+  }
+
   return {
     answer,
-    sources: [...(contextEnabled ? ['chat-history'] : []), 'public-feed'],
+    sources,
   };
 }
 
