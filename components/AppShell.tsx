@@ -65,7 +65,7 @@ export default function AppShell({
   }, [showUserMenu])
 
   return (
-    <div className="h-screen bg-tv-bg flex flex-col overflow-hidden" style={{ touchAction: 'none' }}>
+    <div className="h-screen bg-tv-bg flex flex-col overflow-hidden">
       {/* Modern minimal header */}
       <header className="flex-shrink-0 z-50 bg-tv-panel/80 backdrop-blur-xl border-b border-tv-border elevation-1 safe-area-pt">
         <div className="max-w-[1920px] mx-auto pl-4 pr-[7px] sm:pl-6 sm:pr-[7px] h-14 flex items-center justify-between">
