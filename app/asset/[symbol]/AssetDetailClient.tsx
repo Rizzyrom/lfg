@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import AssetChart from '@/components/AssetChart'
 import MarketDataPanel from '@/components/MarketDataPanel'
 import TechnicalIndicators from '@/components/TechnicalIndicators'
@@ -18,7 +19,8 @@ export default function AssetDetailClient({ symbol, source }: AssetDetailClientP
   const router = useRouter()
 
   return (
-    <div className="max-w-7xl mx-auto p-4 pb-20">
+    <ErrorBoundary>
+      <div className="max-w-7xl mx-auto p-4 pb-20">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -71,5 +73,6 @@ export default function AssetDetailClient({ symbol, source }: AssetDetailClientP
         </Link>
       </div>
     </div>
+    </ErrorBoundary>
   )
 }
