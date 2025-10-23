@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       answer: response.answer,
       sources: response.sources,
+      links: response.links,
     });
   } catch (error: any) {
     console.error('Agent ask API error:', error);

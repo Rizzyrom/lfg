@@ -194,9 +194,11 @@ model SystemEvent {
 }
 
 model ChatContextSetting {
-  groupId         String   @id
-  contextEnabled  Boolean  @default(true)
-  updatedAt       DateTime @updatedAt
+  groupId         String   @id @map("group_id")
+  contextEnabled  Boolean  @default(true) @map("context_enabled")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("chat_context_setting")
 }
 
 model SocialFeedSource {
@@ -236,4 +238,26 @@ model ChatPin {
   pinnedAt  DateTime @default(now())
 
   @@index([groupId, pinnedAt])
+}
+
+model SocialFeedItem {
+  id              String   @id @default(cuid())
+  groupId         String   @map("group_id")
+  sourceId        String?  @map("source_id")
+  platform        String
+  handle          String
+  content         String
+  postUrl         String?  @map("post_url")
+  postId          String   @map("post_id")
+  author          String?
+  publishedAt     DateTime @map("published_at")
+  fetchedAt       DateTime @default(now()) @map("fetched_at")
+  engagementScore Int      @default(0) @map("engagement_score")
+  replyCount      Int      @default(0) @map("reply_count")
+
+  @@unique([platform, postId])
+  @@index([groupId, publishedAt(sort: Desc)])
+  @@index([sourceId, publishedAt(sort: Desc)])
+  @@index([platform, publishedAt(sort: Desc)])
+  @@map("social_feed_item")
 }
