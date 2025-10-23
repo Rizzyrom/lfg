@@ -97,7 +97,6 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
     chartRef.current = chart
 
     // Create candlestick series
-    // @ts-ignore - addCandlestickSeries exists in v5 but types are incomplete
     const candleSeries = chart.addCandlestickSeries({
       upColor: '#10B981',
       downColor: '#EF4444',
@@ -110,13 +109,16 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
     candleSeriesRef.current = candleSeries
 
     // Create volume series
-    // @ts-ignore - addHistogramSeries exists in v5 but types are incomplete
     const volumeSeries = chart.addHistogramSeries({
       color: '#475569',
       priceFormat: {
         type: 'volume',
       },
       priceScaleId: '',
+    })
+
+    // Set scale margins for volume series
+    volumeSeries.priceScale().applyOptions({
       scaleMargins: {
         top: 0.8,
         bottom: 0,
