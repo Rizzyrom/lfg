@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     if (!targetGroupId) {
       const membership = await db.membership.findFirst({
         where: { userId: user.id },
+        select: { groupId: true }, // Only select what we need
       })
       if (membership) {
         targetGroupId = membership.groupId
@@ -27,19 +28,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ messages: [] })
     }
 
-    // Fetch recent messages (last 100)
+    // Optimized query with proper indexes
     const messages = await db.message.findMany({
       where: { groupId: targetGroupId },
       orderBy: { createdAt: 'desc' },
       take: 100,
-      include: {
+      select: {
+        id: true,
+        senderId: true,
+        ciphertext: true,
+        mediaPtr: true,
+        createdAt: true,
         sender: {
           select: {
             username: true,
           },
         },
         reactions: {
-          include: {
+          select: {
+            id: true,
+            emoji: true,
+            userId: true,
             user: {
               select: {
                 id: true,

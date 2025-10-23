@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireUser } from '@/lib/auth'
+import { cachedRequest } from '@/lib/cache'
+import { cachedResponse } from '@/lib/compression'
 
 interface NewsArticle {
   title: string
@@ -14,7 +16,33 @@ export async function GET() {
   try {
     await requireUser()
 
-    const articles: NewsArticle[] = []
+    // Cache news for 5 minutes (300 seconds)
+    const articles = await cachedRequest<NewsArticle[]>(
+      'news:feed',
+      300,
+      async () => {
+        return fetchNewsArticles()
+      }
+    )
+
+    // Return with cache headers
+    return cachedResponse(
+      {
+        success: true,
+        articles: articles.slice(0, 60),
+        sources: ['CoinDesk', 'Finnhub', 'Yahoo Finance', 'Bloomberg', 'Reuters', 'CNBC', 'MarketWatch', 'Seeking Alpha', 'Financial Times', 'Barrons']
+      },
+      180, // 3 minutes max-age
+      300  // 5 minutes stale-while-revalidate
+    )
+  } catch (error) {
+    console.error('News fetch error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+async function fetchNewsArticles(): Promise<NewsArticle[]> {
+  const articles: NewsArticle[] = []
 
     // Fetch crypto news from CoinDesk RSS
     try {
@@ -357,18 +385,10 @@ export async function GET() {
       console.error('Barrons RSS fetch error:', error)
     }
 
-    // Sort by publishedAt (most recent first)
-    articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+  // Sort by publishedAt (most recent first)
+  articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
 
-    console.log(`Total articles collected: ${articles.length}`)
+  console.log(`Total articles collected: ${articles.length}`)
 
-    return NextResponse.json({
-      success: true,
-      articles: articles.slice(0, 60), // Return top 60
-      sources: ['CoinDesk', 'Finnhub', 'Yahoo Finance', 'Bloomberg', 'Reuters', 'CNBC', 'MarketWatch', 'Seeking Alpha', 'Financial Times', 'Barrons']
-    })
-  } catch (error) {
-    console.error('News fetch error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+  return articles
 }

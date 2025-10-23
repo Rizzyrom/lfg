@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { TrendingUp } from 'lucide-react'
 import SkeletonRow from '@/components/SkeletonRow'
 import AssetSearchBar from './AssetSearchBar'
 
@@ -176,7 +177,7 @@ export default function WatchlistClient() {
     [items]
   )
 
-  // Render asset bubble component
+  // Render asset bubble component with modern card design
   const renderAssetBubble = (item: WatchItem) => {
     const change24h = item.change24h ? parseFloat(item.change24h) : 0
     const change30d = item.change30d ? parseFloat(item.change30d) : 0
@@ -186,45 +187,48 @@ export default function WatchlistClient() {
     return (
       <div
         key={item.id}
-        className="bg-white rounded-xl p-3 transition-all hover:shadow-elevation-2 min-h-[80px] flex flex-col justify-between"
+        className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 transition-all duration-300 hover:shadow-xl active:scale-[0.98] min-h-[100px] flex flex-col justify-between relative overflow-hidden"
         style={{
-          border: `3px solid ${
+          border: `2px solid ${
             item.price
               ? isPositive24h
                 ? '#10b981'  // tv-up green
                 : '#ef4444'  // tv-down red
-              : 'rgba(0, 0, 0, 0.1)'  // neutral gray
-          }`
+              : 'rgba(0, 0, 0, 0.08)'  // neutral gray
+          }`,
+          boxShadow: item.price ? (isPositive24h ? '0 4px 20px rgba(16, 185, 129, 0.15)' : '0 4px 20px rgba(239, 68, 68, 0.15)') : 'none'
         }}
       >
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/[0.02] pointer-events-none" />
+
         <Link
           href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
-          className="block w-full h-full flex flex-col justify-between"
+          className="block w-full h-full flex flex-col justify-between relative z-10"
         >
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-base font-bold text-tv-text truncate">{item.symbol}</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-bold text-tv-text truncate">{item.symbol}</h3>
             {item.mentionCount && item.mentionCount > 0 && (
-              <span className="text-[0.5rem] leading-none text-red-600 font-bold ml-2 flex-shrink-0">
+              <span className="px-2 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full shadow-md flex-shrink-0 ml-2">
                 {item.mentionCount}
               </span>
             )}
           </div>
           {item.price && (
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-mono font-semibold text-tv-text">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-base font-mono font-bold text-tv-text">
                 ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <div className="flex items-center gap-1.5 text-xs font-medium flex-wrap">
-                <div className="flex items-center gap-0.5">
-                  <span className="text-tv-text-soft">D</span>
-                  <span className={isPositive24h ? 'text-tv-up' : 'text-tv-down'}>
+              <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-tv-bg/50">
+                  <span className="text-tv-text-muted">24h</span>
+                  <span className={`${isPositive24h ? 'text-tv-up' : 'text-tv-down'} font-bold`}>
                     {isPositive24h ? '+' : ''}{change24h.toFixed(2)}%
                   </span>
                 </div>
-                <span className="text-tv-text-soft">|</span>
-                <div className="flex items-center gap-0.5">
-                  <span className="text-tv-text-soft">M</span>
-                  <span className={isPositive30d ? 'text-tv-up' : 'text-tv-down'}>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-tv-bg/50">
+                  <span className="text-tv-text-muted">30d</span>
+                  <span className={`${isPositive30d ? 'text-tv-up' : 'text-tv-down'} font-bold`}>
                     {isPositive30d ? '+' : ''}{change30d.toFixed(2)}%
                   </span>
                 </div>
@@ -232,7 +236,10 @@ export default function WatchlistClient() {
             </div>
           )}
           {!item.price && (
-            <p className="text-xs text-tv-text-soft">Loading...</p>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-tv-blue border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs text-tv-text-soft font-medium">Loading price...</p>
+            </div>
           )}
         </Link>
       </div>
@@ -258,9 +265,15 @@ export default function WatchlistClient() {
             <SkeletonRow />
           </div>
         ) : items.length === 0 ? (
-          <div className="card p-8 text-center">
-            <p className="text-tv-text-soft">
-              Your watchlist is empty. Add symbols above to start tracking.
+          <div className="bg-gradient-to-br from-tv-panel to-tv-bg rounded-2xl p-10 text-center shadow-sm border border-tv-grid/30">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-tv-blue/20 to-tv-blue/5 flex items-center justify-center">
+              <TrendingUp className="w-10 h-10 text-tv-blue" />
+            </div>
+            <p className="text-tv-text font-semibold text-lg mb-2">
+              Your watchlist is empty
+            </p>
+            <p className="text-tv-text-soft text-sm">
+              Add symbols above to start tracking your favorite assets
             </p>
           </div>
         ) : (

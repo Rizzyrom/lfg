@@ -38,9 +38,9 @@ export default function ChatTabs({ mentions, tickers, attachments }: ChatTabsPro
 
   return (
     <div className="h-full flex flex-col">
-      {/* Tab Headers */}
-      <div className="flex-shrink-0 bg-tv-panel">
-        <div className="flex items-center justify-around px-2 h-12">
+      {/* Tab Headers - Modern iOS-style segmented control */}
+      <div className="flex-shrink-0 bg-gradient-to-b from-tv-panel to-tv-bg/50 backdrop-blur-md border-b border-tv-grid/30">
+        <div className="flex items-center gap-1 px-3 py-3 overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -48,17 +48,17 @@ export default function ChatTabs({ mentions, tickers, attachments }: ChatTabsPro
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                   isActive
-                    ? 'bg-tv-blue text-white'
-                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover'
+                    ? 'bg-gradient-to-r from-tv-blue to-tv-blue-hover text-white shadow-lg shadow-tv-blue/30'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-tv-hover/50 active:scale-95'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span className="text-sm font-medium hidden sm:inline">{tab.label}</span>
+                <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
+                <span className="text-sm font-semibold hidden sm:inline">{tab.label}</span>
                 {tab.count !== null && tab.count > 0 && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-white/20' : 'bg-tv-chip'
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold transition-colors duration-200 ${
+                    isActive ? 'bg-white/25 text-white' : 'bg-tv-blue/20 text-tv-blue'
                   }`}>
                     {tab.count}
                   </span>
@@ -97,27 +97,30 @@ export default function ChatTabs({ mentions, tickers, attachments }: ChatTabsPro
               initial={{ x: 300, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -300, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
               className="h-full overflow-y-auto p-4"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <h2 className="text-lg font-bold text-tv-text mb-4">Your Mentions</h2>
               {mentions.length === 0 ? (
                 <div className="text-center py-12">
-                  <AtSign className="w-12 h-12 text-tv-text-soft mx-auto mb-3" />
-                  <p className="text-tv-text-soft">No mentions yet</p>
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-tv-blue/20 to-tv-blue/5 flex items-center justify-center">
+                    <AtSign className="w-10 h-10 text-tv-blue" />
+                  </div>
+                  <p className="text-tv-text-soft font-medium">No mentions yet</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {mentions.map((mention) => (
-                    <div key={mention.id} className="card p-4">
+                    <div key={mention.id} className="bg-tv-panel rounded-2xl p-4 border border-tv-grid/30 hover:border-tv-blue/30 transition-all duration-200 active:scale-[0.98]">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-tv-blue flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-tv-blue to-tv-blue-hover flex items-center justify-center text-white text-sm font-bold shadow-md flex-shrink-0">
                           {mention.username[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-tv-text">@{mention.username}</p>
-                          <p className="text-sm text-tv-text-soft mt-1">{mention.message}</p>
-                          <p className="text-xs text-tv-text-soft mt-2">
+                          <p className="text-sm font-bold text-tv-blue mb-1">@{mention.username}</p>
+                          <p className="text-sm text-tv-text leading-relaxed">{mention.message}</p>
+                          <p className="text-xs text-tv-text-muted mt-2 font-medium">
                             {new Date(mention.timestamp).toLocaleString()}
                           </p>
                         </div>

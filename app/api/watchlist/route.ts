@@ -6,12 +6,22 @@ export async function GET() {
   try {
     const user = await requireUser()
 
+    // Optimized query - only select needed fields
     const memberships = await db.membership.findMany({
       where: { userId: user.id },
-      include: {
+      select: {
         group: {
-          include: {
-            watchlist: true,
+          select: {
+            watchlist: {
+              select: {
+                id: true,
+                symbol: true,
+                source: true,
+                tags: true,
+                groupId: true,
+                createdAt: true,
+              },
+            },
           },
         },
       },

@@ -81,6 +81,9 @@ model Message {
   replies       Message[]      @relation("MessageReplies")
   notifications Notification[]
   reactions     Reaction[]
+
+  @@index([groupId, createdAt(sort: Desc)])
+  @@index([senderId])
 }
 
 model WatchItem {
@@ -95,6 +98,8 @@ model WatchItem {
   user      User     @relation("WatchItemCreator", fields: [userId], references: [id])
 
   @@unique([groupId, symbol, source])
+  @@index([userId])
+  @@index([groupId, createdAt])
 }
 
 model PriceCache {
@@ -106,6 +111,7 @@ model PriceCache {
   updatedAt DateTime @default(now())
 
   @@id([symbol, source])
+  @@index([updatedAt])
 }
 
 model Notification {

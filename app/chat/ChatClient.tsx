@@ -353,15 +353,17 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden pt-2 pb-0 space-y-1 smooth-scroll max-w-full"
-        style={{ paddingBottom: '75px' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden pt-3 pb-0 space-y-2 smooth-scroll max-w-full px-3"
+        style={{ paddingBottom: '85px', WebkitOverflowScrolling: 'touch' }}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <MessageCircle className="w-16 h-16 text-tv-text-muted mx-auto mb-4" />
-              <p className="text-tv-text-soft text-lg font-medium">No messages yet</p>
-              <p className="text-tv-text-muted text-sm mt-2">Start the conversation!</p>
+            <div className="text-center px-6 py-12 rounded-2xl bg-gradient-to-b from-tv-panel to-transparent">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-tv-blue/20 to-tv-blue/5 flex items-center justify-center">
+                <MessageCircle className="w-10 h-10 text-tv-blue" />
+              </div>
+              <p className="text-tv-text text-lg font-semibold mb-2">No messages yet</p>
+              <p className="text-tv-text-soft text-sm">Start the conversation!</p>
             </div>
           </div>
         ) : (
@@ -383,99 +385,107 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
         )}
       </div>
 
-      {/* New messages indicator - Fixed positioning */}
+      {/* New messages indicator - Fixed positioning with modern floating button */}
       {showNewMessages && (
-        <div className="flex-shrink-0 flex items-center justify-center py-2 px-4 pointer-events-none">
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none">
           <button
             onClick={() => scrollToBottom()}
-            className="bg-tv-blue text-white px-6 py-3 rounded-full elevation-2 hover:bg-tv-blue-hover transition-all font-medium pointer-events-auto hover-scale"
+            className="bg-gradient-to-r from-tv-blue to-tv-blue-hover text-white px-6 py-3 rounded-full shadow-lg shadow-tv-blue/30 hover:shadow-tv-blue/50 transition-all duration-300 font-semibold pointer-events-auto hover:scale-105 active:scale-95 flex items-center gap-2"
           >
-            New messages ↓
+            <span>New messages</span>
+            <span className="text-sm">↓</span>
           </button>
         </div>
       )}
 
-      {/* Reply Banner - Fixed above input */}
+      {/* Reply Banner - Fixed above input with modern design */}
       {replyingTo && (
-        <div className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid px-4 py-3 flex items-center justify-between animate-slide-in z-40" style={{ bottom: 'calc(5px + 65px)' }}>
+        <div className="fixed left-0 right-0 bg-gradient-to-r from-tv-panel to-tv-panel/95 border-t border-tv-grid/30 backdrop-blur-md px-4 py-3 flex items-center justify-between z-40 animate-slide-in shadow-lg" style={{ bottom: 'calc(5px + 65px)' }}>
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-1 h-10 bg-tv-blue rounded-full flex-shrink-0" />
+            <div className="w-1 h-12 bg-gradient-to-b from-tv-blue to-tv-blue/50 rounded-full flex-shrink-0 shadow-glow-blue" />
             <div className="min-w-0 flex-1">
-              <div className="text-xs text-tv-text-soft font-medium">Replying to @{replyingTo.username}</div>
-              <div className="text-sm text-tv-text truncate">
+              <div className="text-xs text-tv-blue font-semibold mb-1">Replying to @{replyingTo.username}</div>
+              <div className="text-sm text-tv-text-soft truncate">
                 {replyingTo.ciphertext}
               </div>
             </div>
           </div>
           <button
             onClick={() => setReplyingTo(null)}
-            className="p-2 hover:bg-tv-hover rounded-lg transition-all flex-shrink-0 active:scale-95"
+            className="p-2 hover:bg-tv-hover/50 rounded-full transition-all duration-200 flex-shrink-0 active:scale-90"
             type="button"
           >
-            <X className="w-5 h-5 text-tv-text-soft" />
+            <X className="w-5 h-5 text-tv-text-muted" />
           </button>
         </div>
       )}
 
-      {/* File Preview Panel - Fixed above input */}
+      {/* File Preview Panel - Fixed above input with modern card design */}
       {selectedFile && (
-        <div className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid p-4 animate-slide-in z-40" style={{ bottom: 'calc(5px + 65px)' }}>
-          <div className="flex items-center gap-3 bg-tv-bg border border-tv-grid rounded-lg p-3 elevation-1">
+        <div className="fixed left-0 right-0 bg-gradient-to-b from-tv-panel/98 to-tv-panel backdrop-blur-lg border-t border-tv-grid/30 p-4 animate-slide-in z-40 shadow-xl" style={{ bottom: 'calc(5px + 65px)' }}>
+          <div className="flex items-center gap-3 bg-tv-bg/50 backdrop-blur-sm border border-tv-grid/50 rounded-2xl p-4 shadow-md">
             {selectedFile.type.startsWith('image/') && filePreview && (
-              <img
-                src={filePreview}
-                alt="Preview"
-                className="w-16 h-16 object-cover rounded"
-              />
+              <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm bg-tv-grid flex-shrink-0">
+                <img
+                  src={filePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             )}
 
             {selectedFile.type.startsWith('video/') && filePreview && (
-              <video
-                src={filePreview}
-                className="w-16 h-16 object-cover rounded"
-                muted
-              />
+              <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm bg-tv-grid flex-shrink-0">
+                <video
+                  src={filePreview}
+                  className="w-full h-full object-cover"
+                  muted
+                />
+              </div>
             )}
 
             {selectedFile.type === 'application/pdf' && (
-              <FileIcon className="w-16 h-16 text-gray-400" />
+              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-tv-blue/10 to-tv-blue/5 flex items-center justify-center flex-shrink-0">
+                <FileIcon className="w-10 h-10 text-tv-blue" />
+              </div>
             )}
 
             <div className="flex-1 min-w-0">
-              <div className="text-sm text-tv-text truncate">{selectedFile.name}</div>
-              <div className="text-xs text-tv-text-soft">
+              <div className="text-sm font-semibold text-tv-text truncate mb-1">{selectedFile.name}</div>
+              <div className="text-xs text-tv-text-soft font-medium">
                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </div>
               {uploading && (
-                <div className="mt-2">
-                  <div className="w-full bg-tv-grid rounded-full h-1.5">
+                <div className="mt-2.5">
+                  <div className="w-full bg-tv-grid/50 rounded-full h-2 overflow-hidden">
                     <div
-                      className="bg-tv-up h-1.5 rounded-full transition-all"
+                      className="bg-gradient-to-r from-tv-up to-tv-up/80 h-2 rounded-full transition-all duration-300 shadow-sm"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
+                  <div className="text-xs text-tv-text-soft mt-1 font-medium">{uploadProgress}%</div>
                 </div>
               )}
             </div>
 
             <button
               onClick={handleCancelUpload}
-              className="p-2 hover:bg-tv-hover rounded-lg transition-all flex-shrink-0 active:scale-95"
+              className="p-2.5 hover:bg-tv-hover/50 rounded-full transition-all duration-200 flex-shrink-0 active:scale-90"
               disabled={uploading}
             >
-              <X className="w-5 h-5 text-tv-text-soft" />
+              <X className="w-5 h-5 text-tv-text-muted" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Input Area - Fixed at bottom aligned with nav bar */}
+      {/* Input Area - Fixed at bottom with modern iOS-style design */}
       <form
         onSubmit={handleSend}
-        className="fixed left-0 right-0 bg-tv-panel border-t border-tv-grid/50 z-40"
+        className="fixed left-0 right-0 bg-gradient-to-t from-tv-panel via-tv-panel to-tv-panel/95 backdrop-blur-lg border-t border-tv-grid/20 z-40 shadow-2xl"
         style={{ bottom: '5px' }}
       >
-        <div className="flex items-center gap-1.5 px-3 py-2">
+        <div className="flex items-center gap-2 px-3 py-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -487,11 +497,11 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
+            className="p-2.5 rounded-full hover:bg-tv-hover/50 transition-all duration-200 flex-shrink-0 active:scale-90"
             disabled={uploading}
             aria-label="Attach file"
           >
-            <Paperclip className="w-4 h-4 text-tv-text-soft" />
+            <Paperclip className="w-5 h-5 text-tv-text-soft" />
           </button>
 
           <button
@@ -500,12 +510,12 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
               setInput(prev => prev + '$')
               inputRef.current?.focus()
             }}
-            className="p-2 rounded-lg hover:bg-tv-hover transition-all flex-shrink-0 active:scale-95 hover-opacity"
+            className="p-2.5 rounded-full hover:bg-tv-hover/50 transition-all duration-200 flex-shrink-0 active:scale-90"
             disabled={sending || uploading}
             aria-label="Insert ticker symbol"
             title="Insert $ for ticker"
           >
-            <DollarSign className="w-4 h-4 text-tv-green" />
+            <DollarSign className="w-5 h-5 text-tv-green" />
           </button>
 
           <div className="flex-1 min-w-0">
@@ -515,7 +525,7 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
               value={input}
               onChange={handleInputChange}
               placeholder={`Message @${username}`}
-              className="w-full bg-tv-bg text-tv-text placeholder-tv-text-muted rounded-lg px-3 py-2 border border-tv-grid/60 focus:outline-none focus:ring-1 focus:ring-tv-blue focus:border-tv-blue transition-all"
+              className="w-full bg-tv-bg/50 backdrop-blur-sm text-tv-text placeholder-tv-text-muted rounded-full px-5 py-2.5 border border-tv-grid/40 focus:outline-none focus:ring-2 focus:ring-tv-blue/30 focus:border-tv-blue/50 transition-all duration-200 shadow-sm"
               disabled={sending || uploading}
               style={{ fontSize: '16px' }}
             />
@@ -524,13 +534,13 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
           <button
             type="submit"
             disabled={(!input.trim() && !selectedFile) || sending || uploading}
-            className="p-2 bg-tv-blue hover:bg-tv-blue-hover disabled:bg-tv-text-muted disabled:cursor-not-allowed rounded-lg transition-all elevation-2 flex-shrink-0 active:scale-95"
+            className="p-3 bg-gradient-to-br from-tv-blue to-tv-blue-hover hover:from-tv-blue-hover hover:to-tv-blue disabled:from-tv-text-muted disabled:to-tv-text-muted disabled:cursor-not-allowed rounded-full transition-all duration-200 shadow-lg shadow-tv-blue/20 hover:shadow-tv-blue/40 flex-shrink-0 active:scale-90 disabled:shadow-none"
             aria-label="Send message"
           >
             {sending ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send className="w-4 h-4 text-white" />
+              <Send className="w-5 h-5 text-white" />
             )}
           </button>
         </div>
