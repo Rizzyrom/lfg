@@ -130,46 +130,85 @@ function parseCoinGeckoData(data: any): MarketData {
 }
 
 /**
- * Fetch stock data from Finnhub (requires API key)
+ * Fetch stock data from Finnhub (requires API key) with Yahoo Finance fallback
  */
 export async function fetchStockData(symbol: string): Promise<MarketData | null> {
   const apiKey = process.env.FINNHUB_API_KEY;
-  if (!apiKey) {
-    console.warn('Finnhub API key not found');
-    return null;
+
+  // Try Finnhub first if API key is available
+  if (apiKey) {
+    try {
+      // Fetch current quote
+      const quoteRes = await fetch(
+        `${FINNHUB_BASE}/quote?symbol=${symbol.toUpperCase()}&token=${apiKey}`,
+        { next: { revalidate: 30 } }
+      );
+
+      if (quoteRes.ok) {
+        const quote = await quoteRes.json();
+
+        // Fetch company profile for additional data
+        const profileRes = await fetch(
+          `${FINNHUB_BASE}/stock/profile2?symbol=${symbol.toUpperCase()}&token=${apiKey}`,
+          { next: { revalidate: 3600 } }
+        );
+
+        let marketCap;
+        if (profileRes.ok) {
+          const profile = await profileRes.json();
+          marketCap = profile.marketCapitalization;
+        }
+
+        return {
+          price: quote.c || 0,
+          change24h: quote.dp || 0,
+          marketCap,
+          high52w: quote.h,
+          low52w: quote.l,
+        };
+      }
+    } catch (error) {
+      console.error('Finnhub API error, falling back to Yahoo Finance:', error);
+    }
   }
 
+  // Fallback to Yahoo Finance (free, no API key)
   try {
-    // Fetch current quote
-    const quoteRes = await fetch(
-      `${FINNHUB_BASE}/quote?symbol=${symbol.toUpperCase()}&token=${apiKey}`,
+    const response = await fetch(
+      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=1y`,
       { next: { revalidate: 30 } }
     );
 
-    if (!quoteRes.ok) return null;
-    const quote = await quoteRes.json();
+    if (!response.ok) return null;
 
-    // Fetch company profile for additional data
-    const profileRes = await fetch(
-      `${FINNHUB_BASE}/stock/profile2?symbol=${symbol.toUpperCase()}&token=${apiKey}`,
-      { next: { revalidate: 3600 } }
-    );
+    const data = await response.json();
+    const result = data.chart?.result?.[0];
 
-    let marketCap;
-    if (profileRes.ok) {
-      const profile = await profileRes.json();
-      marketCap = profile.marketCapitalization;
-    }
+    if (!result) return null;
+
+    const meta = result.meta;
+    const quote = result.indicators?.quote?.[0];
+
+    if (!meta || !quote) return null;
+
+    const prices = quote.close || [];
+    const validPrices = prices.filter((p: number) => p != null);
+
+    const high52w = Math.max(...validPrices);
+    const low52w = Math.min(...validPrices);
+    const currentPrice = meta.regularMarketPrice || validPrices[validPrices.length - 1] || 0;
+    const previousClose = meta.chartPreviousClose || validPrices[validPrices.length - 2] || currentPrice;
+    const change24h = ((currentPrice - previousClose) / previousClose) * 100;
 
     return {
-      price: quote.c || 0,
-      change24h: quote.dp || 0,
-      marketCap,
-      high52w: quote.h,
-      low52w: quote.l,
+      price: currentPrice,
+      change24h,
+      marketCap: meta.marketCap,
+      high52w,
+      low52w,
     };
   } catch (error) {
-    console.error('Finnhub API error:', error);
+    console.error('Yahoo Finance API error:', error);
     return null;
   }
 }
@@ -227,7 +266,7 @@ function parseOHLCData(data: any[]): PriceData[] {
 }
 
 /**
- * Fetch stock chart data from Finnhub
+ * Fetch stock chart data from Finnhub with Yahoo Finance fallback
  */
 export async function fetchStockChartData(
   symbol: string,
@@ -235,32 +274,69 @@ export async function fetchStockChartData(
   days: number = 7
 ): Promise<PriceData[]> {
   const apiKey = process.env.FINNHUB_API_KEY;
-  if (!apiKey) return [];
 
+  // Try Finnhub first if API key is available
+  if (apiKey) {
+    try {
+      const to = Math.floor(Date.now() / 1000);
+      const from = to - days * 24 * 60 * 60;
+
+      const response = await fetch(
+        `${FINNHUB_BASE}/stock/candle?symbol=${symbol.toUpperCase()}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`,
+        { next: { revalidate: 60 } }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.s === 'ok') {
+          return data.t.map((timestamp: number, index: number) => ({
+            timestamp: timestamp * 1000,
+            open: data.o[index],
+            high: data.h[index],
+            low: data.l[index],
+            close: data.c[index],
+            volume: data.v[index],
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Finnhub chart data error, falling back to Yahoo Finance:', error);
+    }
+  }
+
+  // Fallback to Yahoo Finance (free, no API key)
   try {
-    const to = Math.floor(Date.now() / 1000);
-    const from = to - days * 24 * 60 * 60;
+    const range = days <= 7 ? '7d' : days <= 30 ? '1mo' : days <= 90 ? '3mo' : days <= 365 ? '1y' : '5y';
+    const interval = days <= 7 ? '1h' : '1d';
 
     const response = await fetch(
-      `${FINNHUB_BASE}/stock/candle?symbol=${symbol.toUpperCase()}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`,
+      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=${interval}&range=${range}`,
       { next: { revalidate: 60 } }
     );
 
     if (!response.ok) return [];
+
     const data = await response.json();
+    const result = data.chart?.result?.[0];
 
-    if (data.s !== 'ok') return [];
+    if (!result) return [];
 
-    return data.t.map((timestamp: number, index: number) => ({
+    const timestamps = result.timestamp || [];
+    const quote = result.indicators?.quote?.[0];
+
+    if (!quote) return [];
+
+    return timestamps.map((timestamp: number, index: number) => ({
       timestamp: timestamp * 1000,
-      open: data.o[index],
-      high: data.h[index],
-      low: data.l[index],
-      close: data.c[index],
-      volume: data.v[index],
-    }));
+      open: quote.open?.[index] || quote.close?.[index] || 0,
+      high: quote.high?.[index] || quote.close?.[index] || 0,
+      low: quote.low?.[index] || quote.close?.[index] || 0,
+      close: quote.close?.[index] || 0,
+      volume: quote.volume?.[index] || 0,
+    })).filter((d: PriceData) => d.close > 0);
   } catch (error) {
-    console.error('Stock chart data error:', error);
+    console.error('Yahoo Finance chart data error:', error);
     return [];
   }
 }
