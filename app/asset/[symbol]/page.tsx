@@ -18,6 +18,7 @@ export default async function AssetDetailPage({ params, searchParams }: PageProp
 
   const { symbol } = await params
   const { source } = await searchParams
+  const assetSource = (source === 'crypto' ? 'crypto' : 'stock') as 'crypto' | 'stock'
 
   return (
     <AppShell
@@ -28,7 +29,7 @@ export default async function AssetDetailPage({ params, searchParams }: PageProp
     >
       <AssetDetailClient
         symbol={decodeURIComponent(symbol)}
-        source={source || 'stock'}
+        source={assetSource}
       />
     </AppShell>
   )

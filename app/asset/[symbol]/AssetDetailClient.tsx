@@ -11,12 +11,11 @@ import AssetNews from '@/components/AssetNews'
 
 interface AssetDetailClientProps {
   symbol: string
-  source: string
+  source: 'crypto' | 'stock'
 }
 
 export default function AssetDetailClient({ symbol, source }: AssetDetailClientProps) {
   const router = useRouter()
-  const assetSource = source as 'crypto' | 'stock'
 
   return (
     <div className="max-w-7xl mx-auto p-4 pb-20">
@@ -43,22 +42,22 @@ export default function AssetDetailClient({ symbol, source }: AssetDetailClientP
         {/* Left Column - Chart and Market Data */}
         <div className="lg:col-span-2 space-y-6">
           {/* Real-time Chart */}
-          <AssetChart symbol={symbol} source={assetSource} />
+          <AssetChart symbol={symbol} source={source} />
 
           {/* Market Data Panel */}
-          <MarketDataPanel symbol={symbol} source={assetSource} />
+          <MarketDataPanel symbol={symbol} source={source} />
 
           {/* News Feed */}
-          <AssetNews symbol={symbol} source={assetSource} />
+          <AssetNews symbol={symbol} source={source} />
         </div>
 
         {/* Right Column - Indicators and Sentiment */}
         <div className="lg:col-span-1 space-y-6">
           {/* Technical Indicators */}
-          <TechnicalIndicators symbol={symbol} source={assetSource} />
+          <TechnicalIndicators symbol={symbol} source={source} />
 
           {/* Sentiment/Analyst Ratings */}
-          <SentimentPanel symbol={symbol} source={assetSource} />
+          <SentimentPanel symbol={symbol} source={source} />
         </div>
       </div>
 

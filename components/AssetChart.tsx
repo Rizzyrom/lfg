@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { createChart, ColorType } from 'lightweight-charts'
-import type { IChartApi, ISeriesApi, CandlestickData, HistogramData } from 'lightweight-charts'
+import { createChart, ColorType, type IChartApi, type ISeriesApi, type CandlestickData, type HistogramData } from 'lightweight-charts'
 import useSWR from 'swr'
 import { PriceData } from '@/lib/marketDataAPI'
 import { TrendingUp, TrendingDown } from 'lucide-react'
@@ -97,7 +96,7 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
     chartRef.current = chart
 
     // Create candlestick series
-    const candleSeries = (chart as any).addCandlestickSeries({
+    const candleSeries = chart.addCandlestickSeries({
       upColor: '#10B981',
       downColor: '#EF4444',
       borderUpColor: '#10B981',
@@ -109,7 +108,7 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
     candleSeriesRef.current = candleSeries
 
     // Create volume series
-    const volumeSeries = (chart as any).addHistogramSeries({
+    const volumeSeries = chart.addHistogramSeries({
       color: '#475569',
       priceFormat: {
         type: 'volume',
