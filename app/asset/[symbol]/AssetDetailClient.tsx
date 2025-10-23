@@ -34,59 +34,43 @@ export default function AssetDetailClient({ symbol, source }: AssetDetailClientP
 
   return (
     <ErrorBoundary>
-      <div className="max-w-7xl mx-auto p-4 pb-20">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-tv-text-soft hover:text-tv-text transition-all mb-4 touch-manipulation"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">Back to Watchlist</span>
-        </button>
+      <div className="w-full min-h-screen pb-24">
+        {/* Mobile-optimized Header */}
+        <div className="sticky top-0 z-20 bg-tv-bg/95 backdrop-blur-lg border-b border-tv-border px-4 py-3">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-tv-text-soft active:text-tv-text transition-colors mb-2 -ml-2 p-2 touch-manipulation"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">Back</span>
+          </button>
 
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-tv-text">{symbol}</h1>
-          <span className="px-3 py-1 rounded-full bg-tv-chip text-tv-text-soft text-sm font-medium uppercase">
-            {source}
-          </span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-tv-text truncate">{symbol}</h1>
+            <span className="flex-shrink-0 px-2 py-0.5 rounded text-xs font-semibold bg-tv-chip text-tv-text-soft uppercase">
+              {source}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Chart and Market Data */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Real-time Chart */}
+        {/* Mobile-first single column layout */}
+        <div className="w-full px-3 sm:px-4 pt-4 space-y-4">
+          {/* Chart - Full width mobile */}
           <AssetChart symbol={symbol} source={source} />
 
-          {/* Market Data Panel */}
+          {/* Market Data */}
           <MarketDataPanel symbol={symbol} source={source} />
 
-          {/* News Feed */}
-          <AssetNews symbol={symbol} source={source} />
-        </div>
-
-        {/* Right Column - Indicators and Sentiment */}
-        <div className="lg:col-span-1 space-y-6">
           {/* Technical Indicators */}
           <TechnicalIndicators symbol={symbol} source={source} />
 
-          {/* Sentiment/Analyst Ratings */}
+          {/* Sentiment */}
           <SentimentPanel symbol={symbol} source={source} />
+
+          {/* News */}
+          <AssetNews symbol={symbol} source={source} />
         </div>
       </div>
-
-      {/* Quick Actions */}
-      <div className="fixed bottom-20 lg:bottom-6 right-4 flex gap-2 z-10">
-        <Link
-          href="/watchlist"
-          className="px-6 py-3 rounded-full bg-tv-blue hover:bg-tv-blue-hover text-white font-medium shadow-elevation-3 transition-all active:scale-95 touch-manipulation"
-        >
-          Back to Watchlist
-        </Link>
-      </div>
-    </div>
     </ErrorBoundary>
   )
 }

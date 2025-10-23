@@ -1,11 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Enable SWC minification for faster builds
+  swcMinify: true,
+  // Optimize images
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+  },
+  // Performance optimizations
+  compress: true,
+  poweredByHeader: false,
   experimental: {
     serverActions: {
       bodySizeLimit: '50mb',
     },
     serverComponentsExternalPackages: ['@node-rs/argon2'],
+    // Optimize route loading
+    optimizeCss: true,
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

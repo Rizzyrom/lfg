@@ -54,10 +54,11 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
   useEffect(() => {
     if (!chartContainerRef.current) return
 
-    // Create chart
+    // Create chart with mobile-optimized height
+    const isMobile = window.innerWidth < 640
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: isMobile ? 300 : 400,
       layout: {
         background: { type: ColorType.Solid, color: '#FFFFFF' },
         textColor: '#000000',
