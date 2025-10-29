@@ -36,21 +36,22 @@ export default function MobilePageHub({ userId, username }: MobilePageHubProps) 
 
   // On desktop, just render the current page without the hub
   if (!isMobile) {
-    // Render based on current page index
+    // Render based on current page index (always active on desktop)
     if (currentPageIndex === 0) {
       return (
         <div className="h-[calc(100vh-3.5rem)]">
-          <ChatClient username={username} userId={userId} />
+          <ChatClient username={username} userId={userId} isActive={true} />
         </div>
       )
     } else if (currentPageIndex === 1) {
-      return <WatchlistClient />
+      return <WatchlistClient isActive={true} />
     } else {
-      return <FeedLayout />
+      return <FeedLayout isActive={true} />
     }
   }
 
   // On mobile, render all pages in containers for instant switching
+  // Pass isActive prop to prevent hidden pages from fetching data
   return (
     <div className="relative w-full h-full overflow-hidden">
       <PageContainer
@@ -60,7 +61,7 @@ export default function MobilePageHub({ userId, username }: MobilePageHubProps) 
         pageIndex={0}
       >
         <div className="h-[calc(100vh-3.5rem)]">
-          <ChatClient username={username} userId={userId} />
+          <ChatClient username={username} userId={userId} isActive={currentPageIndex === 0} />
         </div>
       </PageContainer>
 
@@ -70,7 +71,7 @@ export default function MobilePageHub({ userId, username }: MobilePageHubProps) 
         direction={direction}
         pageIndex={1}
       >
-        <WatchlistClient />
+        <WatchlistClient isActive={currentPageIndex === 1} />
       </PageContainer>
 
       <PageContainer
@@ -79,7 +80,7 @@ export default function MobilePageHub({ userId, username }: MobilePageHubProps) 
         direction={direction}
         pageIndex={2}
       >
-        <FeedLayout />
+        <FeedLayout isActive={currentPageIndex === 2} />
       </PageContainer>
     </div>
   )

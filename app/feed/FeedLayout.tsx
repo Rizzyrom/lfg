@@ -10,17 +10,23 @@ interface SearchResult {
   description: string
 }
 
-export default function FeedLayout() {
+interface FeedLayoutProps {
+  isActive?: boolean
+}
+
+export default function FeedLayout({ isActive = true }: FeedLayoutProps = {}) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [page, setPage] = useState(0)
 
-  // Load latest news on mount
+  // Load latest news on mount ONLY when active
   useEffect(() => {
-    loadLatestNews()
-  }, [])
+    if (isActive) {
+      loadLatestNews()
+    }
+  }, [isActive])
 
   const loadLatestNews = async (pageNum = 0) => {
     if (pageNum === 0) {

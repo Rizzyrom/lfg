@@ -39,9 +39,10 @@ interface ChatMessage {
 interface ChatClientProps {
   username: string
   userId?: string
+  isActive?: boolean
 }
 
-export default function ChatClient({ username, userId }: ChatClientProps) {
+export default function ChatClient({ username, userId, isActive = true }: ChatClientProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -84,11 +85,14 @@ export default function ChatClient({ username, userId }: ChatClientProps) {
   }, [])
 
   useEffect(() => {
+    // Only fetch messages when component is active
+    if (!isActive) return
+
     fetchMessages()
     // Optimized: Increased polling interval to 5 seconds
     const interval = setInterval(fetchMessages, 5000)
     return () => clearInterval(interval)
-  }, [fetchMessages])
+  }, [fetchMessages, isActive])
 
   autoScrollOnNewContent([messages])
 

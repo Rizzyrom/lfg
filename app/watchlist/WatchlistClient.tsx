@@ -21,7 +21,11 @@ interface WatchItem {
 const STAGGER_INTERVAL = 5000 // 5 seconds between each item update
 const REFRESH_CYCLE = 5 * 60 * 1000 // 5 minutes total cycle
 
-export default function WatchlistClient() {
+interface WatchlistClientProps {
+  isActive?: boolean
+}
+
+export default function WatchlistClient({ isActive = true }: WatchlistClientProps = {}) {
   const [items, setItems] = useState<WatchItem[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -117,12 +121,12 @@ export default function WatchlistClient() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [items, updateItemPrice])
 
-  // Initial load: fetch all prices in parallel
+  // Initial load: fetch all prices in parallel ONLY when active
   useEffect(() => {
-    if (isFirstLoadRef.current) {
+    if (isFirstLoadRef.current && isActive) {
       fetchAllPrices()
     }
-  }, [fetchAllPrices])
+  }, [fetchAllPrices, isActive])
 
   // Start staggered updates AFTER first load completes
   useEffect(() => {
