@@ -44,6 +44,17 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
   const isVisibleRef = useRef(true)
   const isFirstLoadRef = useRef(true)
 
+  // Listen for cache updates and reactively update component state
+  useEffect(() => {
+    const cached = getCachedData('watchlist')
+    if (cached && cached.length > 0 && items.length === 0) {
+      // Cache was populated, update component state immediately
+      console.log('[WatchlistClient] Cache populated! Updating state with', cached.length, 'items')
+      setItems(cached)
+      setLoading(false)
+    }
+  }, [getCachedData, items.length])
+
   // Initial load: fetch ALL prices in parallel for fast first load
   const fetchAllPrices = useCallback(async () => {
     try {

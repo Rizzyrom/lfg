@@ -28,6 +28,16 @@ export default function FeedLayout({ isActive = true }: FeedLayoutProps = {}) {
   const [loadingMore, setLoadingMore] = useState(false)
   const [page, setPage] = useState(0)
 
+  // Listen for cache updates and reactively update component state
+  useEffect(() => {
+    const cached = getCachedData('feed')
+    if (cached && cached.length > 0 && searchResults.length === 0) {
+      // Cache was populated, update component state immediately
+      console.log('[FeedLayout] Cache populated! Updating state with', cached.length, 'results')
+      setSearchResults(cached)
+    }
+  }, [getCachedData, searchResults.length])
+
   // Load latest news on mount ONLY when active
   useEffect(() => {
     if (!isActive) return

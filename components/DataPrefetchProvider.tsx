@@ -126,7 +126,8 @@ export default function DataPrefetchProvider({ children }: DataPrefetchProviderP
   useEffect(() => {
     console.log('[DataPrefetch] App mounted - immediately prefetching Markets data...')
     prefetchPage('watchlist')
-  }, []) // Empty array = runs once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty array = runs once on mount, prefetchPage not needed as dependency
 
   // Adjacent page prefetching - trigger 2-3 seconds after page becomes stable
   useEffect(() => {

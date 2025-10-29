@@ -77,6 +77,16 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
   // Use auto-scroll hook
   const { scrollRef, showNewMessages, scrollToBottom, handleScroll, autoScrollOnNewContent } = useAutoScroll()
 
+  // Listen for cache updates and reactively update component state
+  useEffect(() => {
+    const cached = getCachedData('chat')
+    if (cached && cached.length > 0 && messages.length === 0) {
+      // Cache was populated, update component state immediately
+      console.log('[ChatClient] Cache populated! Updating state with', cached.length, 'messages')
+      setMessages(cached)
+    }
+  }, [getCachedData, messages.length])
+
   // Memoize fetchMessages to prevent recreating on every render
   const fetchMessages = useCallback(async (skipCache = false) => {
     try {
