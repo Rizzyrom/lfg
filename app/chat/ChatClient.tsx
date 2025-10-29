@@ -5,6 +5,7 @@ import Message from '@/components/Message'
 import MentionAutocomplete from '@/components/MentionAutocomplete'
 import Toast from '@/components/Toast'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
+import { useDataPrefetch } from '@/components/DataPrefetchProvider'
 import { Paperclip, X, FileIcon, Send, MessageCircle, DollarSign } from 'lucide-react'
 
 interface Reaction {
@@ -43,7 +44,13 @@ interface ChatClientProps {
 }
 
 export default function ChatClient({ username, userId, isActive = true }: ChatClientProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const { getCachedData, setCachedData } = useDataPrefetch()
+
+  // Initialize with cached data for instant display
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const cached = getCachedData('chat')
+    return cached || []
+  })
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -76,13 +83,16 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       const res = await fetch('/api/chat')
       if (res.ok) {
         const data = await res.json()
-        setMessages(data.messages || [])
+        const freshMessages = data.messages || []
+        setMessages(freshMessages)
+        // Update cache with fresh data
+        setCachedData('chat', freshMessages)
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
       setToast({ message: 'Failed to fetch messages', type: 'error' })
     }
-  }, [])
+  }, [setCachedData])
 
   useEffect(() => {
     // Only fetch messages when component is active

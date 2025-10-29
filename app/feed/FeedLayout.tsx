@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Search, ExternalLink } from 'lucide-react'
 import UnifiedFeed from '@/components/UnifiedFeed'
+import { useDataPrefetch } from '@/components/DataPrefetchProvider'
 
 interface SearchResult {
   title: string
@@ -15,8 +16,14 @@ interface FeedLayoutProps {
 }
 
 export default function FeedLayout({ isActive = true }: FeedLayoutProps = {}) {
+  const { getCachedData, setCachedData } = useDataPrefetch()
+
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  // Initialize with cached data for instant display
+  const [searchResults, setSearchResults] = useState<SearchResult[]>(() => {
+    const cached = getCachedData('feed')
+    return cached || []
+  })
   const [searching, setSearching] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [page, setPage] = useState(0)
@@ -46,10 +53,13 @@ export default function FeedLayout({ isActive = true }: FeedLayoutProps = {}) {
 
       if (res.ok) {
         const data = await res.json()
+        const freshResults = data.results || []
         if (pageNum === 0) {
-          setSearchResults(data.results || [])
+          setSearchResults(freshResults)
+          // Update cache with fresh data
+          setCachedData('feed', freshResults)
         } else {
-          setSearchResults(prev => [...prev, ...(data.results || [])])
+          setSearchResults(prev => [...prev, ...freshResults])
         }
         setPage(pageNum)
       }

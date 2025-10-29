@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { TrendingUp } from 'lucide-react'
 import SkeletonRow from '@/components/SkeletonRow'
 import AssetSearchBar from './AssetSearchBar'
+import { useDataPrefetch } from '@/components/DataPrefetchProvider'
 
 interface WatchItem {
   id: string
@@ -26,8 +27,17 @@ interface WatchlistClientProps {
 }
 
 export default function WatchlistClient({ isActive = true }: WatchlistClientProps = {}) {
-  const [items, setItems] = useState<WatchItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const { getCachedData, setCachedData } = useDataPrefetch()
+
+  // Initialize with cached data for instant display
+  const [items, setItems] = useState<WatchItem[]>(() => {
+    const cached = getCachedData('watchlist')
+    return cached || []
+  })
+  const [loading, setLoading] = useState(() => {
+    const cached = getCachedData('watchlist')
+    return !cached // Only show loading if no cache
+  })
   const [adding, setAdding] = useState(false)
   const pathname = usePathname()
   const updateTimersRef = useRef<NodeJS.Timeout[]>([])
@@ -40,7 +50,10 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
       const res = await fetch('/api/watchlist/prices')
       if (res.ok) {
         const data = await res.json()
-        setItems(data.items || [])
+        const freshItems = data.items || []
+        setItems(freshItems)
+        // Update cache with fresh data
+        setCachedData('watchlist', freshItems)
         isFirstLoadRef.current = false
       }
     } catch (error) {
@@ -48,7 +61,7 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setCachedData])
 
   // Update price for a single item
   const updateItemPrice = useCallback(async (item: WatchItem) => {

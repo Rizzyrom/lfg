@@ -8,6 +8,7 @@ import RightRail from './RightRail'
 import MobileSwipeContainer from './MobileSwipeContainer'
 import MobilePageHub from './MobilePageHub'
 import MobileNavigationProvider from './MobileNavigationProvider'
+import DataPrefetchProvider from './DataPrefetchProvider'
 import { usePathname } from 'next/navigation'
 
 interface UnifiedMobileLayoutProps {
@@ -59,17 +60,19 @@ export default function UnifiedMobileLayout({ userId, username }: UnifiedMobileL
 
   return (
     <MobileNavigationProvider initialPage={pathname as any}>
-      <AppShell
-        leftRail={pageConfig.leftRail}
-        rightRail={<RightRail />}
-        leftDrawerTitle={pageConfig.leftDrawerTitle}
-        rightDrawerTitle={pageConfig.rightDrawerTitle}
-        pageTitle={pageConfig.pageTitle}
-      >
-        <MobileSwipeContainer>
-          <MobilePageHub userId={userId} username={username} />
-        </MobileSwipeContainer>
-      </AppShell>
+      <DataPrefetchProvider>
+        <AppShell
+          leftRail={pageConfig.leftRail}
+          rightRail={<RightRail />}
+          leftDrawerTitle={pageConfig.leftDrawerTitle}
+          rightDrawerTitle={pageConfig.rightDrawerTitle}
+          pageTitle={pageConfig.pageTitle}
+        >
+          <MobileSwipeContainer>
+            <MobilePageHub userId={userId} username={username} />
+          </MobileSwipeContainer>
+        </AppShell>
+      </DataPrefetchProvider>
     </MobileNavigationProvider>
   )
 }
