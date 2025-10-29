@@ -122,6 +122,12 @@ export default function DataPrefetchProvider({ children }: DataPrefetchProviderP
     }
   }, [cachedData, setCachedData])
 
+  // Immediate Markets prefetch on app mount - ensure Markets is always ready
+  useEffect(() => {
+    console.log('[DataPrefetch] App mounted - immediately prefetching Markets data...')
+    prefetchPage('watchlist')
+  }, []) // Empty array = runs once on mount
+
   // Adjacent page prefetching - trigger 2-3 seconds after page becomes stable
   useEffect(() => {
     // Clear existing timers
