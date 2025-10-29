@@ -136,10 +136,26 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
 
   // Initial load: fetch all prices in parallel ONLY when active
   useEffect(() => {
-    if (isFirstLoadRef.current && isActive) {
-      fetchAllPrices()
+    if (!isActive) return
+
+    if (isFirstLoadRef.current) {
+      // Check if we have cache first
+      const cached = getCachedData('watchlist')
+      if (!cached || cached.length === 0) {
+        // No cache, fetch immediately
+        console.log('[WatchlistClient] No cache, fetching immediately')
+        fetchAllPrices()
+      } else {
+        // Have cache, show it and fetch fresh data in background
+        console.log('[WatchlistClient] Using cached data, fetching fresh in background')
+        setItems(cached)
+        setLoading(false)
+        isFirstLoadRef.current = false
+        // Fetch fresh data after 1s delay
+        setTimeout(() => fetchAllPrices(), 1000)
+      }
     }
-  }, [fetchAllPrices, isActive])
+  }, [fetchAllPrices, isActive, getCachedData])
 
   // Start staggered updates AFTER first load completes
   useEffect(() => {

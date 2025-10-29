@@ -78,7 +78,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
   const { scrollRef, showNewMessages, scrollToBottom, handleScroll, autoScrollOnNewContent } = useAutoScroll()
 
   // Memoize fetchMessages to prevent recreating on every render
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async (skipCache = false) => {
     try {
       const res = await fetch('/api/chat')
       if (res.ok) {
@@ -98,11 +98,32 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
     // Only fetch messages when component is active
     if (!isActive) return
 
-    fetchMessages()
-    // Optimized: Increased polling interval to 5 seconds
+    // Check if we have cache first
+    const cached = getCachedData('chat')
+    if (!cached || cached.length === 0) {
+      // No cache, fetch immediately
+      console.log('[ChatClient] No cache, fetching immediately')
+      fetchMessages()
+    } else {
+      // Have cache, show it and fetch fresh data in background
+      console.log('[ChatClient] Using cached data, fetching fresh in background')
+      setMessages(cached)
+      // Fetch fresh data after 1s delay
+      const timer = setTimeout(() => fetchMessages(), 1000)
+
+      // Set up polling interval
+      const interval = setInterval(fetchMessages, 5000)
+
+      return () => {
+        clearTimeout(timer)
+        clearInterval(interval)
+      }
+    }
+
+    // Set up polling interval for no-cache case
     const interval = setInterval(fetchMessages, 5000)
     return () => clearInterval(interval)
-  }, [fetchMessages, isActive])
+  }, [fetchMessages, isActive, getCachedData])
 
   autoScrollOnNewContent([messages])
 

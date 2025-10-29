@@ -30,10 +30,22 @@ export default function FeedLayout({ isActive = true }: FeedLayoutProps = {}) {
 
   // Load latest news on mount ONLY when active
   useEffect(() => {
-    if (isActive) {
+    if (!isActive) return
+
+    // Check if we have cache first
+    const cached = getCachedData('feed')
+    if (!cached || cached.length === 0) {
+      // No cache, fetch immediately
+      console.log('[FeedLayout] No cache, fetching immediately')
       loadLatestNews()
+    } else {
+      // Have cache, show it and fetch fresh data in background
+      console.log('[FeedLayout] Using cached data, fetching fresh in background')
+      setSearchResults(cached)
+      // Fetch fresh data after 1s delay
+      setTimeout(() => loadLatestNews(), 1000)
     }
-  }, [isActive])
+  }, [isActive, getCachedData])
 
   const loadLatestNews = async (pageNum = 0) => {
     if (pageNum === 0) {
