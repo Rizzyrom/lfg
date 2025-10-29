@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import dynamic from 'next/dynamic'
 
 // Page routes
 const PAGES = ['/chat', '/watchlist', '/feed'] as const
@@ -51,26 +50,25 @@ export default function MobileNavigationProvider({ children, initialPage }: Prop
     }
   }, [pathname, currentPageIndex])
 
-  // Progressive background mounting
+  // Mount current page and adjacent pages for instant navigation
   useEffect(() => {
-    // Mount the current page immediately
-    setMountedPages(prev => new Set([...prev, currentPageIndex]))
+    const pagesToMount = new Set<number>()
 
-    // After a short delay, start mounting other pages in the background
-    const timer = setTimeout(() => {
-      const allPageIndices = [0, 1, 2]
-      const pagesToMount = allPageIndices.filter(idx => !mountedPages.has(idx))
+    // Always mount current page
+    pagesToMount.add(currentPageIndex)
 
-      // Mount pages one by one with a small delay between each
-      pagesToMount.forEach((pageIdx, i) => {
-        setTimeout(() => {
-          setMountedPages(prev => new Set([...prev, pageIdx]))
-        }, i * 500) // 500ms between each background mount
-      })
-    }, 1500) // Wait 1.5s after initial page is interactive
+    // Mount previous page if exists
+    if (currentPageIndex > 0) {
+      pagesToMount.add(currentPageIndex - 1)
+    }
 
-    return () => clearTimeout(timer)
-  }, []) // Only run once on mount
+    // Mount next page if exists
+    if (currentPageIndex < PAGES.length - 1) {
+      pagesToMount.add(currentPageIndex + 1)
+    }
+
+    setMountedPages(pagesToMount)
+  }, [currentPageIndex]) // Re-run when page changes to preload new adjacent pages
 
   const navigateToPage = useCallback((targetIndex: number) => {
     if (targetIndex < 0 || targetIndex >= PAGES.length || targetIndex === currentPageIndex) {

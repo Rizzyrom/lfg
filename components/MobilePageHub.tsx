@@ -1,22 +1,11 @@
 'use client'
 
-import { ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMobileNavigation } from './MobileNavigationProvider'
 import PageContainer from './PageContainer'
-import dynamic from 'next/dynamic'
-
-// Dynamically import page clients for code splitting
-const ChatClient = dynamic(() => import('@/app/chat/ChatClient'), {
-  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-tv-text-soft">Loading chat...</div></div>,
-})
-
-const WatchlistClient = dynamic(() => import('@/app/watchlist/WatchlistClient'), {
-  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-tv-text-soft">Loading markets...</div></div>,
-})
-
-const FeedLayout = dynamic(() => import('@/app/feed/FeedLayout'), {
-  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-pulse text-tv-text-soft">Loading feed...</div></div>,
-})
+import ChatClient from '@/app/chat/ChatClient'
+import WatchlistClient from '@/app/watchlist/WatchlistClient'
+import FeedLayout from '@/app/feed/FeedLayout'
 
 interface MobilePageHubProps {
   userId: string
@@ -30,12 +19,17 @@ interface MobilePageHubProps {
  */
 export default function MobilePageHub({ userId, username }: MobilePageHubProps) {
   const { currentPageIndex, direction, isPageMounted } = useMobileNavigation()
-  const [isMobile, setIsMobile] = useState(false)
+  // Initialize isMobile based on window size immediately to avoid re-render
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024
+    }
+    return false
+  })
 
   // Detect mobile
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024)
-    checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])

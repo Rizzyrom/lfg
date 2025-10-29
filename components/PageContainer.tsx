@@ -22,11 +22,25 @@ export default function PageContainer({
   pageIndex,
 }: PageContainerProps) {
   const [isVisible, setIsVisible] = useState(isActive)
-  const [animationState, setAnimationState] = useState<'enter' | 'center' | 'exit' | null>(null)
+  const [animationState, setAnimationState] = useState<'enter' | 'center' | 'exit' | null>(
+    isActive ? 'center' : null
+  )
   const containerRef = useRef<HTMLDivElement>(null)
   const prevActiveRef = useRef(isActive)
+  const isInitialMount = useRef(true)
 
   useEffect(() => {
+    // Skip animations on initial mount - all pages should appear instantly
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      if (isActive) {
+        setIsVisible(true)
+        setAnimationState('center')
+      }
+      prevActiveRef.current = isActive
+      return
+    }
+
     if (isActive && !prevActiveRef.current) {
       // Page becoming active
       setIsVisible(true)
