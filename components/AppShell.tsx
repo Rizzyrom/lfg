@@ -171,7 +171,7 @@ export default function AppShell({
           )}
 
           {/* Main content - full width on mobile */}
-          <main className="min-w-0 w-full h-full overflow-hidden">{children}</main>
+          <main className="min-w-0 w-full h-full overflow-y-auto overflow-x-hidden scrollbar-hide">{children}</main>
 
           {/* Right rail - hidden on mobile */}
           {rightRail && (
