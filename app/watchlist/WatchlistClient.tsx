@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, TrendingDown, Star, ArrowUpRight, Loader2 } from 'lucide-react'
 import SkeletonRow from '@/components/SkeletonRow'
 import AssetSearchBar from './AssetSearchBar'
 import { useDataPrefetch } from '@/components/DataPrefetchProvider'
@@ -19,10 +18,9 @@ interface WatchItem {
   mentionCount?: number
 }
 
-const STAGGER_INTERVAL = 5000 // 5 seconds between each item update
-const REFRESH_CYCLE = 5 * 60 * 1000 // 5 minutes total cycle
+const STAGGER_INTERVAL = 5000
+const REFRESH_CYCLE = 5 * 60 * 1000
 
-// Separate refs for timeouts and intervals to properly clean them up
 type TimerRefs = {
   timeouts: NodeJS.Timeout[]
   intervals: NodeJS.Timeout[]
@@ -35,35 +33,28 @@ interface WatchlistClientProps {
 export default function WatchlistClient({ isActive = true }: WatchlistClientProps = {}) {
   const { getCachedData, setCachedData } = useDataPrefetch()
 
-  // Initialize with cached data for instant display
   const [items, setItems] = useState<WatchItem[]>(() => {
     const cached = getCachedData('watchlist')
     return cached || []
   })
   const [loading, setLoading] = useState(() => {
     const cached = getCachedData('watchlist')
-    return !cached // Only show loading if no cache
+    return !cached
   })
   const [adding, setAdding] = useState(false)
-  const pathname = usePathname()
   const updateTimersRef = useRef<TimerRefs>({ timeouts: [], intervals: [] })
   const isVisibleRef = useRef(true)
   const isFirstLoadRef = useRef(true)
-  const pendingRequestsRef = useRef<Set<string>>(new Set()) // Track in-flight requests
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const pendingRequestsRef = useRef<Set<string>>(new Set())
 
-  // Listen for cache updates and reactively update component state
   useEffect(() => {
     const cached = getCachedData('watchlist')
     if (cached && cached.length > 0 && items.length === 0) {
-      // Cache was populated, update component state immediately
-      console.log('[WatchlistClient] Cache populated! Updating state with', cached.length, 'items')
       setItems(cached)
       setLoading(false)
     }
   }, [getCachedData, items.length])
 
-  // Initial load: fetch ALL prices in parallel for fast first load
   const fetchAllPrices = useCallback(async () => {
     try {
       const res = await fetch('/api/watchlist/prices')
@@ -71,7 +62,6 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
         const data = await res.json()
         const freshItems = data.items || []
         setItems(freshItems)
-        // Update cache with fresh data
         setCachedData('watchlist', freshItems)
         isFirstLoadRef.current = false
       }
@@ -82,12 +72,8 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     }
   }, [setCachedData])
 
-  // Update price for a single item with request deduplication
   const updateItemPrice = useCallback(async (item: WatchItem) => {
-    // Skip if request already in flight for this item
-    if (pendingRequestsRef.current.has(item.id)) {
-      return
-    }
+    if (pendingRequestsRef.current.has(item.id)) return
 
     pendingRequestsRef.current.add(item.id)
 
@@ -97,9 +83,7 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
         const data = await res.json()
         if (data.success && data.item) {
           setItems(prevItems =>
-            prevItems.map(i =>
-              i.id === item.id ? { ...i, ...data.item } : i
-            )
+            prevItems.map(i => i.id === item.id ? { ...i, ...data.item } : i)
           )
         }
       }
@@ -110,28 +94,21 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     }
   }, [])
 
-  // Clear all timers helper
   const clearAllTimers = useCallback(() => {
     updateTimersRef.current.timeouts.forEach(timer => clearTimeout(timer))
     updateTimersRef.current.intervals.forEach(timer => clearInterval(timer))
     updateTimersRef.current = { timeouts: [], intervals: [] }
   }, [])
 
-  // Start staggered price updates
   const startStaggeredUpdates = useCallback((itemsList: WatchItem[]) => {
-    // Clear existing timers (both timeouts AND intervals)
     clearAllTimers()
-
     if (itemsList.length === 0) return
 
-    // Calculate stagger delay to spread updates across 5 minutes
     const staggerDelay = Math.min(STAGGER_INTERVAL, REFRESH_CYCLE / itemsList.length)
 
-    // Schedule updates for each item
     itemsList.forEach((item, index) => {
       const initialDelay = index * staggerDelay
 
-      // Initial update
       const initialTimer = setTimeout(() => {
         if (isVisibleRef.current) {
           updateItemPrice(item)
@@ -140,7 +117,6 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
 
       updateTimersRef.current.timeouts.push(initialTimer)
 
-      // Recurring updates every 5 minutes
       const recurringTimer = setInterval(() => {
         if (isVisibleRef.current) {
           updateItemPrice(item)
@@ -151,15 +127,13 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     })
   }, [updateItemPrice, clearAllTimers])
 
-  // Handle visibility changes (page visibility API)
   useEffect(() => {
     const handleVisibilityChange = () => {
       isVisibleRef.current = !document.hidden
 
-      // When page becomes visible, trigger immediate updates for stale prices
       if (isVisibleRef.current && items.length > 0 && !isFirstLoadRef.current) {
         items.forEach((item, index) => {
-          setTimeout(() => updateItemPrice(item), index * 100) // Quick stagger
+          setTimeout(() => updateItemPrice(item), index * 100)
         })
       }
     }
@@ -168,39 +142,28 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [items, updateItemPrice])
 
-  // Initial load: fetch all prices in parallel ONLY when active
   useEffect(() => {
     if (!isActive) return
 
     if (isFirstLoadRef.current) {
-      // Check if we have cache first
       const cached = getCachedData('watchlist')
       if (!cached || cached.length === 0) {
-        // No cache, fetch immediately
-        console.log('[WatchlistClient] No cache, fetching immediately')
         fetchAllPrices()
       } else {
-        // Have cache, show it and fetch fresh data in background
-        console.log('[WatchlistClient] Using cached data, fetching fresh in background')
         setItems(cached)
         setLoading(false)
         isFirstLoadRef.current = false
-        // Fetch fresh data after 1s delay
         setTimeout(() => fetchAllPrices(), 1000)
       }
     }
   }, [fetchAllPrices, isActive, getCachedData])
 
-  // Start staggered updates AFTER first load completes
   useEffect(() => {
     if (items.length > 0 && !loading && !isFirstLoadRef.current) {
       startStaggeredUpdates(items)
     }
 
-    // Properly clear both timeouts AND intervals on cleanup
-    return () => {
-      clearAllTimers()
-    }
+    return () => clearAllTimers()
   }, [items.length, loading, startStaggeredUpdates, clearAllTimers])
 
   const handleAdd = async (symbol: string, source: 'crypto' | 'stock') => {
@@ -208,7 +171,6 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
 
     setAdding(true)
     try {
-      console.log('Adding watchlist item:', { symbol, source })
       const res = await fetch('/api/watchlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -216,13 +178,10 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
       })
 
       const data = await res.json()
-      console.log('Add watchlist response:', { ok: res.ok, status: res.status, data })
 
       if (res.ok) {
-        // Fetch all prices again to immediately show the new item
         await fetchAllPrices()
       } else {
-        console.error('Failed to add item:', data)
         alert(data.error || 'Failed to add item. Please try again.')
       }
     } catch (error) {
@@ -233,164 +192,169 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     }
   }
 
+  const stockItems = useMemo(() => items.filter(item => item.source === 'stock'), [items])
+  const cryptoItems = useMemo(() => items.filter(item => item.source === 'crypto'), [items])
 
-  // Memoize separated items for performance
-  const stockItems = useMemo(() =>
-    items.filter(item => item.source === 'stock'),
-    [items]
-  )
-  const cryptoItems = useMemo(() =>
-    items.filter(item => item.source === 'crypto'),
-    [items]
-  )
-
-  // Render asset bubble component with modern card design
-  const renderAssetBubble = (item: WatchItem, index: number) => {
+  const renderAssetCard = (item: WatchItem, index: number) => {
     const change24h = item.change24h ? parseFloat(item.change24h) : 0
     const change30d = item.change30d ? parseFloat(item.change30d) : 0
     const isPositive24h = change24h >= 0
     const isPositive30d = change30d >= 0
-    const staggerClass = index < 8 ? 'animate-stagger-in' : ''
-    const staggerStyle = index < 8 ? { animationDelay: `${index * 60}ms` } : {}
 
     return (
-      <div
+      <Link
         key={item.id}
-        className={`bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 transition-all duration-300 hover:shadow-xl active:scale-[0.98] min-h-[100px] flex flex-col justify-between relative overflow-hidden ${staggerClass}`}
-        style={{
-          ...staggerStyle,
-          border: `2px solid ${
-            item.price
-              ? isPositive24h
-                ? '#10b981'  // tv-up green
-                : '#ef4444'  // tv-down red
-              : 'rgba(0, 0, 0, 0.08)'  // neutral gray
-          }`,
-          boxShadow: item.price ? (isPositive24h ? '0 4px 20px rgba(16, 185, 129, 0.15)' : '0 4px 20px rgba(239, 68, 68, 0.15)') : 'none'
-        }}
+        href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
+        className="block animate-fade-in-up"
+        style={{ animationDelay: `${index * 60}ms` }}
       >
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/[0.02] pointer-events-none" />
-
-        <Link
-          href={`/asset/${encodeURIComponent(item.symbol)}?source=${item.source}`}
-          className="block w-full h-full flex flex-col justify-between relative z-10"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-tv-text truncate">{item.symbol}</h3>
-            {item.mentionCount && item.mentionCount > 0 && (
-              <span className="px-2 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full shadow-md flex-shrink-0 ml-2">
-                {item.mentionCount}
-              </span>
-            )}
+        <div className="bg-white rounded-2xl p-4 border border-tv-border hover:border-tv-blue/30 hover:shadow-lg transition-all duration-300 active:scale-[0.98] group">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-tv-text group-hover:text-tv-blue transition-colors">
+                {item.symbol}
+              </h3>
+              {item.mentionCount && item.mentionCount > 0 && (
+                <span className="px-2 py-0.5 bg-tv-down text-white text-[10px] font-bold rounded-full">
+                  {item.mentionCount} mentions
+                </span>
+              )}
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-tv-text-muted group-hover:text-tv-blue transition-colors" />
           </div>
-          {item.price && (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-base font-mono font-bold text-tv-text">
+
+          {/* Price */}
+          {item.price ? (
+            <div className="space-y-3">
+              <div className="text-2xl font-bold font-mono text-tv-text">
                 ${parseFloat(item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-tv-bg/50">
-                  <span className="text-tv-text-muted">24h</span>
-                  <span className={`${isPositive24h ? 'text-tv-up' : 'text-tv-down'} font-bold`}>
+              </div>
+
+              {/* Changes */}
+              <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${
+                  isPositive24h ? 'bg-tv-up-soft' : 'bg-tv-down-soft'
+                }`}>
+                  {isPositive24h ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-tv-up" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5 text-tv-down" />
+                  )}
+                  <span className={`text-xs font-bold ${isPositive24h ? 'text-tv-up' : 'text-tv-down'}`}>
                     {isPositive24h ? '+' : ''}{change24h.toFixed(2)}%
                   </span>
+                  <span className="text-[10px] text-tv-text-muted font-medium ml-0.5">24h</span>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-tv-bg/50">
-                  <span className="text-tv-text-muted">30d</span>
-                  <span className={`${isPositive30d ? 'text-tv-up' : 'text-tv-down'} font-bold`}>
+
+                <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${
+                  isPositive30d ? 'bg-tv-up-soft' : 'bg-tv-down-soft'
+                }`}>
+                  {isPositive30d ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-tv-up" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5 text-tv-down" />
+                  )}
+                  <span className={`text-xs font-bold ${isPositive30d ? 'text-tv-up' : 'text-tv-down'}`}>
                     {isPositive30d ? '+' : ''}{change30d.toFixed(2)}%
                   </span>
+                  <span className="text-[10px] text-tv-text-muted font-medium ml-0.5">30d</span>
                 </div>
               </div>
             </div>
-          )}
-          {!item.price && (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-tv-blue border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs text-tv-text-soft font-medium">Loading price...</p>
+          ) : (
+            <div className="flex items-center gap-2 py-4">
+              <Loader2 className="w-4 h-4 text-tv-blue animate-spin" />
+              <span className="text-sm text-tv-text-soft font-medium">Loading price...</span>
             </div>
           )}
-        </Link>
-      </div>
+        </div>
+      </Link>
     )
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Search bar - Fixed at top */}
-      <div className="flex-shrink-0 mb-3">
+      {/* Search bar */}
+      <div className="flex-shrink-0 mb-4">
         <div className="flex justify-end">
-          <div className="w-full sm:w-64">
+          <div className="w-full sm:w-72">
             <AssetSearchBar onAdd={handleAdd} disabled={adding} />
           </div>
         </div>
       </div>
 
-      {/* Content area - Scrollable columns */}
+      {/* Content area */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {loading ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
+            <SkeletonRow />
             <SkeletonRow />
             <SkeletonRow />
           </div>
         ) : items.length === 0 ? (
-          <div className="bg-gradient-to-br from-tv-panel to-tv-bg rounded-2xl p-10 text-center shadow-sm border border-tv-grid/30">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-tv-blue/20 to-tv-blue/5 flex items-center justify-center">
-              <TrendingUp className="w-10 h-10 text-tv-blue" />
+          <div className="bg-white rounded-2xl p-10 text-center border border-tv-border animate-scale-in">
+            <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-tv-blue-soft flex items-center justify-center">
+              <Star className="w-8 h-8 text-tv-blue" />
             </div>
-            <p className="text-tv-text font-semibold text-lg mb-2">
+            <h3 className="text-lg font-bold text-tv-text mb-2">
               Your watchlist is empty
-            </p>
-            <p className="text-tv-text-soft text-sm">
-              Add symbols above to start tracking your favorite assets
+            </h3>
+            <p className="text-tv-text-soft text-sm max-w-xs mx-auto">
+              Search and add your favorite stocks and crypto to start tracking them
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 h-full">
-            {/* Stocks Column - Left */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full overflow-hidden">
+            {/* Stocks Column */}
             <div className="flex flex-col h-full overflow-hidden">
-              <h2 className="text-base font-bold text-tv-text mb-2 px-1 flex-shrink-0">Stocks</h2>
+              <div className="flex items-center gap-2 mb-3 px-1 flex-shrink-0">
+                <h2 className="text-sm font-bold text-tv-text uppercase tracking-wide">Stocks</h2>
+                <span className="px-2 py-0.5 bg-tv-bg-secondary rounded-full text-xs font-semibold text-tv-text-soft">
+                  {stockItems.length}
+                </span>
+              </div>
               <div
-                className="space-y-2 overflow-y-auto snap-y snap-mandatory flex-1 pb-2 scrollbar-hide"
+                className="space-y-3 overflow-y-auto flex-1 pb-20 scrollbar-hide"
                 style={{
                   WebkitOverflowScrolling: 'touch',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'contain'
                 }}
               >
-                <div className="h-0 snap-start" />
                 {stockItems.length === 0 ? (
-                  <div className="bg-tv-panel rounded-xl p-6 text-center">
-                    <p className="text-tv-text-soft text-sm">No stocks in watchlist</p>
+                  <div className="bg-tv-bg-secondary rounded-xl p-6 text-center">
+                    <p className="text-tv-text-soft text-sm">No stocks added yet</p>
                   </div>
                 ) : (
-                  stockItems.map((item, index) => renderAssetBubble(item, index))
+                  stockItems.map((item, index) => renderAssetCard(item, index))
                 )}
-                <div className="h-0 snap-end" />
               </div>
             </div>
 
-            {/* Crypto Column - Right */}
+            {/* Crypto Column */}
             <div className="flex flex-col h-full overflow-hidden">
-              <h2 className="text-base font-bold text-tv-text mb-2 px-1 flex-shrink-0">Crypto</h2>
+              <div className="flex items-center gap-2 mb-3 px-1 flex-shrink-0">
+                <h2 className="text-sm font-bold text-tv-text uppercase tracking-wide">Crypto</h2>
+                <span className="px-2 py-0.5 bg-tv-bg-secondary rounded-full text-xs font-semibold text-tv-text-soft">
+                  {cryptoItems.length}
+                </span>
+              </div>
               <div
-                className="space-y-2 overflow-y-auto snap-y snap-mandatory flex-1 pb-2 scrollbar-hide"
+                className="space-y-3 overflow-y-auto flex-1 pb-20 scrollbar-hide"
                 style={{
                   WebkitOverflowScrolling: 'touch',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'contain'
                 }}
               >
-                <div className="h-0 snap-start" />
                 {cryptoItems.length === 0 ? (
-                  <div className="bg-tv-panel rounded-xl p-6 text-center">
-                    <p className="text-tv-text-soft text-sm">No crypto in watchlist</p>
+                  <div className="bg-tv-bg-secondary rounded-xl p-6 text-center">
+                    <p className="text-tv-text-soft text-sm">No crypto added yet</p>
                   </div>
                 ) : (
-                  cryptoItems.map((item, index) => renderAssetBubble(item, index))
+                  cryptoItems.map((item, index) => renderAssetCard(item, index))
                 )}
-                <div className="h-0 snap-end" />
               </div>
             </div>
           </div>

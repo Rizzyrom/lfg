@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, memo, useMemo, useCallback } from 'react'
+import { Reply, Bot, FileText, Download, ExternalLink } from 'lucide-react'
 import TickerChip from './TickerChip'
 
 interface Reaction {
@@ -35,7 +36,7 @@ interface MessageProps {
 
 type MessagePart = { type: 'text'; content: string } | { type: 'ticker'; symbol: string } | { type: 'mention'; username: string }
 
-// Parse message text for tickers and mentions - moved outside component
+// Parse message text for tickers and mentions
 const parseMessage = (text: string): MessagePart[] => {
   const parts: MessagePart[] = []
   const regex = /(\$[A-Za-z]{1,5})|(@\w+)/g
@@ -63,7 +64,7 @@ const parseMessage = (text: string): MessagePart[] => {
   return parts.length > 0 ? parts : [{ type: 'text', content: text }]
 }
 
-// Determine attachment type - moved outside component
+// Determine attachment type
 const getAttachmentType = (url: string): 'image' | 'video' | 'pdf' | null => {
   if (!url) return null
   const lower = url.toLowerCase()
@@ -73,7 +74,7 @@ const getAttachmentType = (url: string): 'image' | 'video' | 'pdf' | null => {
   return null
 }
 
-// Extract filename from URL - moved outside component
+// Extract filename from URL
 const getFilename = (url: string): string => {
   try {
     const parts = url.split('/')
@@ -108,7 +109,7 @@ function Message({
   const handleTouchStart = useCallback(() => {
     const timer = setTimeout(() => {
       setShowReactionPicker(true)
-    }, 500) // 0.5 second long press
+    }, 500)
     setLongPressTimer(timer)
   }, [])
 
@@ -125,7 +126,6 @@ function Message({
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      // If click is outside the reaction picker, close it
       if (!target.closest('.reaction-picker-container')) {
         setShowReactionPicker(false)
       }
@@ -161,7 +161,6 @@ function Message({
     setReactions(Object.values(grouped))
   }, [initialReactions, currentUserId])
 
-  // Memoize handleReaction to prevent re-creating on every render
   const handleReaction = useCallback(async (emoji: string) => {
     try {
       const res = await fetch('/api/reactions', {
@@ -171,17 +170,14 @@ function Message({
       })
 
       if (res.ok) {
-        // Optimistically update UI
         const existing = reactions.find(r => r.emoji === emoji)
         if (existing?.userReacted) {
-          // Remove reaction
           setReactions(prev =>
             prev
               .map(r => (r.emoji === emoji ? { ...r, count: r.count - 1, userReacted: false } : r))
               .filter(r => r.count > 0)
           )
         } else {
-          // Add reaction
           if (existing) {
             setReactions(prev =>
               prev.map(r => (r.emoji === emoji ? { ...r, count: r.count + 1, userReacted: true } : r))
@@ -196,38 +192,25 @@ function Message({
     }
   }, [id, reactions])
 
-  // Memoize parsed message parts
+  // Memoized values
   const messageParts = useMemo(() => parseMessage(ciphertext), [ciphertext])
+  const attachmentType = useMemo(() => mediaPtr ? getAttachmentType(mediaPtr) : null, [mediaPtr])
+  const filename = useMemo(() => mediaPtr ? getFilename(mediaPtr) : '', [mediaPtr])
 
-  // Memoize attachment type
-  const attachmentType = useMemo(() =>
-    mediaPtr ? getAttachmentType(mediaPtr) : null,
-    [mediaPtr]
-  )
-
-  // Memoize filename
-  const filename = useMemo(() =>
-    mediaPtr ? getFilename(mediaPtr) : '',
-    [mediaPtr]
-  )
-
-  // Memoize reply handler
   const handleReplyClick = useCallback(() => {
     if (onReply) {
       onReply({ id, username, ciphertext })
     }
   }, [onReply, id, username, ciphertext])
 
-  // Memoize image click handler
   const handleImageClick = useCallback(() => {
     if (mediaPtr) {
       window.open(mediaPtr, '_blank')
     }
   }, [mediaPtr])
 
-  // Memoize formatted timestamp
   const formattedTime = useMemo(() =>
-    new Date(timestamp).toLocaleTimeString(),
+    new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     [timestamp]
   )
 
@@ -237,47 +220,45 @@ function Message({
   return (
     <div
       id={`message-${id}`}
-      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 group`}
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 group animate-fade-in-up`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchEnd}
     >
-      <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col relative`}>
-        <div className="text-xs text-tv-text-soft mb-1 flex items-center gap-2">
+      <div className={`max-w-[75%] sm:max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col relative`}>
+        {/* Username header */}
+        <div className="flex items-center gap-2 mb-1.5 px-1">
           {isAgent && (
-            <span className="inline-flex items-center justify-center w-5 h-5 bg-tv-blue rounded-full">
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </span>
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-tv-blue to-tv-purple flex items-center justify-center">
+              <Bot className="w-3 h-3 text-white" />
+            </div>
           )}
-          <span>{username}</span>
+          <span className="text-xs font-semibold text-tv-text-soft">{username}</span>
           {isAgent && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-tv-blue text-white">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-tv-blue text-white">
               AI
             </span>
           )}
         </div>
 
-        {/* Reply + Reaction Picker (shows on long press) */}
+        {/* Reaction Picker */}
         {showReactionPicker && (
-          <div className="reaction-picker-container absolute -top-2 left-0 right-0 z-10 flex flex-col gap-2 animate-fade-in">
-            {/* Reply button at top */}
+          <div className="reaction-picker-container absolute -top-14 left-0 right-0 z-20 flex flex-col gap-2 animate-scale-in">
             {onReply && (
               <button
                 onClick={() => {
                   handleReplyClick()
                   setShowReactionPicker(false)
                 }}
-                className="self-start bg-tv-panel border border-tv-grid rounded-lg px-4 py-2 text-sm font-medium text-tv-text hover:bg-tv-hover active:scale-95 transition-all shadow-lg"
+                className="self-start flex items-center gap-2 bg-white border border-tv-border rounded-xl px-4 py-2.5 text-sm font-semibold text-tv-text hover:bg-tv-bg-secondary active:scale-95 transition-all shadow-elevation-3"
                 type="button"
               >
+                <Reply className="w-4 h-4" />
                 Reply
               </button>
             )}
 
-            {/* Reactions at bottom */}
-            <div className="flex items-center gap-1 bg-tv-panel border border-tv-grid rounded-full px-2 py-1 shadow-lg">
+            <div className="flex items-center gap-0.5 bg-white border border-tv-border rounded-full px-3 py-2 shadow-elevation-3">
               {quickReactions.map(emoji => (
                 <button
                   key={emoji}
@@ -285,7 +266,7 @@ function Message({
                     handleReaction(emoji)
                     setShowReactionPicker(false)
                   }}
-                  className="hover:scale-125 active:scale-110 transition-transform text-lg p-2 min-h-[44px] min-w-[44px] touch-manipulation"
+                  className="hover:scale-125 active:scale-95 transition-transform text-xl p-2 min-h-[44px] min-w-[44px] touch-manipulation rounded-full hover:bg-tv-bg-secondary"
                   type="button"
                 >
                   {emoji}
@@ -295,36 +276,37 @@ function Message({
           </div>
         )}
 
-        {/* Reply Reference (if this is a reply) */}
+        {/* Reply Reference */}
         {replyTo && (
           <button
-            className="mb-2 flex items-center gap-2 text-xs text-tv-text-soft hover:text-tv-text transition-colors"
+            className="mb-2 ml-1 flex items-center gap-2 text-xs text-tv-text-soft hover:text-tv-text transition-colors group/reply"
             type="button"
           >
-            <div className="w-0.5 h-8 bg-tv-grid rounded-full" />
-            <div className="text-left">
-              <div className="font-medium">@{replyTo.sender.username}</div>
-              <div className="truncate max-w-[200px]">{replyTo.ciphertext}</div>
+            <div className="w-0.5 h-10 bg-tv-border group-hover/reply:bg-tv-blue rounded-full transition-colors" />
+            <div className="text-left bg-tv-bg-secondary rounded-lg px-3 py-2">
+              <div className="font-semibold text-tv-text-soft">@{replyTo.sender.username}</div>
+              <div className="truncate max-w-[200px] text-tv-text-muted">{replyTo.ciphertext}</div>
             </div>
           </button>
         )}
 
+        {/* Message Bubble */}
         <div
-          className={`px-4 py-2 rounded-xl ${
+          className={`px-4 py-3 rounded-2xl shadow-sm transition-all ${
             isAgent
-              ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white border border-blue-400/30'
+              ? 'bg-gradient-to-br from-tv-blue via-tv-blue to-tv-blue-hover text-white shadow-md shadow-tv-blue/20'
               : isOwn
-              ? 'bg-tv-blue text-white'
-              : 'bg-tv-chip text-tv-text'
+              ? 'bg-tv-text text-white rounded-br-md'
+              : 'bg-white border border-tv-border text-tv-text rounded-bl-md'
           }`}
         >
-          <p className="text-sm break-words whitespace-pre-wrap">
+          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
             {messageParts.map((part, index) => {
               if (part.type === 'text') {
                 return <span key={index}>{part.content}</span>
               } else if (part.type === 'ticker') {
                 return (
-                  <span key={index} className="inline-block mx-0.5">
+                  <span key={index} className="inline-block mx-0.5 align-middle">
                     <TickerChip symbol={part.symbol} />
                   </span>
                 )
@@ -332,7 +314,11 @@ function Message({
                 return (
                   <span
                     key={index}
-                    className="bg-white text-black px-1 rounded font-medium mx-0.5"
+                    className={`px-1.5 py-0.5 rounded-md font-semibold mx-0.5 ${
+                      isOwn || isAgent
+                        ? 'bg-white/20 text-white'
+                        : 'bg-tv-blue-soft text-tv-blue'
+                    }`}
                   >
                     @{part.username}
                   </span>
@@ -344,11 +330,11 @@ function Message({
 
           {/* Image attachment */}
           {attachmentType === 'image' && !imageError && (
-            <div className="mt-2">
+            <div className="mt-3 -mx-1">
               <img
                 src={mediaPtr!}
                 alt="Attachment"
-                className="max-w-full max-h-[300px] rounded-lg cursor-pointer hover:opacity-90 active:opacity-75 transition-opacity"
+                className="w-full max-h-[300px] object-cover rounded-xl cursor-pointer hover:opacity-95 active:opacity-90 transition-opacity"
                 onClick={handleImageClick}
                 onError={() => setImageError(true)}
                 loading="lazy"
@@ -359,11 +345,11 @@ function Message({
 
           {/* Video attachment */}
           {attachmentType === 'video' && (
-            <div className="mt-2">
+            <div className="mt-3 -mx-1">
               <video
                 src={mediaPtr!}
                 controls
-                className="max-w-full max-h-[300px] rounded-lg"
+                className="w-full max-h-[300px] rounded-xl"
                 preload="metadata"
               >
                 Your browser does not support video playback.
@@ -377,68 +363,49 @@ function Message({
               href={mediaPtr!}
               target="_blank"
               rel="noopener noreferrer"
-              className={`mt-2 flex items-center gap-2 p-2 rounded border ${
-                isOwn
-                  ? 'border-white/30 hover:bg-white/10'
-                  : 'border-tv-grid hover:bg-tv-bg-secondary'
-              } transition-colors`}
+              className={`mt-3 flex items-center gap-3 p-3 rounded-xl transition-all ${
+                isOwn || isAgent
+                  ? 'bg-white/10 hover:bg-white/20'
+                  : 'bg-tv-bg-secondary hover:bg-tv-chip'
+              }`}
             >
-              <svg
-                className="w-6 h-6 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                />
-              </svg>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium truncate">{filename}</div>
-                <div className="text-[10px] opacity-75">PDF Document</div>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isOwn || isAgent ? 'bg-white/20' : 'bg-tv-down-soft'
+              }`}>
+                <FileText className={`w-5 h-5 ${isOwn || isAgent ? 'text-white' : 'text-tv-down'}`} />
               </div>
-              <svg
-                className="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{filename}</div>
+                <div className="text-xs opacity-70">PDF Document</div>
+              </div>
+              <ExternalLink className="w-4 h-4 opacity-60" />
             </a>
           )}
         </div>
 
-        {/* Reaction Counts (below message) */}
+        {/* Reactions */}
         {reactions.length > 0 && (
-          <div className="flex items-center gap-1 mt-2 flex-wrap">
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap px-1">
             {reactions.map(r => (
               <button
                 key={r.emoji}
                 onClick={() => handleReaction(r.emoji)}
-                className={`flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-full text-xs border transition-all touch-manipulation active:scale-95 ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all touch-manipulation active:scale-95 ${
                   r.userReacted
-                    ? 'bg-tv-blue border-tv-blue text-white'
-                    : 'bg-tv-bg border-tv-grid text-tv-text hover:bg-tv-hover'
+                    ? 'bg-tv-blue border-tv-blue text-white shadow-sm shadow-tv-blue/20'
+                    : 'bg-white border-tv-border text-tv-text hover:border-tv-blue hover:bg-tv-blue-soft'
                 }`}
                 type="button"
               >
                 <span>{r.emoji}</span>
-                <span className="font-medium">{r.count}</span>
+                <span>{r.count}</span>
               </button>
             ))}
           </div>
         )}
 
-        <div className="text-[10px] text-tv-text-soft mt-1">
+        {/* Timestamp */}
+        <div className="text-[11px] text-tv-text-muted mt-1.5 px-1 font-medium">
           {formattedTime}
         </div>
       </div>
@@ -446,9 +413,7 @@ function Message({
   )
 }
 
-// Export memoized component to prevent unnecessary re-renders
 export default memo(Message, (prevProps, nextProps) => {
-  // Custom comparison for better memoization
   return (
     prevProps.id === nextProps.id &&
     prevProps.username === nextProps.username &&
