@@ -78,15 +78,17 @@ body {
 
 .card {
   background: #FFFFFF;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .card:hover {
   background: #FAFAFA;
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .card-interactive {
@@ -94,7 +96,8 @@ body {
 }
 
 .card-interactive:active {
-  transform: scale(0.98);
+  transform: scale(0.98) translateY(0);
+  transition: transform 0.1s ease;
 }
 
 /* Glassmorphism variant */
@@ -396,12 +399,12 @@ body {
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slide-up {
   from {
-    transform: translateY(20px);
+    transform: translateY(16px);
     opacity: 0;
   }
   to {
@@ -411,7 +414,7 @@ body {
 }
 
 .animate-slide-up {
-  animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fade-in {
@@ -424,7 +427,58 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Staggered entrance animation for lists */
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-stagger-in {
+  animation: stagger-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.animate-stagger-in:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger-in:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger-in:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger-in:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger-in:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger-in:nth-child(6) { animation-delay: 250ms; }
+.animate-stagger-in:nth-child(7) { animation-delay: 300ms; }
+.animate-stagger-in:nth-child(8) { animation-delay: 350ms; }
+
+/* Scale-in animation for modals/popovers */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Subtle bounce for buttons */
+@keyframes micro-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-micro-bounce:hover {
+  animation: micro-bounce 0.3s ease;
 }
 
 @keyframes spin {

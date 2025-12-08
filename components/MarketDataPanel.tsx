@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { MarketData } from '@/lib/marketDataAPI'
-import { TrendingUp, TrendingDown, DollarSign, Activity, Layers, Calendar } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, Activity, Layers, Calendar, BarChart3, Percent, ArrowUpDown, Clock } from 'lucide-react'
 
 interface MarketDataPanelProps {
   symbol: string
@@ -22,9 +21,9 @@ export default function MarketDataPanel({ symbol, source, className = '' }: Mark
     `/api/market-data?symbol=${symbol}&source=${source}`,
     fetcher,
     {
-      refreshInterval: 300000, // Refresh every 5 minutes
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
+      refreshInterval: 30000, // Refresh every 30 seconds for real-time feel
+      revalidateOnFocus: true,
+      dedupingInterval: 10000,
     }
   )
 
@@ -84,145 +83,247 @@ export default function MarketDataPanel({ symbol, source, className = '' }: Mark
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
+  // Helper to render a metric card
+  const MetricCard = ({ icon: Icon, label, value, subValue, colorClass }: {
+    icon: any,
+    label: string,
+    value: string | number,
+    subValue?: string,
+    colorClass?: string
+  }) => (
+    <div className="p-3 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-tv-grid/20 hover:border-tv-blue/30 transition-all">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon className="w-3.5 h-3.5 text-tv-text-muted" />
+        <p className="text-[11px] text-tv-text-soft font-medium uppercase tracking-wide">{label}</p>
+      </div>
+      <p className={`text-base font-bold ${colorClass || 'text-tv-text'}`}>{value}</p>
+      {subValue && <p className="text-[10px] text-tv-text-muted mt-0.5">{subValue}</p>}
+    </div>
+  )
+
   return (
-    <div className={`card p-6 ${className}`}>
+    <div className={`card p-4 ${className}`}>
       <div className="flex items-center gap-2 mb-4">
         <Activity className="w-5 h-5 text-tv-blue" />
-        <h2 className="text-lg font-bold text-tv-text">Market Data</h2>
+        <h2 className="text-lg font-bold text-tv-text">Market Stats</h2>
+        <span className="ml-auto text-[10px] text-tv-text-muted bg-tv-chip px-2 py-0.5 rounded-full">Live</span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Current Price */}
-        <div className="p-4 rounded-lg bg-tv-bg-secondary">
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign className="w-4 h-4 text-tv-text-soft" />
-            <p className="text-xs text-tv-text-soft font-medium">Current Price</p>
-          </div>
-          <p className="text-lg font-bold text-tv-text price">
-            ${marketData.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        {/* Current Price - Always first */}
+        <MetricCard
+          icon={DollarSign}
+          label="Price"
+          value={`$${marketData.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        />
 
         {/* 24h Change */}
-        <div className="p-4 rounded-lg bg-tv-bg-secondary">
-          <div className="flex items-center gap-2 mb-1">
-            <Activity className="w-4 h-4 text-tv-text-soft" />
-            <p className="text-xs text-tv-text-soft font-medium">24h Change</p>
+        <div className="p-3 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-tv-grid/20">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Activity className="w-3.5 h-3.5 text-tv-text-muted" />
+            <p className="text-[11px] text-tv-text-soft font-medium uppercase tracking-wide">24h Change</p>
           </div>
-          <div className={`flex items-center gap-1 text-lg font-bold ${marketData.change24h >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
-            {marketData.change24h >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
-            <span>
-              {marketData.change24h >= 0 ? '+' : ''}
-              {marketData.change24h.toFixed(2)}%
-            </span>
+          <div className={`flex items-center gap-1 text-base font-bold ${marketData.change24h >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+            {marketData.change24h >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+            <span>{marketData.change24h >= 0 ? '+' : ''}{marketData.change24h.toFixed(2)}%</span>
           </div>
         </div>
+
+        {/* Day Range */}
+        {(marketData.high24h || marketData.low24h) && (
+          <MetricCard
+            icon={ArrowUpDown}
+            label="Day Range"
+            value={`$${(marketData.low24h || 0).toFixed(2)} - $${(marketData.high24h || 0).toFixed(2)}`}
+          />
+        )}
+
+        {/* 52-Week Range */}
+        {marketData.high52w && marketData.low52w && (
+          <MetricCard
+            icon={BarChart3}
+            label="52-Week Range"
+            value={`$${marketData.low52w.toFixed(2)} - $${marketData.high52w.toFixed(2)}`}
+          />
+        )}
 
         {/* Market Cap */}
         {marketData.marketCap && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <Layers className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">Market Cap</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">{formatLargeNumber(marketData.marketCap)}</p>
-          </div>
+          <MetricCard
+            icon={Layers}
+            label="Market Cap"
+            value={formatLargeNumber(marketData.marketCap)}
+          />
         )}
 
-        {/* 24h Volume */}
+        {/* Volume */}
         {marketData.volume24h && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <Activity className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">24h Volume</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">{formatLargeNumber(marketData.volume24h)}</p>
-          </div>
+          <MetricCard
+            icon={BarChart3}
+            label="Volume (24h)"
+            value={formatLargeNumber(marketData.volume24h)}
+            subValue={marketData.avgVolume ? `Avg: ${formatNumber(marketData.avgVolume)}` : undefined}
+          />
         )}
 
-        {/* Circulating Supply (Crypto) */}
-        {source === 'crypto' && marketData.circulatingSupply && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <Layers className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">Circulating Supply</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">{formatNumber(marketData.circulatingSupply)}</p>
-            {marketData.totalSupply && (
-              <p className="text-xs text-tv-text-muted mt-0.5">
-                of {formatNumber(marketData.totalSupply)} total
-              </p>
+        {/* Stock-specific metrics */}
+        {source === 'stock' && (
+          <>
+            {/* P/E Ratio */}
+            {marketData.peRatio && (
+              <MetricCard
+                icon={Percent}
+                label="P/E Ratio"
+                value={marketData.peRatio.toFixed(2)}
+              />
             )}
-          </div>
-        )}
 
-        {/* All-Time High (Crypto) */}
-        {source === 'crypto' && marketData.ath && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">All-Time High</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">
-              ${marketData.ath.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            {marketData.athDate && (
-              <p className="text-xs text-tv-text-muted mt-0.5">{formatDate(marketData.athDate)}</p>
+            {/* EPS */}
+            {marketData.eps && (
+              <MetricCard
+                icon={DollarSign}
+                label="EPS (TTM)"
+                value={`$${marketData.eps.toFixed(2)}`}
+              />
             )}
-          </div>
-        )}
 
-        {/* All-Time Low (Crypto) */}
-        {source === 'crypto' && marketData.atl && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">All-Time Low</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">
-              ${marketData.atl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            {marketData.atlDate && (
-              <p className="text-xs text-tv-text-muted mt-0.5">{formatDate(marketData.atlDate)}</p>
+            {/* Beta */}
+            {marketData.beta && (
+              <MetricCard
+                icon={Activity}
+                label="Beta"
+                value={marketData.beta.toFixed(2)}
+              />
             )}
-          </div>
+
+            {/* Dividend Yield */}
+            {marketData.dividendYield !== undefined && marketData.dividendYield > 0 && (
+              <MetricCard
+                icon={Percent}
+                label="Dividend Yield"
+                value={`${marketData.dividendYield.toFixed(2)}%`}
+              />
+            )}
+
+            {/* Previous Close */}
+            {marketData.previousClose && (
+              <MetricCard
+                icon={Clock}
+                label="Prev Close"
+                value={`$${marketData.previousClose.toFixed(2)}`}
+              />
+            )}
+
+            {/* Open */}
+            {marketData.openPrice && (
+              <MetricCard
+                icon={Clock}
+                label="Open"
+                value={`$${marketData.openPrice.toFixed(2)}`}
+              />
+            )}
+
+            {/* Bid/Ask */}
+            {marketData.bid && marketData.ask && (
+              <MetricCard
+                icon={ArrowUpDown}
+                label="Bid / Ask"
+                value={`$${marketData.bid.toFixed(2)} / $${marketData.ask.toFixed(2)}`}
+              />
+            )}
+
+            {/* Next Earnings */}
+            {earnings?.nextEarnings && (
+              <MetricCard
+                icon={Calendar}
+                label="Next Earnings"
+                value={formatDate(earnings.nextEarnings)}
+              />
+            )}
+          </>
         )}
 
-        {/* 52-Week High (Stocks) */}
-        {source === 'stock' && marketData.high52w && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">52-Week High</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">
-              ${marketData.high52w.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
-        )}
+        {/* Crypto-specific metrics */}
+        {source === 'crypto' && (
+          <>
+            {/* Circulating Supply */}
+            {marketData.circulatingSupply && (
+              <MetricCard
+                icon={Layers}
+                label="Circulating Supply"
+                value={formatNumber(marketData.circulatingSupply)}
+                subValue={marketData.totalSupply ? `of ${formatNumber(marketData.totalSupply)} total` : undefined}
+              />
+            )}
 
-        {/* 52-Week Low (Stocks) */}
-        {source === 'stock' && marketData.low52w && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">52-Week Low</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text price">
-              ${marketData.low52w.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
-        )}
+            {/* All-Time High */}
+            {marketData.ath && (
+              <MetricCard
+                icon={TrendingUp}
+                label="All-Time High"
+                value={`$${marketData.ath.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                subValue={marketData.athDate ? formatDate(marketData.athDate) : undefined}
+              />
+            )}
 
-        {/* Next Earnings (Stocks) */}
-        {source === 'stock' && earnings?.nextEarnings && (
-          <div className="p-4 rounded-lg bg-tv-bg-secondary">
-            <div className="flex items-center gap-2 mb-1">
-              <Calendar className="w-4 h-4 text-tv-text-soft" />
-              <p className="text-xs text-tv-text-soft font-medium">Next Earnings</p>
-            </div>
-            <p className="text-lg font-bold text-tv-text">{formatDate(earnings.nextEarnings)}</p>
-          </div>
+            {/* All-Time Low */}
+            {marketData.atl && (
+              <MetricCard
+                icon={TrendingDown}
+                label="All-Time Low"
+                value={`$${marketData.atl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                subValue={marketData.atlDate ? formatDate(marketData.atlDate) : undefined}
+              />
+            )}
+
+            {/* 7d Change */}
+            {marketData.priceChange7d !== undefined && (
+              <div className="p-3 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-tv-grid/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity className="w-3.5 h-3.5 text-tv-text-muted" />
+                  <p className="text-[11px] text-tv-text-soft font-medium uppercase tracking-wide">7d Change</p>
+                </div>
+                <p className={`text-base font-bold ${marketData.priceChange7d >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                  {marketData.priceChange7d >= 0 ? '+' : ''}{marketData.priceChange7d.toFixed(2)}%
+                </p>
+              </div>
+            )}
+
+            {/* 30d Change */}
+            {marketData.priceChange30d !== undefined && (
+              <div className="p-3 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-tv-grid/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity className="w-3.5 h-3.5 text-tv-text-muted" />
+                  <p className="text-[11px] text-tv-text-soft font-medium uppercase tracking-wide">30d Change</p>
+                </div>
+                <p className={`text-base font-bold ${marketData.priceChange30d >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                  {marketData.priceChange30d >= 0 ? '+' : ''}{marketData.priceChange30d.toFixed(2)}%
+                </p>
+              </div>
+            )}
+
+            {/* 1y Change */}
+            {marketData.priceChange1y !== undefined && (
+              <div className="p-3 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-tv-grid/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity className="w-3.5 h-3.5 text-tv-text-muted" />
+                  <p className="text-[11px] text-tv-text-soft font-medium uppercase tracking-wide">1y Change</p>
+                </div>
+                <p className={`text-base font-bold ${marketData.priceChange1y >= 0 ? 'text-tv-up' : 'text-tv-down'}`}>
+                  {marketData.priceChange1y >= 0 ? '+' : ''}{marketData.priceChange1y.toFixed(2)}%
+                </p>
+              </div>
+            )}
+
+            {/* Fully Diluted Valuation */}
+            {marketData.fullyDilutedValuation && (
+              <MetricCard
+                icon={Layers}
+                label="Fully Diluted Val"
+                value={formatLargeNumber(marketData.fullyDilutedValuation)}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

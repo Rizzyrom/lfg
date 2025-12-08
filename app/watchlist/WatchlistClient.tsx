@@ -245,17 +245,20 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
   )
 
   // Render asset bubble component with modern card design
-  const renderAssetBubble = (item: WatchItem) => {
+  const renderAssetBubble = (item: WatchItem, index: number) => {
     const change24h = item.change24h ? parseFloat(item.change24h) : 0
     const change30d = item.change30d ? parseFloat(item.change30d) : 0
     const isPositive24h = change24h >= 0
     const isPositive30d = change30d >= 0
+    const staggerClass = index < 8 ? 'animate-stagger-in' : ''
+    const staggerStyle = index < 8 ? { animationDelay: `${index * 60}ms` } : {}
 
     return (
       <div
         key={item.id}
-        className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 transition-all duration-300 hover:shadow-xl active:scale-[0.98] min-h-[100px] flex flex-col justify-between relative overflow-hidden"
+        className={`bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 transition-all duration-300 hover:shadow-xl active:scale-[0.98] min-h-[100px] flex flex-col justify-between relative overflow-hidden ${staggerClass}`}
         style={{
+          ...staggerStyle,
           border: `2px solid ${
             item.price
               ? isPositive24h
@@ -362,7 +365,7 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
                     <p className="text-tv-text-soft text-sm">No stocks in watchlist</p>
                   </div>
                 ) : (
-                  stockItems.map(renderAssetBubble)
+                  stockItems.map((item, index) => renderAssetBubble(item, index))
                 )}
                 <div className="h-0 snap-end" />
               </div>
@@ -385,7 +388,7 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
                     <p className="text-tv-text-soft text-sm">No crypto in watchlist</p>
                   </div>
                 ) : (
-                  cryptoItems.map(renderAssetBubble)
+                  cryptoItems.map((item, index) => renderAssetBubble(item, index))
                 )}
                 <div className="h-0 snap-end" />
               </div>

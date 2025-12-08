@@ -32,6 +32,23 @@ export interface MarketData {
   atlDate?: string;
   high52w?: number;
   low52w?: number;
+  // Additional Robinhood-style metrics
+  high24h?: number;
+  low24h?: number;
+  priceChange7d?: number;
+  priceChange30d?: number;
+  priceChange1y?: number;
+  fullyDilutedValuation?: number;
+  // Stock-specific metrics
+  peRatio?: number;
+  eps?: number;
+  beta?: number;
+  dividendYield?: number;
+  avgVolume?: number;
+  previousClose?: number;
+  openPrice?: number;
+  bid?: number;
+  ask?: number;
 }
 
 export interface TechnicalIndicators {
@@ -124,8 +141,17 @@ function parseCoinGeckoData(data: any): MarketData {
     athDate: marketData.ath_date?.usd,
     atl: marketData.atl?.usd,
     atlDate: marketData.atl_date?.usd,
-    high52w: marketData.high_24h?.usd,
-    low52w: marketData.low_24h?.usd,
+    // Use ATH/ATL as fallback for 52w if no specific 52w data available
+    // CoinGecko doesn't provide explicit 52-week, but provides price_change_percentage data
+    high52w: marketData.ath?.usd, // ATH is a better proxy than 24h high
+    low52w: marketData.atl?.usd,  // ATL is a better proxy than 24h low
+    // Additional metrics for Robinhood-style display
+    high24h: marketData.high_24h?.usd,
+    low24h: marketData.low_24h?.usd,
+    priceChange7d: marketData.price_change_percentage_7d,
+    priceChange30d: marketData.price_change_percentage_30d,
+    priceChange1y: marketData.price_change_percentage_1y,
+    fullyDilutedValuation: marketData.fully_diluted_valuation?.usd,
   };
 }
 
@@ -174,6 +200,44 @@ export async function fetchStockData(symbol: string): Promise<MarketData | null>
 
   // Fallback to Yahoo Finance (free, no API key)
   try {
+    // Use v7/finance/quote for comprehensive data including P/E, EPS, etc.
+    const quoteResponse = await fetch(
+      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol.toUpperCase()}`,
+      {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        next: { revalidate: 30 }
+      }
+    );
+
+    if (quoteResponse.ok) {
+      const quoteData = await quoteResponse.json();
+      const quote = quoteData.quoteResponse?.result?.[0];
+
+      if (quote) {
+        return {
+          price: quote.regularMarketPrice || 0,
+          change24h: quote.regularMarketChangePercent || 0,
+          marketCap: quote.marketCap,
+          volume24h: quote.regularMarketVolume,
+          high52w: quote.fiftyTwoWeekHigh,
+          low52w: quote.fiftyTwoWeekLow,
+          high24h: quote.regularMarketDayHigh,
+          low24h: quote.regularMarketDayLow,
+          previousClose: quote.regularMarketPreviousClose,
+          openPrice: quote.regularMarketOpen,
+          // Robinhood-style metrics
+          peRatio: quote.trailingPE,
+          eps: quote.epsTrailingTwelveMonths,
+          beta: quote.beta,
+          dividendYield: quote.dividendYield ? quote.dividendYield * 100 : undefined,
+          avgVolume: quote.averageDailyVolume10Day,
+          bid: quote.bid,
+          ask: quote.ask,
+        };
+      }
+    }
+
+    // Fallback to chart API if quote API fails
     const response = await fetch(
       `https://query2.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=1y`,
       { next: { revalidate: 30 } }

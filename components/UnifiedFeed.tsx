@@ -176,12 +176,15 @@ export default function UnifiedFeed() {
     setDisplayCount(prev => Math.min(prev + 10, filteredItems.length))
   }, [filteredItems.length])
 
-  const renderFeedItem = useCallback((item: FeedItem) => {
+  const renderFeedItem = useCallback((item: FeedItem, index: number) => {
+    const staggerClass = index < 8 ? `animate-stagger-in` : ''
+    const staggerStyle = index < 8 ? { animationDelay: `${index * 50}ms` } : {}
+
     switch (item.type) {
       case 'news':
         const news = item.data as NewsArticle
         return (
-          <div key={`news-${news.url}`} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 border-2 border-tv-grid/30 hover:border-tv-blue/50 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-[0.99]">
+          <div key={`news-${news.url}`} className={`bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 border-2 border-tv-grid/30 hover:border-tv-blue/50 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-[0.99] ${staggerClass}`} style={staggerStyle}>
             <div className="flex items-start gap-3 mb-2">
               <div className="p-2.5 bg-gradient-to-br from-tv-blue/15 to-tv-blue/5 rounded-xl flex-shrink-0 shadow-sm">
                 <Newspaper className="w-5 h-5 text-tv-blue" />
@@ -213,7 +216,7 @@ export default function UnifiedFeed() {
       case 'reddit':
         const reddit = item.data as RedditPost
         return (
-          <div key={`reddit-${reddit.id}`} className="bg-gradient-to-br from-white to-orange-50/30 rounded-2xl p-4 border-2 border-tv-grid/30 hover:border-[#FF4500]/50 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-[0.99]">
+          <div key={`reddit-${reddit.id}`} className={`bg-gradient-to-br from-white to-orange-50/30 rounded-2xl p-4 border-2 border-tv-grid/30 hover:border-[#FF4500]/50 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-[0.99] ${staggerClass}`} style={staggerStyle}>
             <div className="flex items-start gap-3">
               <div className="p-2.5 bg-gradient-to-br from-[#FF4500]/15 to-[#FF4500]/5 rounded-xl flex-shrink-0 shadow-sm">
                 <svg className="w-5 h-5 text-[#FF4500]" fill="currentColor" viewBox="0 0 24 24">
@@ -226,7 +229,7 @@ export default function UnifiedFeed() {
                   <span className="text-xs text-tv-text-soft font-semibold">u/{reddit.author}</span>
                   <span className="text-xs text-tv-text-muted">• {getTimeAgo(item.timestamp)}</span>
                 </div>
-                <a href={`https://reddit.com${reddit.permalink}`} target="_blank" rel="noopener noreferrer" className="block">
+                <a href={reddit.permalink} target="_blank" rel="noopener noreferrer" className="block">
                   <h3 className="text-base font-bold text-tv-text mb-3 group-hover:text-[#FF4500] transition-colors duration-200 line-clamp-2 leading-snug">
                     {reddit.title}
                   </h3>
@@ -249,7 +252,7 @@ export default function UnifiedFeed() {
       case 'twitter':
         const tweet = item.data as Tweet
         return (
-          <div key={`twitter-${tweet.id}`} className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-4 border-2 border-tv-grid/30 hover:border-[#1DA1F2]/50 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-[0.99]">
+          <div key={`twitter-${tweet.id}`} className={`bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-4 border-2 border-tv-grid/30 hover:border-[#1DA1F2]/50 transition-all duration-300 group shadow-sm hover:shadow-lg active:scale-[0.99] ${staggerClass}`} style={staggerStyle}>
             <div className="flex items-start gap-3">
               <div className="p-2.5 bg-gradient-to-br from-[#1DA1F2]/15 to-[#1DA1F2]/5 rounded-xl flex-shrink-0 shadow-sm">
                 <svg className="w-5 h-5 text-[#1DA1F2]" fill="currentColor" viewBox="0 0 24 24">
@@ -355,7 +358,7 @@ export default function UnifiedFeed() {
           </div>
         ) : (
           <>
-            {displayedItems.map((item) => renderFeedItem(item))}
+            {displayedItems.map((item, index) => renderFeedItem(item, index))}
             {displayCount < filteredItems.length && (
               <button
                 onClick={loadMore}

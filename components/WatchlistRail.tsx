@@ -81,10 +81,12 @@ export default function WatchlistRail({ onItemClick }: WatchlistRailProps = {}) 
         </div>
       ) : (
         <div className="space-y-2">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const priceData = getPrice(item.symbol, item.source)
             const change = priceData?.change24h ? parseFloat(priceData.change24h) : 0
             const isPositive = change >= 0
+            const staggerClass = index < 8 ? 'animate-stagger-in' : ''
+            const staggerDelay = index < 8 ? `${index * 50}ms` : '0ms'
 
             return (
               <div
@@ -95,7 +97,8 @@ export default function WatchlistRail({ onItemClick }: WatchlistRailProps = {}) 
                     onItemClick?.(item.symbol, item.source)
                   }
                 }}
-                className="p-3 bg-tv-chip rounded-lg hover:bg-tv-hover transition cursor-pointer border border-transparent hover:border-tv-blue active:scale-[0.98]"
+                className={`p-3 bg-tv-chip rounded-lg hover:bg-tv-hover transition-all duration-200 cursor-pointer border border-transparent hover:border-tv-blue active:scale-[0.98] ${staggerClass}`}
+                style={{ animationDelay: staggerDelay }}
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
@@ -124,11 +127,11 @@ export default function WatchlistRail({ onItemClick }: WatchlistRailProps = {}) 
       {/* Price Detail Overlay */}
       {selectedItem && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setSelectedItem(null)}
         >
           <div
-            className="bg-tv-panel rounded-2xl shadow-2xl max-w-md w-full p-6 border border-tv-grid"
+            className="bg-tv-panel rounded-2xl shadow-2xl max-w-md w-full p-6 border border-tv-grid animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">

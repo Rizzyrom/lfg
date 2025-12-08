@@ -41,354 +41,143 @@ export async function GET() {
   }
 }
 
-async function fetchNewsArticles(): Promise<NewsArticle[]> {
+// RSS feed configuration for parallel fetching
+const RSS_FEEDS = [
+  { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk', limit: 10 },
+  { url: 'https://finance.yahoo.com/news/rssindex', source: 'Yahoo Finance', limit: 10 },
+  { url: 'https://feeds.bloomberg.com/markets/news.rss', source: 'Bloomberg', limit: 8 },
+  { url: 'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', source: 'Reuters', limit: 8 },
+  { url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html', source: 'CNBC', limit: 8 },
+  { url: 'https://www.marketwatch.com/rss/topstories', source: 'MarketWatch', limit: 10 },
+  { url: 'https://seekingalpha.com/feed.xml', source: 'Seeking Alpha', limit: 10 },
+  { url: 'https://www.ft.com/?format=rss', source: 'Financial Times', limit: 8 },
+  { url: 'https://www.barrons.com/rss/RSSMarketsMain.xml', source: 'Barrons', limit: 8 },
+  // Additional crypto-focused feeds
+  { url: 'https://cointelegraph.com/rss', source: 'Cointelegraph', limit: 8 },
+  { url: 'https://decrypt.co/feed', source: 'Decrypt', limit: 8 },
+  { url: 'https://www.theblock.co/rss.xml', source: 'The Block', limit: 8 },
+]
+
+// Helper to parse RSS text - handles both CDATA and plain text
+function parseRSSFeed(rssText: string, source: string, limit: number): NewsArticle[] {
   const articles: NewsArticle[] = []
 
-    // Fetch crypto news from CoinDesk RSS
-    try {
-      const rssResponse = await fetch('https://www.coindesk.com/arc/outboundfeeds/rss/', {
-        next: { revalidate: 300 } // Cache for 5 minutes
+  // Match both CDATA wrapped and plain text formats
+  const titleMatches = rssText.matchAll(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/gs)
+  const linkMatches = rssText.matchAll(/<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/gs)
+  const descMatches = rssText.matchAll(/<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/description>/gs)
+  const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
+  const enclosureMatches = rssText.matchAll(/<enclosure[^>]*url="([^"]+)"[^>]*>/g)
+
+  const titles = Array.from(titleMatches).map(m => m[1].trim())
+  const links = Array.from(linkMatches).map(m => m[1].trim())
+  const descriptions = Array.from(descMatches).map(m => m[1].trim().replace(/<[^>]+>/g, '').slice(0, 200))
+  const pubDates = Array.from(pubDateMatches).map(m => m[1])
+  const images = Array.from(enclosureMatches).map(m => m[1])
+
+  // Skip first title (usually feed title)
+  for (let i = 1; i < Math.min(titles.length, limit + 1); i++) {
+    if (titles[i] && links[i]) {
+      articles.push({
+        title: titles[i],
+        description: descriptions[i] || '',
+        url: links[i],
+        source,
+        publishedAt: pubDates[i - 1] || new Date().toISOString(),
+        imageUrl: images[i - 1],
       })
-
-      if (rssResponse.ok) {
-        const rssText = await rssResponse.text()
-
-        // Simple RSS parsing (title, link, pubDate)
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        // Skip first title (feed title) and combine
-        for (let i = 1; i < Math.min(titles.length, 10); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'CoinDesk',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('CoinDesk RSS fetch error:', error)
     }
-
-    // Fetch stock market news from Finnhub
-    try {
-      const finnhubResponse = await fetch(
-        `https://finnhub.io/api/v1/news?category=general&token=${process.env.FINNHUB_API_KEY}`,
-        { next: { revalidate: 300 } }
-      )
-
-      if (finnhubResponse.ok) {
-        const finnhubNews = await finnhubResponse.json()
-        console.log(`Finnhub returned ${finnhubNews.length} articles`)
-
-        if (Array.isArray(finnhubNews)) {
-          finnhubNews.slice(0, 15).forEach((item: any) => {
-            if (item.headline && item.url) {
-              articles.push({
-                title: item.headline,
-                description: item.summary || '',
-                url: item.url,
-                source: item.source || 'Market News',
-                publishedAt: new Date(item.datetime * 1000).toISOString(),
-                imageUrl: item.image,
-              })
-            }
-          })
-        }
-      } else {
-        console.error('Finnhub API error:', finnhubResponse.status, await finnhubResponse.text())
-      }
-    } catch (error) {
-      console.error('Finnhub news fetch error:', error)
-    }
-
-    // Add Yahoo Finance RSS as backup
-    try {
-      const yahooResponse = await fetch('https://finance.yahoo.com/news/rssindex', {
-        next: { revalidate: 300 }
-      })
-
-      if (yahooResponse.ok) {
-        const rssText = await yahooResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 10); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'Yahoo Finance',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Yahoo Finance RSS fetch error:', error)
-    }
-
-    // Add Bloomberg RSS
-    try {
-      const bloombergResponse = await fetch('https://feeds.bloomberg.com/markets/news.rss', {
-        next: { revalidate: 300 }
-      })
-
-      if (bloombergResponse.ok) {
-        const rssText = await bloombergResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 8); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'Bloomberg',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Bloomberg RSS fetch error:', error)
-    }
-
-    // Add Reuters Business RSS
-    try {
-      const reutersResponse = await fetch('https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', {
-        next: { revalidate: 300 }
-      })
-
-      if (reutersResponse.ok) {
-        const rssText = await reutersResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 8); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'Reuters',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Reuters RSS fetch error:', error)
-    }
-
-    // Add CNBC Markets RSS
-    try {
-      const cnbcResponse = await fetch('https://www.cnbc.com/id/100003114/device/rss/rss.html', {
-        next: { revalidate: 300 }
-      })
-
-      if (cnbcResponse.ok) {
-        const rssText = await cnbcResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 8); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'CNBC',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('CNBC RSS fetch error:', error)
-    }
-
-    // Add MarketWatch RSS
-    try {
-      const marketWatchResponse = await fetch('https://www.marketwatch.com/rss/topstories', {
-        next: { revalidate: 300 }
-      })
-
-      if (marketWatchResponse.ok) {
-        const rssText = await marketWatchResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 10); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'MarketWatch',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('MarketWatch RSS fetch error:', error)
-    }
-
-    // Add Seeking Alpha RSS
-    try {
-      const seekingAlphaResponse = await fetch('https://seekingalpha.com/feed.xml', {
-        next: { revalidate: 300 }
-      })
-
-      if (seekingAlphaResponse.ok) {
-        const rssText = await seekingAlphaResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 10); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'Seeking Alpha',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Seeking Alpha RSS fetch error:', error)
-    }
-
-    // Add Financial Times RSS
-    try {
-      const ftResponse = await fetch('https://www.ft.com/?format=rss', {
-        next: { revalidate: 300 }
-      })
-
-      if (ftResponse.ok) {
-        const rssText = await ftResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 8); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'Financial Times',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Financial Times RSS fetch error:', error)
-    }
-
-    // Add Barron's RSS
-    try {
-      const barronsResponse = await fetch('https://www.barrons.com/rss/RSSMarketsMain.xml', {
-        next: { revalidate: 300 }
-      })
-
-      if (barronsResponse.ok) {
-        const rssText = await barronsResponse.text()
-        const titleMatches = rssText.matchAll(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g)
-        const linkMatches = rssText.matchAll(/<link>(.*?)<\/link>/g)
-        const descMatches = rssText.matchAll(/<description><!\[CDATA\[(.*?)\]\]><\/description>/g)
-        const pubDateMatches = rssText.matchAll(/<pubDate>(.*?)<\/pubDate>/g)
-
-        const titles = Array.from(titleMatches).map(m => m[1])
-        const links = Array.from(linkMatches).map(m => m[1])
-        const descriptions = Array.from(descMatches).map(m => m[1])
-        const pubDates = Array.from(pubDateMatches).map(m => m[1])
-
-        for (let i = 1; i < Math.min(titles.length, 8); i++) {
-          if (titles[i] && links[i]) {
-            articles.push({
-              title: titles[i],
-              description: descriptions[i] || '',
-              url: links[i],
-              source: 'Barrons',
-              publishedAt: pubDates[i] || new Date().toISOString(),
-            })
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Barrons RSS fetch error:', error)
-    }
-
-  // Sort by publishedAt (most recent first)
-  articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-
-  console.log(`Total articles collected: ${articles.length}`)
+  }
 
   return articles
+}
+
+// Parallel RSS fetcher
+async function fetchRSSFeed(feed: typeof RSS_FEEDS[0]): Promise<NewsArticle[]> {
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout per feed
+
+    const response = await fetch(feed.url, {
+      next: { revalidate: 300 },
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (response.ok) {
+      const rssText = await response.text()
+      return parseRSSFeed(rssText, feed.source, feed.limit)
+    }
+  } catch (error) {
+    console.error(`${feed.source} RSS fetch error:`, error instanceof Error ? error.message : error)
+  }
+  return []
+}
+
+// Fetch Finnhub news (API-based, not RSS)
+async function fetchFinnhubNews(): Promise<NewsArticle[]> {
+  const apiKey = process.env.FINNHUB_API_KEY
+  if (!apiKey) return []
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+    const response = await fetch(
+      `https://finnhub.io/api/v1/news?category=general&token=${apiKey}`,
+      { next: { revalidate: 300 }, signal: controller.signal }
+    )
+
+    clearTimeout(timeoutId)
+
+    if (response.ok) {
+      const news = await response.json()
+      if (Array.isArray(news)) {
+        return news.slice(0, 15).map((item: any) => ({
+          title: item.headline,
+          description: item.summary || '',
+          url: item.url,
+          source: item.source || 'Market News',
+          publishedAt: new Date(item.datetime * 1000).toISOString(),
+          imageUrl: item.image,
+        })).filter((a: NewsArticle) => a.title && a.url)
+      }
+    }
+  } catch (error) {
+    console.error('Finnhub news fetch error:', error instanceof Error ? error.message : error)
+  }
+  return []
+}
+
+async function fetchNewsArticles(): Promise<NewsArticle[]> {
+  console.log('[News] Starting parallel fetch from all sources...')
+  const startTime = Date.now()
+
+  // Fetch ALL sources in parallel for maximum speed
+  const [finnhubArticles, ...rssResults] = await Promise.all([
+    fetchFinnhubNews(),
+    ...RSS_FEEDS.map(feed => fetchRSSFeed(feed))
+  ])
+
+  // Combine all articles
+  const articles = [
+    ...finnhubArticles,
+    ...rssResults.flat()
+  ]
+
+  // Deduplicate by URL
+  const seen = new Set<string>()
+  const uniqueArticles = articles.filter(article => {
+    if (seen.has(article.url)) return false
+    seen.add(article.url)
+    return true
+  })
+
+  // Sort by publishedAt (most recent first)
+  uniqueArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+
+  console.log(`[News] Fetched ${uniqueArticles.length} unique articles in ${Date.now() - startTime}ms`)
+
+  return uniqueArticles
 }
