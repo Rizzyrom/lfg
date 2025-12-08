@@ -191,46 +191,51 @@ export default function AssetChart({ symbol, source, className = '' }: AssetChar
   return (
     <div className={`card p-6 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-bold text-tv-text mb-1">Price Chart</h2>
-          {currentPrice !== null && (
-            <div className="flex items-baseline gap-3">
-              <span className="text-2xl font-bold text-tv-text font-mono price">
-                ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              {priceChange !== null && (
-                <div
-                  className={`flex items-center gap-1 text-sm font-semibold ${
-                    priceChange >= 0 ? 'text-tv-up' : 'text-tv-down'
-                  }`}
-                >
-                  {priceChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                  <span>
-                    {priceChange >= 0 ? '+' : ''}
-                    {priceChange.toFixed(2)}%
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+      <div className="flex flex-col gap-4 mb-4">
+        {/* Title & Price */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-tv-text mb-1">Price Chart</h2>
+            {currentPrice !== null && (
+              <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                <span className="text-xl sm:text-2xl font-bold text-tv-text font-mono price">
+                  ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                {priceChange !== null && (
+                  <div
+                    className={`flex items-center gap-1 text-sm font-semibold ${
+                      priceChange >= 0 ? 'text-tv-up' : 'text-tv-down'
+                    }`}
+                  >
+                    {priceChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                    <span>
+                      {priceChange >= 0 ? '+' : ''}
+                      {priceChange.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Timeframe Selector */}
-        <div className="flex gap-1 bg-tv-bg-secondary rounded-lg p-1">
-          {timeFrames.map((tf) => (
-            <button
-              key={tf}
-              onClick={() => setTimeFrame(tf)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                timeFrame === tf
-                  ? 'bg-white text-tv-text shadow-elevation-1'
-                  : 'text-tv-text-soft hover:text-tv-text'
-              }`}
-            >
-              {tf}
-            </button>
-          ))}
+        {/* Timeframe Selector - Scrollable on mobile */}
+        <div className="overflow-x-auto -mx-6 px-6 scrollbar-hide">
+          <div className="flex gap-1 bg-tv-bg-secondary rounded-xl p-1.5 w-fit min-w-full sm:min-w-0">
+            {timeFrames.map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeFrame(tf)}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                  timeFrame === tf
+                    ? 'bg-white text-tv-text shadow-elevation-1'
+                    : 'text-tv-text-soft hover:text-tv-text hover:bg-white/50'
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
