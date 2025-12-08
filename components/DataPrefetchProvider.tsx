@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useCallback, useRef, useState, useEffect } from 'react'
+import { createContext, useContext, useCallback, useRef, useState, useEffect, useMemo } from 'react'
 import { useMobileNavigation } from './MobileNavigationProvider'
 
 interface ChatMessage {
@@ -68,9 +68,14 @@ export default function DataPrefetchProvider({ children }: DataPrefetchProviderP
   const prefetchTimersRef = useRef<NodeJS.Timeout[]>([])
   const lastPageIndexRef = useRef(currentPageIndex)
 
+  // Use a ref to store cached data for stable getCachedData function
+  const cachedDataRef = useRef(cachedData)
+  cachedDataRef.current = cachedData
+
+  // Stable getCachedData - doesn't change when cachedData changes
   const getCachedData = useCallback((page: 'chat' | 'watchlist' | 'feed') => {
-    return cachedData[page]
-  }, [cachedData])
+    return cachedDataRef.current[page]
+  }, []) // Empty deps = stable reference
 
   const setCachedData = useCallback((page: 'chat' | 'watchlist' | 'feed', data: any) => {
     setCachedDataState(prev => ({
@@ -85,7 +90,7 @@ export default function DataPrefetchProvider({ children }: DataPrefetchProviderP
 
   const prefetchPage = useCallback(async (page: 'chat' | 'watchlist' | 'feed') => {
     // Don't prefetch if already prefetching or data exists
-    if (prefetchingRef.current.has(page) || cachedData[page]) {
+    if (prefetchingRef.current.has(page) || cachedDataRef.current[page]) {
       return
     }
 
@@ -120,7 +125,7 @@ export default function DataPrefetchProvider({ children }: DataPrefetchProviderP
     } finally {
       prefetchingRef.current.delete(page)
     }
-  }, [cachedData, setCachedData])
+  }, [setCachedData]) // Removed cachedData dependency - using ref now
 
   // Immediate Markets prefetch on app mount - ensure Markets is always ready
   useEffect(() => {

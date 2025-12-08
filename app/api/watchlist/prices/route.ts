@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireUser } from '@/lib/auth'
-import { fetchMarketPrice } from '@/lib/market-data'
+import { fetchCryptoPricesBatch, fetchStockPricesBatch } from '@/lib/market-data'
 
 export async function GET() {
   try {
@@ -42,52 +42,54 @@ export async function GET() {
       // Continue without mention counts - table may not exist yet
     }
 
-    // Fetch real-time prices for each item
-    const pricesWithData = await Promise.all(
-      items.map(async (item) => {
-        const priceData = await fetchMarketPrice(item.symbol, item.source)
+    // Separate items by source for batch fetching
+    const cryptoSymbols = [...new Set(items.filter(i => i.source === 'crypto').map(i => i.symbol))]
+    const stockSymbols = [...new Set(items.filter(i => i.source === 'stock').map(i => i.symbol))]
 
-        if (priceData) {
-          // Update cache in database
-          await db.priceCache.upsert({
-            where: {
-              symbol_source: {
-                symbol: item.symbol,
-                source: item.source,
-              },
-            },
-            create: {
-              symbol: item.symbol,
-              source: item.source,
-              price: priceData.price,
-              change24h: priceData.change24h,
-              change30d: priceData.change30d,
-            },
-            update: {
-              price: priceData.price,
-              change24h: priceData.change24h,
-              change30d: priceData.change30d,
-              updatedAt: new Date(),
-            },
-          })
-        }
+    // Batch fetch prices - 2 API calls instead of N calls
+    const [cryptoPrices, stockPrices] = await Promise.all([
+      fetchCryptoPricesBatch(cryptoSymbols),
+      fetchStockPricesBatch(stockSymbols)
+    ])
 
-        // Get mention count for this item
-        const mentionKey = `${item.symbol}-${item.source}-${item.groupId}`
-        const mentionCount = mentionMap.get(mentionKey) || 0
+    // Combine into a single price map
+    const priceMap = new Map<string, { price: string; change24h: string; change30d: string }>()
+    cryptoPrices.forEach((value, key) => priceMap.set(`${key}-crypto`, value))
+    stockPrices.forEach((value, key) => priceMap.set(`${key}-stock`, value))
 
-        return {
-          id: item.id,
-          symbol: item.symbol,
-          source: item.source,
-          tags: item.tags,
-          price: priceData?.price || null,
-          change24h: priceData?.change24h || null,
-          change30d: priceData?.change30d || null,
-          mentionCount,
-        }
+    // Batch update price cache in database (fire and forget for performance)
+    const cacheUpdates = Array.from(priceMap.entries()).map(([key, priceData]) => {
+      const [symbol, source] = key.split('-')
+      return db.priceCache.upsert({
+        where: { symbol_source: { symbol, source } },
+        create: { symbol, source, price: priceData.price, change24h: priceData.change24h, change30d: priceData.change30d },
+        update: { price: priceData.price, change24h: priceData.change24h, change30d: priceData.change30d, updatedAt: new Date() },
       })
-    )
+    })
+
+    // Fire and forget - don't wait for cache updates
+    Promise.all(cacheUpdates).catch(err => console.error('Cache update error:', err))
+
+    // Build response with prices
+    const pricesWithData = items.map((item) => {
+      const priceKey = `${item.symbol}-${item.source}`
+      const priceData = priceMap.get(priceKey)
+
+      // Get mention count for this item
+      const mentionKey = `${item.symbol}-${item.source}-${item.groupId}`
+      const mentionCount = mentionMap.get(mentionKey) || 0
+
+      return {
+        id: item.id,
+        symbol: item.symbol,
+        source: item.source,
+        tags: item.tags,
+        price: priceData?.price || null,
+        change24h: priceData?.change24h || null,
+        change30d: priceData?.change30d || null,
+        mentionCount,
+      }
+    })
 
     // Sort by mention count (descending), then by symbol alphabetically
     const sortedItems = pricesWithData.sort((a, b) => {

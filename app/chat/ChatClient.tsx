@@ -108,6 +108,9 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
     // Only fetch messages when component is active
     if (!isActive) return
 
+    let timer: NodeJS.Timeout | null = null
+    let interval: NodeJS.Timeout | null = null
+
     // Check if we have cache first
     const cached = getCachedData('chat')
     if (!cached || cached.length === 0) {
@@ -119,20 +122,16 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       console.log('[ChatClient] Using cached data, fetching fresh in background')
       setMessages(cached)
       // Fetch fresh data after 1s delay
-      const timer = setTimeout(() => fetchMessages(), 1000)
-
-      // Set up polling interval
-      const interval = setInterval(fetchMessages, 5000)
-
-      return () => {
-        clearTimeout(timer)
-        clearInterval(interval)
-      }
+      timer = setTimeout(() => fetchMessages(), 1000)
     }
 
-    // Set up polling interval for no-cache case
-    const interval = setInterval(fetchMessages, 5000)
-    return () => clearInterval(interval)
+    // Set up polling interval - increased from 5s to 30s to reduce server load
+    interval = setInterval(fetchMessages, 30000)
+
+    return () => {
+      if (timer) clearTimeout(timer)
+      if (interval) clearInterval(interval)
+    }
   }, [fetchMessages, isActive, getCachedData])
 
   autoScrollOnNewContent([messages])

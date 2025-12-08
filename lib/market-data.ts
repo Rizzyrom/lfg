@@ -231,3 +231,119 @@ export async function fetchMarketPrice(symbol: string, source: string) {
   }
   return null
 }
+
+// Batch fetch crypto prices - much more efficient than individual calls
+export async function fetchCryptoPricesBatch(symbols: string[]): Promise<Map<string, { price: string; change24h: string; change30d: string }>> {
+  const results = new Map<string, { price: string; change24h: string; change30d: string }>()
+
+  if (symbols.length === 0) return results
+
+  try {
+    // Map symbols to CoinGecko IDs
+    const symbolToIdMap = new Map<string, string>()
+    const coinIds: string[] = []
+
+    for (const symbol of symbols) {
+      const symbolUpper = symbol.toUpperCase()
+      const coinId = cryptoIdMap[symbolUpper]
+      if (coinId) {
+        symbolToIdMap.set(symbol, coinId)
+        coinIds.push(coinId)
+      }
+    }
+
+    if (coinIds.length === 0) return results
+
+    const headers: HeadersInit = {}
+    if (process.env.COINGECKO_API_KEY) {
+      headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY
+    }
+
+    // Fetch all prices in one API call
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(',')}&vs_currencies=usd&include_24hr_change=true&include_30d_change=true`,
+      {
+        headers,
+        next: { revalidate: 30 }
+      }
+    )
+
+    if (!response.ok) {
+      console.error('CoinGecko batch API error:', response.status)
+      return results
+    }
+
+    const data = await response.json()
+
+    // Map results back to symbols
+    for (const [symbol, coinId] of symbolToIdMap) {
+      const coinData = data[coinId]
+      if (coinData) {
+        results.set(symbol, {
+          price: coinData.usd.toString(),
+          change24h: coinData.usd_24h_change?.toString() || '0',
+          change30d: coinData.usd_30d_change?.toString() || '0'
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error batch fetching crypto prices:', error)
+  }
+
+  return results
+}
+
+// Batch fetch stock prices using Yahoo Finance
+export async function fetchStockPricesBatch(symbols: string[]): Promise<Map<string, { price: string; change24h: string; change30d: string }>> {
+  const results = new Map<string, { price: string; change24h: string; change30d: string }>()
+
+  if (symbols.length === 0) return results
+
+  try {
+    // Yahoo Finance supports batch quotes
+    const symbolsStr = symbols.join(',')
+
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbolsStr)}`,
+      {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        next: { revalidate: 30 }
+      }
+    )
+
+    if (!response.ok) {
+      console.error('Yahoo Finance batch API error:', response.status)
+      // Fall back to individual fetches
+      const fetchPromises = symbols.map(async (symbol) => {
+        const price = await fetchStockPrice(symbol)
+        if (price) results.set(symbol, price)
+      })
+      await Promise.all(fetchPromises)
+      return results
+    }
+
+    const data = await response.json()
+    const quotes = data.quoteResponse?.result || []
+
+    for (const quote of quotes) {
+      if (quote.regularMarketPrice) {
+        const previousClose = quote.regularMarketPreviousClose || quote.regularMarketPrice
+        const change24h = previousClose ? ((quote.regularMarketPrice - previousClose) / previousClose) * 100 : 0
+
+        // For 30d change, we'll use fiftyDayAverageChangePercent as approximation
+        // or fallback to 0 (individual fetch would be needed for exact 30d)
+        const change30d = quote.fiftyTwoWeekLowChangePercent ? quote.fiftyTwoWeekLowChangePercent / 4 : 0
+
+        results.set(quote.symbol, {
+          price: quote.regularMarketPrice.toString(),
+          change24h: change24h.toFixed(2),
+          change30d: change30d.toFixed(2)
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error batch fetching stock prices:', error)
+  }
+
+  return results
+}

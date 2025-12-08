@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
     const user = await requireUser()
     const { searchParams } = new URL(request.url)
     const groupId = searchParams.get('groupId')
+    const cursor = searchParams.get('cursor') // For pagination
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100) // Default 50, max 100
 
     // Get user's first group if not specified
     let targetGroupId = groupId
@@ -25,14 +27,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (!targetGroupId) {
-      return NextResponse.json({ messages: [] })
+      return NextResponse.json({ messages: [], hasMore: false })
     }
 
-    // Optimized query with proper indexes
+    // Optimized query with cursor-based pagination
     const messages = await db.message.findMany({
       where: { groupId: targetGroupId },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      take: limit + 1, // Fetch one extra to check if there are more
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1, // Skip the cursor itself
+      }),
       select: {
         id: true,
         senderId: true,
@@ -71,9 +77,14 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Check if there are more messages
+    const hasMore = messages.length > limit
+    const paginatedMessages = hasMore ? messages.slice(0, limit) : messages
+    const nextCursor = hasMore ? paginatedMessages[paginatedMessages.length - 1].id : null
+
     return NextResponse.json({
       success: true,
-      messages: messages.reverse().map(msg => ({
+      messages: paginatedMessages.reverse().map(msg => ({
         id: msg.id,
         senderId: msg.senderId,
         username: msg.sender.username,
@@ -83,6 +94,8 @@ export async function GET(request: NextRequest) {
         reactions: msg.reactions,
         replyTo: msg.replyTo,
       })),
+      hasMore,
+      nextCursor,
     })
   } catch (error) {
     console.error('Chat fetch error:', error)

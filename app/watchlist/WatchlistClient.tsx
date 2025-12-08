@@ -22,6 +22,12 @@ interface WatchItem {
 const STAGGER_INTERVAL = 5000 // 5 seconds between each item update
 const REFRESH_CYCLE = 5 * 60 * 1000 // 5 minutes total cycle
 
+// Separate refs for timeouts and intervals to properly clean them up
+type TimerRefs = {
+  timeouts: NodeJS.Timeout[]
+  intervals: NodeJS.Timeout[]
+}
+
 interface WatchlistClientProps {
   isActive?: boolean
 }
@@ -40,9 +46,11 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
   })
   const [adding, setAdding] = useState(false)
   const pathname = usePathname()
-  const updateTimersRef = useRef<NodeJS.Timeout[]>([])
+  const updateTimersRef = useRef<TimerRefs>({ timeouts: [], intervals: [] })
   const isVisibleRef = useRef(true)
   const isFirstLoadRef = useRef(true)
+  const pendingRequestsRef = useRef<Set<string>>(new Set()) // Track in-flight requests
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Listen for cache updates and reactively update component state
   useEffect(() => {
@@ -74,8 +82,15 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
     }
   }, [setCachedData])
 
-  // Update price for a single item
+  // Update price for a single item with request deduplication
   const updateItemPrice = useCallback(async (item: WatchItem) => {
+    // Skip if request already in flight for this item
+    if (pendingRequestsRef.current.has(item.id)) {
+      return
+    }
+
+    pendingRequestsRef.current.add(item.id)
+
     try {
       const res = await fetch(`/api/watchlist/price/${item.id}`)
       if (res.ok) {
@@ -90,14 +105,22 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
       }
     } catch (error) {
       console.error(`Failed to update price for ${item.symbol}:`, error)
+    } finally {
+      pendingRequestsRef.current.delete(item.id)
     }
+  }, [])
+
+  // Clear all timers helper
+  const clearAllTimers = useCallback(() => {
+    updateTimersRef.current.timeouts.forEach(timer => clearTimeout(timer))
+    updateTimersRef.current.intervals.forEach(timer => clearInterval(timer))
+    updateTimersRef.current = { timeouts: [], intervals: [] }
   }, [])
 
   // Start staggered price updates
   const startStaggeredUpdates = useCallback((itemsList: WatchItem[]) => {
-    // Clear existing timers
-    updateTimersRef.current.forEach(timer => clearTimeout(timer))
-    updateTimersRef.current = []
+    // Clear existing timers (both timeouts AND intervals)
+    clearAllTimers()
 
     if (itemsList.length === 0) return
 
@@ -115,7 +138,7 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
         }
       }, initialDelay)
 
-      updateTimersRef.current.push(initialTimer)
+      updateTimersRef.current.timeouts.push(initialTimer)
 
       // Recurring updates every 5 minutes
       const recurringTimer = setInterval(() => {
@@ -124,9 +147,9 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
         }
       }, REFRESH_CYCLE)
 
-      updateTimersRef.current.push(recurringTimer as any)
+      updateTimersRef.current.intervals.push(recurringTimer)
     })
-  }, [updateItemPrice])
+  }, [updateItemPrice, clearAllTimers])
 
   // Handle visibility changes (page visibility API)
   useEffect(() => {
@@ -174,11 +197,11 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
       startStaggeredUpdates(items)
     }
 
+    // Properly clear both timeouts AND intervals on cleanup
     return () => {
-      updateTimersRef.current.forEach(timer => clearTimeout(timer))
-      updateTimersRef.current = []
+      clearAllTimers()
     }
-  }, [items.length, loading, startStaggeredUpdates])
+  }, [items.length, loading, startStaggeredUpdates, clearAllTimers])
 
   const handleAdd = async (symbol: string, source: 'crypto' | 'stock') => {
     if (!symbol.trim()) return
