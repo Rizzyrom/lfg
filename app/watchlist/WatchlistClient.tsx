@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { TrendingUp, TrendingDown, Star, ArrowUpRight, Loader2 } from 'lucide-react'
 import SkeletonRow from '@/components/SkeletonRow'
+import EmptyState from '@/components/EmptyState'
 import AssetSearchBar from './AssetSearchBar'
 import { useDataPrefetch } from '@/components/DataPrefetchProvider'
 
@@ -293,16 +294,12 @@ export default function WatchlistClient({ isActive = true }: WatchlistClientProp
             <SkeletonRow />
           </div>
         ) : items.length === 0 ? (
-          <div className="bg-white rounded-2xl p-10 text-center border border-tv-border animate-scale-in">
-            <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-tv-blue-soft flex items-center justify-center">
-              <Star className="w-8 h-8 text-tv-blue" />
-            </div>
-            <h3 className="text-lg font-bold text-tv-text mb-2">
-              Your watchlist is empty
-            </h3>
-            <p className="text-tv-text-soft text-sm max-w-xs mx-auto">
-              Search and add your favorite stocks and crypto to start tracking them
-            </p>
+          <div className="bg-white rounded-2xl border border-tv-border animate-scale-in">
+            <EmptyState
+              icon={Star}
+              title="Your watchlist is empty"
+              description="Search and add your favorite stocks and crypto to start tracking them"
+            />
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full overflow-hidden">

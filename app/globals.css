@@ -258,6 +258,62 @@ body {
   color: var(--color-text);
 }
 
+/* Icon button - circular button for icons */
+.btn-icon {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  padding: 0.625rem;
+  cursor: pointer;
+  color: var(--color-text-soft);
+  transition: all 0.2s var(--ease-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-icon:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+}
+
+.btn-icon:active {
+  transform: scale(0.92);
+  background: var(--color-border);
+}
+
+.btn-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-blue);
+}
+
+.btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Icon button variants */
+.btn-icon-primary {
+  color: var(--color-blue);
+}
+
+.btn-icon-primary:hover {
+  background: var(--color-blue-soft);
+}
+
+.btn-icon-danger {
+  color: var(--color-down);
+}
+
+.btn-icon-danger:hover {
+  background: var(--color-down-soft);
+}
+
 /* ========================================
    PREMIUM INPUT SYSTEM
    Clean, focused, accessible
@@ -462,6 +518,21 @@ body {
 
 .animate-slide-in {
   animation: slide-in 0.35s var(--ease-spring);
+}
+
+@keyframes slide-in-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-down {
+  animation: slide-in-down 0.35s var(--ease-spring);
 }
 
 @keyframes slide-up {
