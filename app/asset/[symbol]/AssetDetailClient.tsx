@@ -44,8 +44,9 @@ export default function AssetDetailClient({ symbol, source }: AssetDetailClientP
     `/api/market-data?symbol=${symbol}&source=${source}`,
     fetcher,
     {
-      refreshInterval: 10000, // Refresh every 10 seconds for real-time feel
-      revalidateOnFocus: true,
+      refreshInterval: 30000, // Refresh every 30 seconds (balanced real-time feel vs performance)
+      revalidateOnFocus: false, // Don't refetch on tab focus to save requests
+      dedupingInterval: 10000, // Dedupe requests within 10 seconds
     }
   )
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState } from 'react'
+import Image from 'next/image'
 import { Newspaper, Heart, MessageCircle, Repeat2 } from 'lucide-react'
 
 interface NewsArticle {
@@ -95,12 +96,15 @@ function NewsItem({ data, timestamp, index = 0 }: { data: NewsArticle; timestamp
 
           {/* Image */}
           {data.imageUrl && (
-            <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-tv-bg-secondary">
-              <img
+            <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-tv-bg-secondary relative">
+              <Image
                 src={data.imageUrl}
                 alt=""
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="96px"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
                 loading="lazy"
+                unoptimized
               />
             </div>
           )}

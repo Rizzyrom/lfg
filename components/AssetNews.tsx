@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
+import Image from 'next/image'
 import { Newspaper, ExternalLink, TrendingUp, Minus, TrendingDown } from 'lucide-react'
 import { NewsArticle } from '@/lib/marketDataAPI'
 
@@ -131,14 +132,15 @@ export default function AssetNews({ symbol, source, className = '' }: AssetNewsP
               <div className="flex gap-3">
                 {/* Article Image */}
                 {article.image && (
-                  <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-tv-chip">
-                    <img
+                  <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-tv-chip relative">
+                    <Image
                       src={article.image}
                       alt={article.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                      loading="lazy"
+                      unoptimized
                     />
                   </div>
                 )}
