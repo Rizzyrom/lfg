@@ -88,15 +88,30 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
   }, [getCachedData, messages.length])
 
   // Memoize fetchMessages to prevent recreating on every render
+  // Preserves optimistic (temp-*) messages until server confirms them
   const fetchMessages = useCallback(async (skipCache = false) => {
     try {
       const res = await fetch('/api/chat')
       if (res.ok) {
         const data = await res.json()
-        const freshMessages = data.messages || []
-        setMessages(freshMessages)
-        // Update cache with fresh data
-        setCachedData('chat', freshMessages)
+        const serverMessages: ChatMessage[] = data.messages || []
+        
+        setMessages(prev => {
+          // Get any optimistic messages (temp IDs) that aren't on server yet
+          const optimisticMessages = prev.filter(msg => 
+            msg.id.startsWith('temp-') && 
+            !serverMessages.some(sm => sm.ciphertext === msg.ciphertext && sm.username === msg.username)
+          )
+          
+          // Combine: server messages + any pending optimistic ones
+          if (optimisticMessages.length > 0) {
+            return [...serverMessages, ...optimisticMessages]
+          }
+          return serverMessages
+        })
+        
+        // Update cache with server data only
+        setCachedData('chat', serverMessages)
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
