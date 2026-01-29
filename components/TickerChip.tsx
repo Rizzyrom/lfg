@@ -22,7 +22,7 @@ export default function TickerChip({ symbol }: TickerChipProps) {
 
   useEffect(() => {
     const fetchPrice = async () => {
-      // Check cache first
+      // Check local cache first
       const cached = priceCache[symbol]
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         setPriceData(cached.data)
@@ -31,14 +31,34 @@ export default function TickerChip({ symbol }: TickerChipProps) {
       }
 
       try {
-        // Try to get price from our API
-        const res = await fetch(`/api/price-cache?symbol=${symbol}`)
-        if (res.ok) {
-          const data = await res.json()
+        // Try price-cache first (fast, from DB)
+        const cacheRes = await fetch(`/api/price-cache?symbol=${symbol}`)
+        if (cacheRes.ok) {
+          const data = await cacheRes.json()
           if (data.price) {
             const priceInfo = {
               price: parseFloat(data.price),
               change24h: parseFloat(data.change24h || '0')
+            }
+            priceCache[symbol] = { data: priceInfo, timestamp: Date.now() }
+            setPriceData(priceInfo)
+            setLoading(false)
+            return
+          }
+        }
+
+        // Not in cache - try live market data API
+        // Determine if crypto or stock (common crypto symbols)
+        const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'DOGE', 'XRP', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI', 'ATOM', 'LTC', 'BCH', 'NEAR', 'APT', 'ARB', 'OP', 'INJ', 'SUI', 'SEI', 'TIA', 'JUP', 'WIF', 'PEPE', 'SHIB', 'BONK']
+        const source = cryptoSymbols.includes(symbol.toUpperCase()) ? 'crypto' : 'equity'
+        
+        const marketRes = await fetch(`/api/market-data?symbol=${symbol}&source=${source}`)
+        if (marketRes.ok) {
+          const data = await marketRes.json()
+          if (data.price || data.currentPrice) {
+            const priceInfo = {
+              price: parseFloat(data.price || data.currentPrice),
+              change24h: parseFloat(data.change24h || data.changePercent || '0')
             }
             priceCache[symbol] = { data: priceInfo, timestamp: Date.now() }
             setPriceData(priceInfo)
