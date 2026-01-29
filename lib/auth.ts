@@ -62,27 +62,29 @@ export function verifyOrigin(request: Request): boolean {
   const referer = request.headers.get('referer')
   const host = request.headers.get('host')
 
-  // In production, allow requests from the same host
-  if (host) {
-    const expectedOrigin = process.env.NODE_ENV === 'production'
-      ? `https://${host}`
-      : `http://${host}`
+  // Allow same-origin requests (origin matches host)
+  if (origin && host) {
+    try {
+      const originUrl = new URL(origin)
+      if (originUrl.host === host) {
+        return true
+      }
+    } catch {}
+  }
 
-    // Check origin header
-    if (origin === expectedOrigin) {
-      return true
-    }
+  // Allow if referer matches host
+  if (referer && host) {
+    try {
+      const refererUrl = new URL(referer)
+      if (refererUrl.host === host) {
+        return true
+      }
+    } catch {}
+  }
 
-    // Check referer header
-    if (referer) {
-      try {
-        const refererUrl = new URL(referer)
-        const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`
-        if (refererOrigin === expectedOrigin) {
-          return true
-        }
-      } catch {}
-    }
+  // Allow Vercel preview/production URLs
+  if (origin && (origin.includes('.vercel.app') || origin.includes('lfg'))) {
+    return true
   }
 
   // Fallback: check ALLOWED_ORIGINS env var if set
@@ -107,5 +109,7 @@ export function verifyOrigin(request: Request): boolean {
     return true
   }
 
+  // Log rejection for debugging
+  console.log('[verifyOrigin] Rejected:', { origin, referer, host })
   return false
 }
