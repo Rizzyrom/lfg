@@ -398,7 +398,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto overflow-x-hidden pt-3 pb-0 space-y-2 smooth-scroll max-w-full px-3"
-        style={{ paddingBottom: '130px', WebkitOverflowScrolling: 'touch' }}
+        style={{ paddingBottom: '80px', WebkitOverflowScrolling: 'touch' }}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -444,7 +444,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
 
       {/* Reply Banner - Fixed above input with modern design */}
       {replyingTo && (
-        <div className="fixed left-0 right-0 bg-white/95 border-t border-tv-border backdrop-blur-lg px-4 py-3 flex items-center justify-between z-40 animate-slide-in md:bottom-[56px]" style={{ bottom: 'calc(64px + 56px)' }}>
+        <div className="fixed left-0 right-0 bg-white/95 border-t border-tv-border backdrop-blur-lg px-4 py-3 flex items-center justify-between z-40 animate-slide-in bottom-[56px]">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-1 h-12 bg-gradient-to-b from-tv-blue to-tv-blue/50 rounded-full flex-shrink-0 shadow-glow-blue" />
             <div className="min-w-0 flex-1">
@@ -466,7 +466,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
 
       {/* File Preview Panel - Fixed above input with modern card design */}
       {selectedFile && (
-        <div className="fixed left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-tv-border p-4 animate-slide-in z-40 md:bottom-[56px]" style={{ bottom: 'calc(64px + 56px)' }}>
+        <div className="fixed left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-tv-border p-4 animate-slide-in z-40 bottom-[56px]">
           <div className="flex items-center gap-3 bg-tv-bg/50 backdrop-blur-sm border border-tv-grid/50 rounded-2xl p-4 shadow-md">
             {selectedFile.type.startsWith('image/') && filePreview && (
               <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm bg-tv-grid flex-shrink-0">
@@ -523,11 +523,10 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         </div>
       )}
 
-      {/* Input Area - Fixed at bottom, above mobile nav */}
+      {/* Input Area - Fixed at bottom */}
       <form
         onSubmit={handleSend}
-        className="fixed left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-tv-border z-40 md:bottom-0"
-        style={{ bottom: '64px' }}
+        className="fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur-lg border-t border-tv-border z-40 safe-area-pb"
       >
         <div className="flex items-center gap-2 px-3 py-3">
           <input
