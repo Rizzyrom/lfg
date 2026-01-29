@@ -125,8 +125,8 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       timer = setTimeout(() => fetchMessages(), 1000)
     }
 
-    // Set up polling interval - increased from 5s to 30s to reduce server load
-    interval = setInterval(fetchMessages, 30000)
+    // Poll for new messages from other users (WebSocket not yet wired to client)
+    interval = setInterval(fetchMessages, 5000)
 
     return () => {
       if (timer) clearTimeout(timer)
