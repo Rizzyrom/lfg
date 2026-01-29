@@ -398,13 +398,13 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-tv-bg overflow-x-hidden">
-      {/* Messages Area - Takes full height - NO HORIZONTAL SCROLL */}
+    <div className="flex flex-col h-full bg-tv-bg overflow-x-hidden relative">
+      {/* Messages Area - Takes remaining height above input */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-0 space-y-2 smooth-scroll max-w-full px-3"
-        style={{ paddingBottom: '72px', WebkitOverflowScrolling: 'touch' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-4 space-y-2 smooth-scroll max-w-full px-3"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -435,9 +435,9 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         )}
       </div>
 
-      {/* New messages indicator - Fixed positioning with modern floating button */}
+      {/* New messages indicator - Positioned above input area */}
       {showNewMessages && (
-        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none">
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none">
           <button
             onClick={() => scrollToBottom()}
             className="bg-gradient-to-r from-tv-blue to-tv-blue-hover text-white px-6 py-3 rounded-full shadow-lg shadow-tv-blue/30 hover:shadow-tv-blue/50 transition-all duration-300 font-semibold pointer-events-auto hover:scale-105 active:scale-95 flex items-center gap-2"
@@ -448,9 +448,9 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         </div>
       )}
 
-      {/* Reply Banner - Fixed above input with modern design */}
+      {/* Reply Banner - Above input in flex container */}
       {replyingTo && (
-        <div className="fixed left-0 right-0 bg-white/95 border-t border-tv-border backdrop-blur-lg px-4 py-3 flex items-center justify-between z-40 animate-slide-in bottom-[56px]">
+        <div className="flex-shrink-0 bg-white/95 border-t border-tv-border backdrop-blur-lg px-4 py-3 flex items-center justify-between z-40 animate-slide-in">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-1 h-12 bg-gradient-to-b from-tv-blue to-tv-blue/50 rounded-full flex-shrink-0 shadow-glow-blue" />
             <div className="min-w-0 flex-1">
@@ -470,9 +470,9 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         </div>
       )}
 
-      {/* File Preview Panel - Fixed above input with modern card design */}
+      {/* File Preview Panel - Above input in flex container */}
       {selectedFile && (
-        <div className="fixed left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-tv-border p-4 animate-slide-in z-40 bottom-[56px]">
+        <div className="flex-shrink-0 bg-white/95 backdrop-blur-lg border-t border-tv-border p-4 animate-slide-in z-40">
           <div className="flex items-center gap-3 bg-tv-bg/50 backdrop-blur-sm border border-tv-grid/50 rounded-2xl p-4 shadow-md">
             {selectedFile.type.startsWith('image/') && filePreview && (
               <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm bg-tv-grid flex-shrink-0">
@@ -529,10 +529,10 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         </div>
       )}
 
-      {/* Input Area - Fixed at bottom */}
+      {/* Input Area - Anchored at bottom of flex container */}
       <form
         onSubmit={handleSend}
-        className="fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur-lg border-t border-tv-border z-40 safe-area-pb"
+        className="flex-shrink-0 bg-white/95 backdrop-blur-lg border-t border-tv-border z-40 safe-area-pb"
       >
         <div className="flex items-center gap-2 px-3 py-3">
           <input
