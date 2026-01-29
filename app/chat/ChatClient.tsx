@@ -364,8 +364,14 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
 
         await fetchMessages()
       } else {
-        const data = await res.json()
-        setToast({ message: data.error || 'Failed to send', type: 'error' })
+        console.error('[CHAT DEBUG] Send failed with status:', res.status)
+        try {
+          const data = await res.json()
+          console.error('[CHAT DEBUG] Error response:', data)
+          setToast({ message: `${res.status}: ${data.error || 'Failed to send'}`, type: 'error' })
+        } catch {
+          setToast({ message: `Failed to send (${res.status})`, type: 'error' })
+        }
       }
     } catch (error: any) {
       console.error('Send error:', error)
@@ -567,15 +573,23 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
               type="text"
               value={input}
               onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSend(e as any)
+                }
+              }}
               placeholder={`Message @${username}`}
               className="w-full bg-tv-bg/50 backdrop-blur-sm text-tv-text placeholder-tv-text-muted rounded-full px-5 py-2.5 border border-tv-grid/40 focus:outline-none focus:ring-2 focus:ring-tv-blue/30 focus:border-tv-blue/50 transition-all duration-200 shadow-sm"
               disabled={sending || uploading}
               style={{ fontSize: '16px' }}
+              enterKeyHint="send"
             />
           </div>
 
           <button
-            type="submit"
+            type="button"
+            onClick={handleSend}
             disabled={(!input.trim() && !selectedFile) || sending || uploading}
             className="p-3 bg-gradient-to-br from-tv-blue to-tv-blue-hover hover:from-tv-blue-hover hover:to-tv-blue disabled:from-tv-text-muted disabled:to-tv-text-muted disabled:cursor-not-allowed rounded-full transition-all duration-200 shadow-lg shadow-tv-blue/20 hover:shadow-tv-blue/40 flex-shrink-0 active:scale-90 disabled:shadow-none"
             aria-label="Send message"
