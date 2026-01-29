@@ -283,20 +283,26 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
 
-  // Memoize handleSend
+  // Memoize handleSend - with optimistic updates for instant feedback
   const handleSend = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('[CHAT DEBUG] handleSend called, input:', input)
     if ((!input.trim() && !selectedFile) || sending) {
-      console.log('[CHAT DEBUG] Send blocked - empty input or already sending')
       return
     }
 
-    console.log('[CHAT DEBUG] Sending message:', input)
+    const messageText = input.trim() || '📎 Attachment'
+    const currentReplyTo = replyingTo
+
+    // Clear input immediately for snappy UX
+    setInput('')
+    setShowMentions(false)
+    setReplyingTo(null)
     setSending(true)
+
     let mediaUrl: string | null = null
 
     try {
+      // Handle file upload first (can't be optimistic with files)
       if (selectedFile) {
         setUploading(true)
         const formData = new FormData()
@@ -306,9 +312,8 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
           setUploadProgress(prev => Math.min(prev + 10, 90))
         }, 200)
 
-        // Create an AbortController for timeout
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minute timeout
+        const timeoutId = setTimeout(() => controller.abort(), 120000)
 
         try {
           const uploadRes = await fetch('/api/upload', {
@@ -339,39 +344,58 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         }
       }
 
-      console.log('[CHAT DEBUG] Making POST request to /api/chat')
+      // Create optimistic message for instant display
+      const tempId = `temp-${Date.now()}`
+      const optimisticMessage: ChatMessage = {
+        id: tempId,
+        senderId: userId || '',
+        username: username,
+        ciphertext: messageText,
+        mediaPtr: mediaUrl,
+        createdAt: new Date().toISOString(),
+        reactions: [],
+        replyTo: currentReplyTo ? {
+          id: currentReplyTo.id,
+          ciphertext: currentReplyTo.ciphertext,
+          sender: { username: currentReplyTo.username }
+        } : undefined
+      }
+
+      // Add to UI immediately
+      setMessages(prev => [...prev, optimisticMessage])
+
+      // Send to server
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input.trim() || '📎 Attachment',
+          message: messageText,
           mediaPtr: mediaUrl,
-          replyToId: replyingTo?.id || null
+          replyToId: currentReplyTo?.id || null
         }),
       })
 
-      console.log('[CHAT DEBUG] POST response status:', res.status)
       if (res.ok) {
         const data = await res.json()
-        setInput('')
-        setShowMentions(false)
-        setReplyingTo(null)
+
+        // Replace temp message with real one from server
+        if (data.message) {
+          setMessages(prev => prev.map(msg =>
+            msg.id === tempId ? { ...data.message, username } : msg
+          ))
+        }
 
         // If there's an agent message, show a toast
         if (data.agentMessage) {
           setToast({ message: 'LFG Agent is responding...', type: 'info' })
+          // Fetch to get agent response
+          setTimeout(() => fetchMessages(), 2000)
         }
-
-        await fetchMessages()
       } else {
-        console.error('[CHAT DEBUG] Send failed with status:', res.status)
-        try {
-          const data = await res.json()
-          console.error('[CHAT DEBUG] Error response:', data)
-          setToast({ message: `${res.status}: ${data.error || 'Failed to send'}`, type: 'error' })
-        } catch {
-          setToast({ message: `Failed to send (${res.status})`, type: 'error' })
-        }
+        // Remove optimistic message on failure
+        setMessages(prev => prev.filter(msg => msg.id !== tempId))
+        const errorData = await res.json().catch(() => ({}))
+        setToast({ message: `${res.status}: ${errorData.error || 'Failed to send'}`, type: 'error' })
       }
     } catch (error: any) {
       console.error('Send error:', error)
@@ -385,7 +409,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       setSending(false)
       setUploading(false)
     }
-  }, [input, selectedFile, sending, replyingTo, handleCancelUpload, fetchMessages])
+  }, [input, selectedFile, sending, replyingTo, handleCancelUpload, fetchMessages, username, userId])
 
   // Memoize setReplyingTo callback
   const handleReplyClick = useCallback((message: { id: string; username: string; ciphertext: string }) => {
