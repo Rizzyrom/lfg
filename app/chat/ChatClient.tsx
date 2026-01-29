@@ -397,8 +397,8 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden pt-3 pb-0 space-y-2 smooth-scroll max-w-full px-3"
-        style={{ paddingBottom: '80px', WebkitOverflowScrolling: 'touch' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-0 space-y-2 smooth-scroll max-w-full px-3"
+        style={{ paddingBottom: '72px', WebkitOverflowScrolling: 'touch' }}
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">

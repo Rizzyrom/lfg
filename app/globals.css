@@ -52,9 +52,16 @@
 
 html, body {
   overflow: hidden;
-  height: 100%;
-  position: fixed;
+  height: 100dvh; /* Dynamic viewport height - adjusts for iOS keyboard */
   width: 100%;
+}
+
+/* Fallback for browsers without dvh support */
+@supports not (height: 100dvh) {
+  html, body {
+    height: 100%;
+    position: fixed;
+  }
 }
 
 body {
