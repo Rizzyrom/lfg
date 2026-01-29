@@ -46,6 +46,9 @@ interface ChatClientProps {
 export default function ChatClient({ username, userId, isActive = true }: ChatClientProps) {
   const { getCachedData, setCachedData } = useDataPrefetch()
 
+  // Track pending optimistic messages to prevent poll from overwriting them
+  const pendingMessageIds = useRef<Set<string>>(new Set())
+
   // Initialize with cached data for instant display
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const cached = getCachedData('chat')
@@ -88,29 +91,21 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
   }, [getCachedData, messages.length])
 
   // Memoize fetchMessages to prevent recreating on every render
-  // Preserves optimistic (temp-*) messages until server confirms them
-  const fetchMessages = useCallback(async (skipCache = false) => {
+  // Skips fetch if there are pending optimistic messages to prevent overwriting
+  const fetchMessages = useCallback(async (force = false) => {
+    // Don't fetch if we have pending messages (unless forced)
+    if (!force && pendingMessageIds.current.size > 0) {
+      console.log('[ChatClient] Skipping fetch - pending messages:', pendingMessageIds.current.size)
+      return
+    }
+
     try {
       const res = await fetch('/api/chat')
       if (res.ok) {
         const data = await res.json()
         const serverMessages: ChatMessage[] = data.messages || []
         
-        setMessages(prev => {
-          // Get any optimistic messages (temp IDs) that aren't on server yet
-          const optimisticMessages = prev.filter(msg => 
-            msg.id.startsWith('temp-') && 
-            !serverMessages.some(sm => sm.ciphertext === msg.ciphertext && sm.username === msg.username)
-          )
-          
-          // Combine: server messages + any pending optimistic ones
-          if (optimisticMessages.length > 0) {
-            return [...serverMessages, ...optimisticMessages]
-          }
-          return serverMessages
-        })
-        
-        // Update cache with server data only
+        setMessages(serverMessages)
         setCachedData('chat', serverMessages)
       }
     } catch (error) {
@@ -315,6 +310,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
     setSending(true)
 
     let mediaUrl: string | null = null
+    let tempId: string | null = null
 
     try {
       // Handle file upload first (can't be optimistic with files)
@@ -360,7 +356,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       }
 
       // Create optimistic message for instant display
-      const tempId = `temp-${Date.now()}`
+      tempId = `temp-${Date.now()}`
       const optimisticMessage: ChatMessage = {
         id: tempId,
         senderId: userId || '',
@@ -375,6 +371,9 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
           sender: { username: currentReplyTo.username }
         } : undefined
       }
+
+      // Mark as pending to prevent poll from overwriting
+      pendingMessageIds.current.add(tempId)
 
       // Add to UI immediately
       setMessages(prev => [...prev, optimisticMessage])
@@ -393,6 +392,9 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       if (res.ok) {
         const data = await res.json()
 
+        // Clear pending status
+        pendingMessageIds.current.delete(tempId)
+
         // Replace temp message with real one from server
         if (data.message) {
           setMessages(prev => prev.map(msg =>
@@ -400,20 +402,25 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
           ))
         }
 
-        // If there's an agent message, show a toast
+        // If there's an agent message, show a toast and fetch to get it
         if (data.agentMessage) {
           setToast({ message: 'LFG Agent is responding...', type: 'info' })
-          // Fetch to get agent response
-          setTimeout(() => fetchMessages(), 2000)
+          setTimeout(() => fetchMessages(true), 2000)
         }
       } else {
-        // Remove optimistic message on failure
+        // Clear pending status and remove optimistic message on failure
+        pendingMessageIds.current.delete(tempId)
         setMessages(prev => prev.filter(msg => msg.id !== tempId))
         const errorData = await res.json().catch(() => ({}))
         setToast({ message: `${res.status}: ${errorData.error || 'Failed to send'}`, type: 'error' })
       }
     } catch (error: any) {
       console.error('Send error:', error)
+      // Clean up pending message if it was created
+      if (tempId) {
+        pendingMessageIds.current.delete(tempId)
+        setMessages(prev => prev.filter(msg => msg.id !== tempId))
+      }
       const errorMessage = error?.message || String(error)
       setToast({
         message: errorMessage.includes('Error:') ? errorMessage : `Error: ${errorMessage}`,
