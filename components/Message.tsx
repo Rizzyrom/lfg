@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, memo, useMemo, useCallback } from 'react'
-import { Reply, Bot, FileText, Download, ExternalLink } from 'lucide-react'
+import { Reply, Bot, FileText, ExternalLink } from 'lucide-react'
 import TickerChip from './TickerChip'
 
 interface Reaction {
@@ -32,6 +32,9 @@ interface MessageProps {
   reactions?: Reaction[]
   replyTo?: ReplyTo
   onReply?: (message: { id: string; username: string; ciphertext: string }) => void
+  // Grouping props
+  isFirstInGroup?: boolean
+  isLastInGroup?: boolean
 }
 
 type MessagePart = { type: 'text'; content: string } | { type: 'ticker'; symbol: string } | { type: 'mention'; username: string }
@@ -85,6 +88,30 @@ const getFilename = (url: string): string => {
   }
 }
 
+// Get initials from username
+const getInitials = (name: string): string => {
+  return name.slice(0, 2).toUpperCase()
+}
+
+// Generate consistent color from username
+const getAvatarColor = (name: string): string => {
+  const colors = [
+    'from-blue-500 to-blue-600',
+    'from-green-500 to-green-600',
+    'from-purple-500 to-purple-600',
+    'from-orange-500 to-orange-600',
+    'from-pink-500 to-pink-600',
+    'from-teal-500 to-teal-600',
+    'from-indigo-500 to-indigo-600',
+    'from-rose-500 to-rose-600',
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return colors[Math.abs(hash) % colors.length]
+}
+
 function Message({
   id,
   username,
@@ -95,7 +122,9 @@ function Message({
   currentUserId,
   reactions: initialReactions = [],
   replyTo,
-  onReply
+  onReply,
+  isFirstInGroup = true,
+  isLastInGroup = true,
 }: MessageProps) {
   const [imageError, setImageError] = useState(false)
   const [showReactionPicker, setShowReactionPicker] = useState(false)
@@ -196,6 +225,8 @@ function Message({
   const messageParts = useMemo(() => parseMessage(ciphertext), [ciphertext])
   const attachmentType = useMemo(() => mediaPtr ? getAttachmentType(mediaPtr) : null, [mediaPtr])
   const filename = useMemo(() => mediaPtr ? getFilename(mediaPtr) : '', [mediaPtr])
+  const avatarColor = useMemo(() => getAvatarColor(username), [username])
+  const initials = useMemo(() => getInitials(username), [username])
 
   const handleReplyClick = useCallback(() => {
     if (onReply) {
@@ -217,29 +248,46 @@ function Message({
   // Check if this is an agent message
   const isAgent = username === 'LFG Agent'
 
+  // Spacing based on grouping
+  const marginBottom = isLastInGroup ? 'mb-3' : 'mb-0.5'
+
   return (
     <div
       id={`message-${id}`}
-      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 group animate-fade-in-up`}
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${marginBottom} group`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchEnd}
     >
-      <div className={`max-w-[75%] sm:max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col relative`}>
-        {/* Username header */}
-        <div className="flex items-center gap-2 mb-1.5 px-1">
-          {isAgent && (
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-tv-blue to-tv-purple flex items-center justify-center">
-              <Bot className="w-3 h-3 text-white" />
-            </div>
-          )}
-          <span className="text-xs font-semibold text-tv-text-soft">{username}</span>
-          {isAgent && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-tv-blue text-white">
-              AI
-            </span>
-          )}
+      {/* Avatar for other users - only on first message of group */}
+      {!isOwn && (
+        <div className="w-8 mr-2 flex-shrink-0">
+          {isFirstInGroup ? (
+            isAgent ? (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+            ) : (
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center shadow-sm`}>
+                <span className="text-xs font-bold text-white">{initials}</span>
+              </div>
+            )
+          ) : null}
         </div>
+      )}
+
+      <div className={`max-w-[75%] sm:max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col relative`}>
+        {/* Username header - only on first message of group */}
+        {isFirstInGroup && !isOwn && (
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <span className="text-xs font-semibold text-gray-500">{username}</span>
+            {isAgent && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500 text-white">
+                AI
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Reaction Picker */}
         {showReactionPicker && (
@@ -250,7 +298,7 @@ function Message({
                   handleReplyClick()
                   setShowReactionPicker(false)
                 }}
-                className="self-start flex items-center gap-2 bg-white border border-tv-border rounded-xl px-4 py-2.5 text-sm font-semibold text-tv-text hover:bg-tv-bg-secondary active:scale-95 transition-all shadow-elevation-3"
+                className="self-start flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 active:scale-95 transition-all shadow-lg"
                 type="button"
               >
                 <Reply className="w-4 h-4" />
@@ -258,7 +306,7 @@ function Message({
               </button>
             )}
 
-            <div className="flex items-center gap-0.5 bg-white border border-tv-border rounded-full px-3 py-2 shadow-elevation-3">
+            <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-full px-3 py-2 shadow-lg">
               {quickReactions.map(emoji => (
                 <button
                   key={emoji}
@@ -266,7 +314,7 @@ function Message({
                     handleReaction(emoji)
                     setShowReactionPicker(false)
                   }}
-                  className="hover:scale-125 active:scale-95 transition-transform text-xl p-2 min-h-[44px] min-w-[44px] touch-manipulation rounded-full hover:bg-tv-bg-secondary"
+                  className="hover:scale-125 active:scale-95 transition-transform text-xl p-2 min-h-[44px] min-w-[44px] touch-manipulation rounded-full hover:bg-gray-100"
                   type="button"
                 >
                   {emoji}
@@ -279,28 +327,44 @@ function Message({
         {/* Reply Reference */}
         {replyTo && (
           <button
-            className="mb-2 ml-1 flex items-center gap-2 text-xs text-tv-text-soft hover:text-tv-text transition-colors group/reply"
+            className="mb-2 ml-1 flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors group/reply"
             type="button"
           >
-            <div className="w-0.5 h-10 bg-tv-border group-hover/reply:bg-tv-blue rounded-full transition-colors" />
-            <div className="text-left bg-tv-bg-secondary rounded-lg px-3 py-2">
-              <div className="font-semibold text-tv-text-soft">@{replyTo.sender.username}</div>
-              <div className="truncate max-w-[200px] text-tv-text-muted">{replyTo.ciphertext}</div>
+            <div className="w-0.5 h-10 bg-gray-300 group-hover/reply:bg-blue-500 rounded-full transition-colors" />
+            <div className="text-left bg-gray-100 rounded-lg px-3 py-2">
+              <div className="font-semibold text-gray-600">@{replyTo.sender.username}</div>
+              <div className="truncate max-w-[200px] text-gray-400">{replyTo.ciphertext}</div>
             </div>
           </button>
         )}
 
         {/* Message Bubble */}
         <div
-          className={`px-4 py-3 rounded-2xl shadow-sm transition-all ${
+          className={`px-4 py-2.5 shadow-sm transition-all ${
             isAgent
-              ? 'bg-gradient-to-br from-tv-blue via-tv-blue to-tv-blue-hover text-white shadow-md shadow-tv-blue/20'
+              ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl rounded-bl-md'
               : isOwn
-              ? 'bg-tv-text text-white rounded-br-md'
-              : 'bg-white border border-tv-border text-tv-text rounded-bl-md'
+              ? `bg-gradient-to-br from-blue-500 to-blue-600 text-white ${
+                  isFirstInGroup && isLastInGroup
+                    ? 'rounded-2xl rounded-br-md'
+                    : isFirstInGroup
+                    ? 'rounded-2xl rounded-br-md'
+                    : isLastInGroup
+                    ? 'rounded-2xl rounded-tr-md'
+                    : 'rounded-2xl rounded-r-md'
+                }`
+              : `bg-white border border-gray-200 text-gray-800 ${
+                  isFirstInGroup && isLastInGroup
+                    ? 'rounded-2xl rounded-bl-md'
+                    : isFirstInGroup
+                    ? 'rounded-2xl rounded-bl-md'
+                    : isLastInGroup
+                    ? 'rounded-2xl rounded-tl-md'
+                    : 'rounded-2xl rounded-l-md'
+                }`
           }`}
         >
-          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+          <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap">
             {messageParts.map((part, index) => {
               if (part.type === 'text') {
                 return <span key={index}>{part.content}</span>
@@ -317,7 +381,7 @@ function Message({
                     className={`px-1.5 py-0.5 rounded-md font-semibold mx-0.5 ${
                       isOwn || isAgent
                         ? 'bg-white/20 text-white'
-                        : 'bg-tv-blue-soft text-tv-blue'
+                        : 'bg-blue-100 text-blue-600'
                     }`}
                   >
                     @{part.username}
@@ -330,7 +394,7 @@ function Message({
 
           {/* Image attachment */}
           {attachmentType === 'image' && !imageError && (
-            <div className="mt-3 -mx-1">
+            <div className="mt-2 -mx-1">
               <img
                 src={mediaPtr!}
                 alt="Attachment"
@@ -345,7 +409,7 @@ function Message({
 
           {/* Video attachment */}
           {attachmentType === 'video' && (
-            <div className="mt-3 -mx-1">
+            <div className="mt-2 -mx-1">
               <video
                 src={mediaPtr!}
                 controls
@@ -363,16 +427,16 @@ function Message({
               href={mediaPtr!}
               target="_blank"
               rel="noopener noreferrer"
-              className={`mt-3 flex items-center gap-3 p-3 rounded-xl transition-all ${
+              className={`mt-2 flex items-center gap-3 p-3 rounded-xl transition-all ${
                 isOwn || isAgent
                   ? 'bg-white/10 hover:bg-white/20'
-                  : 'bg-tv-bg-secondary hover:bg-tv-chip'
+                  : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                isOwn || isAgent ? 'bg-white/20' : 'bg-tv-down-soft'
+                isOwn || isAgent ? 'bg-white/20' : 'bg-red-100'
               }`}>
-                <FileText className={`w-5 h-5 ${isOwn || isAgent ? 'text-white' : 'text-tv-down'}`} />
+                <FileText className={`w-5 h-5 ${isOwn || isAgent ? 'text-white' : 'text-red-500'}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{filename}</div>
@@ -385,15 +449,15 @@ function Message({
 
         {/* Reactions */}
         {reactions.length > 0 && (
-          <div className="flex items-center gap-1.5 mt-2 flex-wrap px-1">
+          <div className="flex items-center gap-1 mt-1 flex-wrap px-1">
             {reactions.map(r => (
               <button
                 key={r.emoji}
                 onClick={() => handleReaction(r.emoji)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all touch-manipulation active:scale-95 ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border transition-all touch-manipulation active:scale-95 ${
                   r.userReacted
-                    ? 'bg-tv-blue border-tv-blue text-white shadow-sm shadow-tv-blue/20'
-                    : 'bg-white border-tv-border text-tv-text hover:border-tv-blue hover:bg-tv-blue-soft'
+                    ? 'bg-blue-500 border-blue-500 text-white'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50'
                 }`}
                 type="button"
               >
@@ -404,11 +468,16 @@ function Message({
           </div>
         )}
 
-        {/* Timestamp */}
-        <div className="text-[11px] text-tv-text-muted mt-1.5 px-1 font-medium">
-          {formattedTime}
-        </div>
+        {/* Timestamp - only on last message of group */}
+        {isLastInGroup && (
+          <div className={`text-[11px] text-gray-400 mt-1 px-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+            {formattedTime}
+          </div>
+        )}
       </div>
+
+      {/* Spacer for own messages to align with avatar */}
+      {isOwn && <div className="w-8 ml-2 flex-shrink-0" />}
     </div>
   )
 }
@@ -422,6 +491,8 @@ export default memo(Message, (prevProps, nextProps) => {
     prevProps.timestamp === nextProps.timestamp &&
     prevProps.isOwn === nextProps.isOwn &&
     prevProps.currentUserId === nextProps.currentUserId &&
+    prevProps.isFirstInGroup === nextProps.isFirstInGroup &&
+    prevProps.isLastInGroup === nextProps.isLastInGroup &&
     JSON.stringify(prevProps.reactions) === JSON.stringify(nextProps.reactions) &&
     JSON.stringify(prevProps.replyTo) === JSON.stringify(nextProps.replyTo)
   )

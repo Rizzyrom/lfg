@@ -443,6 +443,28 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
     setToast(null)
   }, [])
 
+  // Message grouping logic - group messages from same sender within 3 minutes
+  const getMessageGrouping = useCallback((messages: ChatMessage[], index: number) => {
+    const msg = messages[index]
+    const prevMsg = index > 0 ? messages[index - 1] : null
+    const nextMsg = index < messages.length - 1 ? messages[index + 1] : null
+    
+    const GROUP_WINDOW_MS = 3 * 60 * 1000 // 3 minutes
+    
+    const isSameSenderAsPrev = prevMsg && prevMsg.username === msg.username
+    const isSameSenderAsNext = nextMsg && nextMsg.username === msg.username
+    
+    const isWithinWindowOfPrev = prevMsg && 
+      (new Date(msg.createdAt).getTime() - new Date(prevMsg.createdAt).getTime()) < GROUP_WINDOW_MS
+    const isWithinWindowOfNext = nextMsg && 
+      (new Date(nextMsg.createdAt).getTime() - new Date(msg.createdAt).getTime()) < GROUP_WINDOW_MS
+    
+    const isFirstInGroup = !isSameSenderAsPrev || !isWithinWindowOfPrev
+    const isLastInGroup = !isSameSenderAsNext || !isWithinWindowOfNext
+    
+    return { isFirstInGroup, isLastInGroup }
+  }, [])
+
   return (
     <div className="flex flex-col h-full bg-tv-bg overflow-x-hidden relative">
       {/* Messages Area - Takes remaining height above input */}
@@ -463,21 +485,26 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
             </div>
           </div>
         ) : (
-          messages.map((msg) => (
-            <Message
-              key={msg.id}
-              id={msg.id}
-              username={msg.username}
-              ciphertext={msg.ciphertext}
-              mediaPtr={msg.mediaPtr}
-              timestamp={msg.createdAt}
-              isOwn={msg.username === username}
-              currentUserId={msg.senderId === userId ? userId : undefined}
-              reactions={msg.reactions}
-              replyTo={msg.replyTo}
-              onReply={handleReplyClick}
-            />
-          ))
+          messages.map((msg, index) => {
+            const { isFirstInGroup, isLastInGroup } = getMessageGrouping(messages, index)
+            return (
+              <Message
+                key={msg.id}
+                id={msg.id}
+                username={msg.username}
+                ciphertext={msg.ciphertext}
+                mediaPtr={msg.mediaPtr}
+                timestamp={msg.createdAt}
+                isOwn={msg.username === username}
+                currentUserId={msg.senderId === userId ? userId : undefined}
+                reactions={msg.reactions}
+                replyTo={msg.replyTo}
+                onReply={handleReplyClick}
+                isFirstInGroup={isFirstInGroup}
+                isLastInGroup={isLastInGroup}
+              />
+            )
+          })
         )}
       </div>
 
@@ -625,7 +652,7 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
                   handleSend(e as any)
                 }
               }}
-              placeholder={`Message @${username}`}
+              placeholder="Type a message..."
               className="w-full bg-tv-bg/50 backdrop-blur-sm text-tv-text placeholder-tv-text-muted rounded-full px-5 py-2.5 border border-tv-grid/40 focus:outline-none focus:ring-2 focus:ring-tv-blue/30 focus:border-tv-blue/50 transition-all duration-200 shadow-sm"
               disabled={sending || uploading}
               style={{ fontSize: '16px' }}
