@@ -170,27 +170,10 @@ export async function executeCommand(
       case 'pin':
         result = await handlers.handlePin(ctx, parsed.args);
         break;
-      case 'snapshot':
-      case 'snap':
-        result = await handlers.handleSnapshot(ctx, parsed.args);
-        break;
-      case 'whois':
-        result = await handlers.handleWhois(ctx, parsed.args);
-        break;
-      case 'feed':
-        result = await handlers.handleFeed(ctx, parsed.args);
-        break;
-      case 'context':
-        result = await handlers.handleContext(ctx, parsed.args);
-        break;
-      case 'ask':
-      case 'q':
-        result = await handlers.handleAsk(ctx, parsed.args);
-        break;
       default:
         result = {
           status: 'error',
-          message: `Handler not implemented: ${parsed.command}`,
+          message: `Unknown command: ${parsed.command}`,
         };
     }
   } catch (error: any) {

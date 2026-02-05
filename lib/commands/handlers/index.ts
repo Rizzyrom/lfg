@@ -3,8 +3,3 @@ export { handleSummarize } from './summarize';
 export { handleAnalyze } from './analyze';
 export { handleAlert } from './alert';
 export { handlePin } from './pin';
-export { handleSnapshot } from './snapshot';
-export { handleWhois } from './whois';
-export { handleFeed } from './feed';
-export { handleContext } from './context';
-export { handleAsk } from './ask';
