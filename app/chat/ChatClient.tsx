@@ -105,7 +105,17 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
         const data = await res.json()
         const serverMessages: ChatMessage[] = data.messages || []
         
-        setMessages(serverMessages)
+        // Merge: preserve pending optimistic messages to prevent flicker
+        setMessages(prev => {
+          const pendingMessages = prev.filter(msg => 
+            msg.id.startsWith('temp-') && pendingMessageIds.current.has(msg.id)
+          )
+          if (pendingMessages.length > 0) {
+            // Keep pending messages at the end until server confirms
+            return [...serverMessages, ...pendingMessages]
+          }
+          return serverMessages
+        })
         setCachedData('chat', serverMessages)
       }
     } catch (error) {
@@ -392,14 +402,17 @@ export default function ChatClient({ username, userId, isActive = true }: ChatCl
       if (res.ok) {
         const data = await res.json()
 
-        // Clear pending status
-        pendingMessageIds.current.delete(tempId)
-
         // Replace temp message with real one from server
-        if (data.message) {
-          setMessages(prev => prev.map(msg =>
-            msg.id === tempId ? { ...data.message, username } : msg
-          ))
+        // Clear pending status INSIDE callback to prevent race condition
+        if (data.message && tempId) {
+          setMessages(prev => {
+            pendingMessageIds.current.delete(tempId!)
+            return prev.map(msg =>
+              msg.id === tempId ? { ...data.message, username } : msg
+            )
+          })
+        } else if (tempId) {
+          pendingMessageIds.current.delete(tempId)
         }
 
         // If there's an agent message, show a toast and fetch to get it
