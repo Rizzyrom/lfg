@@ -65,6 +65,6 @@ All notable changes to the LFG App will be documented in this file.
 ## Contributors
 
 - Rom (@Rizzyrom)
-- Tommy (@annese_)
+- Tom (@annese_)
 - JMH (AI Assistant)
 - Albert Ives (AI Assistant)
